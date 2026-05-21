@@ -1,4 +1,10 @@
-Identifies and isolates the linear direction encoding skin tone in the latent space of Stable Diffusion XL, then uses that vector to generate counterfactual portraits — images of the same person across a continuous skin-tone spectrum — while preserving identity, pose, and background.
+# Bias Mitigation in AI Image Generation
+
+Extracts the linear **skin-tone direction** from Stable Diffusion XL's latent space and uses it to generate **counterfactual portraits** — the same face rendered across a continuous skin-tone spectrum — while preserving identity, pose, and background.
+
+Built as a practical tool for **auditing skin-tone bias encoded in text-to-image generative models**.
+
+`Python` · `PyTorch` · `Diffusers (SDXL)` · `ArcFace` · `MediaPipe` · `FaceNet` · `LPIPS`
 
 ---
 
@@ -10,39 +16,45 @@ Identifies and isolates the linear direction encoding skin tone in the latent sp
 
 ![Final Grid](experiments/results/final_grid.png)
 
-**Quantitative results — all 4 counterfactuals pass every threshold:**
+All 4 counterfactuals pass every threshold:
 
-| α | Face Similarity ↑ | LPIPS ↓ | Background SSIM ↑ | Disentangled |
+| α | Face Similarity ↑ | LPIPS ↓ | Background SSIM ↑ | Pass |
 |---|---|---|---|---|
 | +1.5 | 0.894 | 0.204 | 0.798 | ✓ |
 | +0.8 | 0.977 | 0.134 | 0.864 | ✓ |
 | −0.8 | 0.994 | 0.242 | 0.847 | ✓ |
 | −1.5 | 0.954 | 0.280 | 0.821 | ✓ |
 
-Thresholds: Face Similarity > 0.85 · LPIPS < 0.30 · Background SSIM > 0.75
+*Thresholds: Face Similarity > 0.85 · LPIPS < 0.30 · Background SSIM > 0.75*
 
 ---
 
-## Key Technical Contributions
+## The Core Technical Challenge
 
-- **Latent-space vector extraction** — Computes a skin-tone direction via mean-difference of VAE-encoded portrait latents across two demographic groups; optionally refines it with a FaceNet-based identity-preservation loss.
-- **Steered denoising** — Injects the race vector at every DDIM/DPM++ denoising step rather than adding it to the final latent. This keeps generations in-distribution and eliminates VAE decoding artifacts.
-- **Spatial masking** — Applies a Gaussian face mask to the vector before injection, confining the edit to the face region and leaving background and hair largely unchanged.
-- **Quantitative evaluation** — Measures disentanglement across five axes: face similarity (ArcFace), facial landmark RMSE, perceptual similarity (LPIPS), background SSIM, and 3D head pose drift.
+The naive approach — take the mean-difference vector between two groups of portrait latents, add it to the final latent, decode — produces blurry, out-of-distribution artifacts. The VAE decoder can't reconstruct a coherent face from a latent it never visited during the diffusion process.
+
+**The fix:** inject the skin-tone vector at *every denoising step* via a `callback_on_step_end` hook. Because the denoiser sees and corrects for the perturbation at each step, it converges to a coherent steered image instead of an artifact.
+
+| Spatial Mask | Application |
+|---|---|
+| ![mask](experiments/results/spatial_mask_and_vector_raw.png) | Gaussian face mask weights the vector before injection, confining edits to facial skin and leaving background, hair, and clothing unchanged. |
 
 ---
 
-## Tech Stack
+## Technical Highlights
 
-`Python` · `PyTorch` · `Diffusers (SDXL)` · `scikit-learn` · `OpenCV` · `MediaPipe` · `FaceNet` · `LPIPS`
+- **Steered denoising** — Race vector injected at each DPM++ 2M Karras step rather than added post-hoc to the final latent; keeps generations in-distribution and eliminates VAE decoding artifacts.
+- **Spatial Gaussian masking** — Vector is attenuated by a face-centred Gaussian (radius 1.0, edge weight 0.3) before injection, isolating the skin-tone edit from background and hair.
+- **FaceNet refinement** — Optional gradient-based optimisation step that refines the extracted vector to minimise ArcFace identity loss while maximising the attribute change.
+- **Five-axis evaluation** — Face similarity (ArcFace), facial landmark RMSE (MediaPipe), perceptual similarity (LPIPS), background SSIM, and 3D head-pose drift.
 
 ---
 
 ## Architecture
 
 ```
-generate_training_data.py    # synthesise paired portrait groups via SDXL
-run_race_vector_extraction.py  # end-to-end pipeline
+generate_training_data.py        # synthesise paired portrait groups via SDXL
+run_race_vector_extraction.py    # end-to-end pipeline (CLI: --steps, --alphas, --seed, --output)
 
 src/
 ├── models/stable_diffusion.py      # SDXL wrapper — encode / decode / generate / steer
@@ -67,24 +79,23 @@ git clone https://github.com/Arnavsharma2/Isolating-Race-Vectors-in-Latent-Space
 cd Isolating-Race-Vectors-in-Latent-Space
 pip install -r requirements.txt
 
-# Generate synthetic training portraits (16 total, ~10 min on GPU)
+# Generate synthetic training portraits (~10 min on GPU)
 python3 generate_training_data.py
 
 # Extract race vector, generate counterfactuals, evaluate
 python3 run_race_vector_extraction.py
 ```
 
-**Options:**
-
 ```bash
+# Options
 python3 run_race_vector_extraction.py \
-  --steps 25 \          # denoising steps (DPM++ 2M Karras, default 25)
-  --alphas -1.5 -0.8 0.8 1.5 \ # steering magnitudes
-  --seed 999 \           # reproducibility seed
+  --steps 25 \
+  --alphas -1.5 -0.8 0.8 1.5 \
+  --seed 999 \
   --output experiments/results
 ```
 
-Results are written to `experiments/results/`:
+**Output files:**
 
 | File | Description |
 |---|---|
@@ -93,14 +104,3 @@ Results are written to `experiments/results/`:
 | `final_grid.png` | Grid with per-image metric overlay |
 | `counterfactuals/alpha_±N.N.png` | Individual steered images |
 | `metadata.json` | Full reproducibility record |
-
----
-
-## How It Works
-
-**1. Vector extraction** — Portrait photos (or SDXL-generated portraits) for two skin-tone groups are encoded into SDXL's 4-channel latent space. The race vector is the mean latent difference between groups, weighted by a Gaussian spatial mask centred on the face. An optional optimisation step refines the vector to minimise FaceNet identity loss while maximising attribute change.
-
-**2. Steered generation** — A base portrait is generated from a fixed seed and prompt. Counterfactuals are generated with the exact same seed but with the race vector injected at each denoising step via a `callback_on_step_end` hook. Because the denoiser sees the perturbation at every step, it converges to a coherent image in the steered direction rather than an out-of-distribution artefact.
-
-**3. Evaluation** — Each (base, counterfactual) pair is scored on identity preservation, structural preservation, and an overall disentanglement pass/fail at a configurable threshold.
-
