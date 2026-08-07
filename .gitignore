@@ -1,5 +1,7 @@
 data/photos/dark_skin/*
 data/photos/light_skin/*
+!data/photos/dark_skin/.gitkeep
+!data/photos/light_skin/.gitkeep
 
 # Python cache
 __pycache__/
@@ -15,6 +17,8 @@ env/
 
 # Experiments / generated outputs
 experiments/results/
+experiments/runs/
+experiments/summary/
 data/generated/
 data/embeddings/
 
@@ -27,3 +31,13 @@ data/embeddings/
 
 # OS
 .DS_Store
+
+# Paper build products (source remains tracked)
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
+paper/*.pdf

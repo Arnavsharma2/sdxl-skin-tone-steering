@@ -158,7 +158,7 @@ class StructuralPreservationMetrics:
         img1: Union[Image.Image, np.ndarray],
         img2: Union[Image.Image, np.ndarray],
         mask: Optional[np.ndarray] = None,
-    ) -> float:
+    ) -> Optional[float]:
         """
         Compute SSIM on background region (non-face).
 
@@ -188,6 +188,11 @@ class StructuralPreservationMetrics:
         # Create mask if not provided
         if mask is None:
             mask = self.create_face_mask(img1)
+            if not np.any(mask):
+                # Without a detected face there is no defensible separation of
+                # foreground and background. Returning whole-image SSIM here
+                # would silently mislabel the metric.
+                return None
 
         # Invert mask (we want background)
         bg_mask = 1 - mask

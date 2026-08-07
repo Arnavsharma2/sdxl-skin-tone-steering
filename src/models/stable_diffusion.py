@@ -162,13 +162,18 @@ class StableDiffusionWrapper:
         self,
         image: Union[Image.Image, np.ndarray],
         size: Tuple[int, int] = (512, 512),
+        sample_posterior: bool = False,
+        generator: Optional[torch.Generator] = None,
     ) -> torch.Tensor:
         """
         Encode image to latent space.
 
         Args:
             image: Input image
-            size: Size to resize to before encoding
+            size: Size to resize to before encoding.
+            sample_posterior: Sample the VAE posterior. The deterministic
+                posterior mode is the default for reproducible experiments.
+            generator: Optional generator used for posterior sampling.
 
         Returns:
             Latent code tensor (1, 4, H//8, W//8)
@@ -178,7 +183,11 @@ class StableDiffusionWrapper:
 
         # Encode with VAE
         latent_dist = self.vae.encode(image_tensor).latent_dist
-        latent = latent_dist.sample()
+        latent = (
+            latent_dist.sample(generator=generator)
+            if sample_posterior
+            else latent_dist.mode()
+        )
 
         # Scale (SDXL uses scaling factor)
         latent = latent * self.vae.config.scaling_factor
@@ -285,16 +294,17 @@ class StableDiffusionWrapper:
         guidance_scale: float = 7.5,
     ) -> Tuple[Image.Image, torch.Tensor]:
         """
-        Generate an image steered by a race vector during the denoising process.
+        Generate an image steered by a skin-tone direction during denoising.
 
-        Instead of adding the race vector to the final latent (which pushes it
+        Instead of adding the direction to the final latent (which pushes it
         out-of-distribution), this method injects the vector at each denoising
         step. The diffusion process then naturally produces a coherent image in
         the steered direction.
 
         Args:
             prompt: Text prompt (same as base image)
-            race_vector: The race direction vector extracted from real photos
+            race_vector: Skin-tone direction tensor. The parameter retains its
+                original name for API compatibility.
             alpha: Steering magnitude. Positive = darker, Negative = lighter.
                    Values in [-5, 5] are a reasonable starting range.
             seed: RNG seed — use the same seed as the base image for consistency
@@ -309,10 +319,10 @@ class StableDiffusionWrapper:
 
         generator = torch.Generator(device=self.device).manual_seed(seed)
 
-        # Per-step injection amount. We spread the total alpha * race_vector
+        # Per-step injection amount. We spread the total alpha * direction
         # uniformly across all steps. At early (noisy) steps the injected delta
         # is tiny relative to the noise magnitude so it has little effect;
-        # at late (clean) steps the latent scale matches the race vector scale
+        # at late (clean) steps the latent scale matches the direction scale
         # and the injection meaningfully steers the color/tone. This naturally
         # concentrates the effect where it matters.
         alpha_per_step = alpha / num_inference_steps
@@ -321,7 +331,7 @@ class StableDiffusionWrapper:
             latents = callback_kwargs["latents"]
             rv = race_vector.to(dtype=latents.dtype, device=latents.device)
 
-            # Resize race vector if its spatial dims don't match the current latent
+            # Resize the direction if its spatial dims do not match the latent.
             if rv.shape != latents.shape:
                 # Ensure 4-D for interpolate
                 if rv.dim() == 3:

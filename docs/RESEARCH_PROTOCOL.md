@@ -1,0 +1,87 @@
+# Research protocol
+
+## Research question
+
+Can a linear direction estimated from paired SDXL VAE latents produce a
+monotonic change in visible skin tone during denoising while preserving
+identity, pose, composition, and background better than prompt-only and
+post-hoc latent baselines?
+
+The project estimates **visible skin tone**, not race or ethnicity. Those are
+social identities that cannot be inferred from a pixel-space continuum.
+
+## Hypotheses
+
+- H1: Stepwise masked steering produces a monotonic skin-tone response as
+  alpha moves from negative to positive.
+- H2: At a matched magnitude of skin-tone change, stepwise masked steering
+  preserves face embedding similarity better than prompt-only steering.
+- H3: The spatial mask improves background SSIM relative to unmasked stepwise
+  steering without materially reducing the target-attribute response.
+- H4: Stepwise steering improves perceptual quality and identity preservation
+  relative to adding the same total direction after denoising.
+
+## Design
+
+The confirmatory design is specified in `configs/full_study.yaml`.
+
+1. Generate paired portraits with the same seeds and prompts, changing only
+   the skin-tone descriptor. Split pairs by seed before estimating anything.
+2. Estimate one direction on the training split using the paired mean
+   difference. Do not tune alpha, masks, or thresholds on the held-out split.
+3. Evaluate 30 held-out generation seeds at five alpha values for four methods:
+   prompt-only, post-hoc latent addition, unmasked stepwise injection, and
+   masked stepwise injection.
+4. Measure the target attribute independently of preservation. A study run is
+   invalid unless a face is detected and every required metric is present.
+5. Compare methods at matched target-attribute change. Bootstrap by generation
+   seed—not by image—to preserve within-seed dependence.
+
+## Outcomes
+
+The primary outcome is face-embedding similarity at a matched, prespecified
+skin-tone change. Secondary outcomes are LPIPS, background SSIM, pose drift,
+face-detection failure rate, and monotonicity of the target response.
+
+The current repository does not yet contain a validated target-attribute
+measurement. Before a confirmatory run, implement and validate either:
+
+- a calibrated skin-region color measure reported in a perceptually meaningful
+  color space, with illumination sensitivity characterized; or
+- an externally validated, continuous skin-tone estimator with its model card,
+  error profile, and license recorded.
+
+Pixel brightness alone is not an acceptable primary measurement because it is
+confounded by lighting, exposure, and background.
+
+## Statistics
+
+- Report means, standard deviations, medians, and 95% subject-level bootstrap
+  confidence intervals.
+- Use paired method contrasts within each seed.
+- Correct confirmatory secondary tests using Holm's method.
+- Report effect sizes and intervals; do not interpret threshold crossing alone
+  as evidence.
+- Report missing values and detector failures by method and alpha. Never drop
+  them silently or treat missing metrics as passes.
+
+## Ablations
+
+- mask versus no mask;
+- stepwise versus post-hoc injection;
+- paired difference versus unpaired difference of means;
+- raw direction versus the experimental refinement (exploratory only);
+- training-pair count and seed sensitivity.
+
+## Stopping and exclusions
+
+The seed list, alpha grid, methods, and primary analysis are fixed before the
+confirmatory run. Exclude an image only for a machine-readable generation or
+file-integrity error. Face-detection failure is an outcome, not an exclusion.
+
+## Claim policy
+
+Until the confirmatory study is complete, allowed wording is “pilot,”
+“demonstration,” “suggests,” or “feasibility.” Disallowed wording includes
+“bias mitigation,” “identity preserved,” “disentangled,” “changes race,” and
+“state of the art.”

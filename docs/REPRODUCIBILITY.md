@@ -1,0 +1,57 @@
+# Reproducibility guide
+
+## Environments
+
+Use Python 3.10 or 3.11. Install with:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install -e '.[evaluation,dev]'
+```
+
+The package ranges support development; a paper release must also archive an
+exact lock file or container digest. Record the SDXL model revision and weight
+hash after accepting its license. Hardware backends may not be bitwise
+identical, so do not mix CUDA, MPS, and CPU within one statistical comparison.
+
+## Workflow
+
+```bash
+make test
+python3 generate_training_data.py --n 8
+make pilot
+make summarize
+make paper
+```
+
+Each new run belongs in `experiments/runs/<study>_<seed>/`. The pipeline writes
+settings, package versions, git commit, dirty-state flag, and hardware
+availability into `metadata.json`. The base-image cache is keyed by model,
+prompt, negative prompt, seed, step count, and guidance scale.
+
+## Determinism
+
+- VAE encoding uses the posterior mode by default.
+- Python, NumPy, and PyTorch are seeded by the CLI seed.
+- Generation seed is shared within a counterfactual set.
+- Full bitwise determinism is not promised across hardware or library versions.
+
+## Artifact policy
+
+Generated runs are ignored by git. For a release, archive the following under a
+versioned DOI or release asset and record SHA-256 hashes:
+
+- exact configuration and source commit;
+- long-form result table and aggregate table;
+- metadata for every attempted run, including failures;
+- vector artifact if released, with training-data manifest;
+- paper figures and the script or command that generated each figure;
+- environment lock file or container digest.
+
+The repository currently has no license. Select and add one only after checking
+the licenses of the model, metrics, data, and generated artifacts.
+
+`CITATION.cff` intentionally uses “Project contributors” until the author list
+and order are confirmed. Replace that placeholder before creating a release.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Race Vector Extraction and Counterfactual Generation
+Skin-Tone Direction Extraction and Counterfactual Generation
 
 Extracts a "skin tone direction" from portrait photos in the SDXL latent
 space, then uses steered denoising to generate counterfactual images that
@@ -27,9 +27,14 @@ import matplotlib.pyplot as plt
 sys.path.insert(0, str(Path(__file__).parent))
 
 from src.models.stable_diffusion import StableDiffusionWrapper
-from src.latent.vector_discovery import RaceVectorExtractor, VectorAnalyzer
+from src.latent.vector_discovery import SkinToneDirectionExtractor, VectorAnalyzer
 from src.metrics.evaluator import CounterfactualEvaluator
 from src.visualization.grid_generator import CounterfactualGridGenerator
+from src.utils.reproducibility import (
+    collect_provenance,
+    seed_everything,
+    stable_fingerprint,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -57,8 +62,8 @@ def _clear_cache(device: str):
         torch.mps.empty_cache()
 
 
-class RaceVectorPipeline:
-    """End-to-end pipeline for race vector extraction and evaluation."""
+class SkinToneSteeringPipeline:
+    """End-to-end pipeline for skin-tone direction estimation and evaluation."""
 
     def __init__(self, device=None, output_dir="experiments/results",
                  num_inference_steps=25):
@@ -86,12 +91,13 @@ class RaceVectorPipeline:
         self.counterfactual_images = []
         self.alphas = []
         self.results = []
+        self.evaluator = None
         self.generation_prompt = PORTRAIT_PROMPT
         self.generation_seed = 999
         self.generation_negative_prompt = NEGATIVE_PROMPT
 
         print("=" * 70)
-        print("RACE VECTOR EXTRACTION PIPELINE")
+        print("SKIN-TONE DIRECTION EXTRACTION PIPELINE")
         print("=" * 70)
         print(f"Device:              {self.device}")
         print(f"Inference steps:     {self.num_inference_steps} (DPM++ 2M Karras)")
@@ -187,7 +193,7 @@ class RaceVectorPipeline:
         print(f"Difference:                {diff:.1f}")
 
         if diff < 20:
-            print("\nWARNING: Very small brightness gap — race vector may be weak.")
+            print("\nWARNING: Very small brightness gap — direction may be weak.")
             print("  For best results aim for a gap > 40.\n")
         elif diff < 40:
             print("\nWARNING: Moderate gap; results may be subtle.\n")
@@ -197,11 +203,11 @@ class RaceVectorPipeline:
     # -----------------------------------------------------------------------
     # Step 4 — Race vector
     # -----------------------------------------------------------------------
-    def extract_race_vector(self, radius=1.0, edge_weight=0.3):
-        print("STEP 4: Extracting race vector...")
+    def extract_race_vector(self, radius=1.0, edge_weight=0.3, optimize=False):
+        print("STEP 4: Extracting skin-tone direction...")
         print("-" * 70)
 
-        self.extractor = RaceVectorExtractor(device=self.device)
+        self.extractor = SkinToneDirectionExtractor(device=self.device)
 
         lat_shape = self.light_latents[0].shape
         h, w = lat_shape[-2], lat_shape[-1]
@@ -230,7 +236,11 @@ class RaceVectorPipeline:
         # ------------------------------------------------------------------
         # Optional: optimise vector for identity preservation
         # ------------------------------------------------------------------
-        print("\nSTEP 4b: Optimising vector for identity preservation...")
+        if not optimize:
+            print("\nSTEP 4b: Optimisation disabled (pilot protocol default).\n")
+            return
+
+        print("\nSTEP 4b: Running experimental vector optimisation...")
         print("-" * 70)
         try:
             from facenet_pytorch import InceptionResnetV1
@@ -322,7 +332,17 @@ class RaceVectorPipeline:
             self.generation_prompt = prompt
         self.generation_seed = seed
 
-        cache_path = self.cache_dir / "base_image.png"
+        cache_key = stable_fingerprint(
+            {
+                "model": self.model.model_id,
+                "prompt": self.generation_prompt,
+                "negative_prompt": self.generation_negative_prompt,
+                "seed": self.generation_seed,
+                "steps": self.num_inference_steps,
+                "guidance_scale": 7.5,
+            }
+        )
+        cache_path = self.cache_dir / f"base_image_{cache_key}.png"
         out_path = self.output_dir / "base_image.png"
 
         if cache_path.exists():
@@ -421,14 +441,14 @@ class RaceVectorPipeline:
         print("STEP 7: Evaluating identity & structural preservation...")
         print("-" * 70)
 
-        evaluator = CounterfactualEvaluator(device=self.device)
+        self.evaluator = CounterfactualEvaluator(device=self.device)
         self.results = []
 
         for cf_img, alpha in zip(self.counterfactual_images, self.alphas):
             if abs(alpha) < 0.01:
                 continue
             print(f"\n  α = {alpha:+.1f}")
-            result = evaluator.evaluate_pair(self.base_image, cf_img, verbose=True)
+            result = self.evaluator.evaluate_pair(self.base_image, cf_img, verbose=True)
             self.results.append((alpha, result))
 
         print("\nEvaluation complete.\n")
@@ -464,6 +484,12 @@ class RaceVectorPipeline:
     # -----------------------------------------------------------------------
     def save_metadata(self):
         metadata = {
+            "schema_version": "1.0",
+            "status": "pilot",
+            "terminology": {
+                "estimated_attribute": "visual skin-tone direction",
+                "explicitly_not_estimated": "race or ethnicity",
+            },
             "prompt": self.generation_prompt,
             "negative_prompt": self.generation_negative_prompt,
             "seed": self.generation_seed,
@@ -472,7 +498,13 @@ class RaceVectorPipeline:
             "device": self.device,
             "n_light_photos": len(self.light_images),
             "n_dark_photos": len(self.dark_images),
-            "race_vector_norm": float(self.race_vector.norm().item()),
+            "direction_norm": float(self.race_vector.norm().item()),
+            "model_id": self.model.model_id if self.model is not None else None,
+            "scheduler": "DPMSolverMultistepScheduler (DPM-Solver++)",
+            "thresholds": (
+                vars(self.evaluator.thresholds) if self.evaluator is not None else None
+            ),
+            "provenance": collect_provenance(Path(__file__).parent),
             "results": [
                 {"alpha": a, **r.to_dict()}
                 for a, r in self.results
@@ -491,7 +523,7 @@ class RaceVectorPipeline:
         print("RESULTS SUMMARY")
         print("=" * 70)
         print(f"\nPhotos:  {len(self.light_images)} light  +  {len(self.dark_images)} dark")
-        print(f"Race vector norm: {self.race_vector.norm().item():.4f}")
+        print(f"Direction norm: {self.race_vector.norm().item():.4f}")
         print(f"Counterfactuals:  {len(self.counterfactual_images)}")
 
         if self.results:
@@ -535,13 +567,21 @@ def parse_args():
     p.add_argument("--max-photos", type=int, default=10)
     p.add_argument("--eval-only", action="store_true",
                    help="Skip generation; re-evaluate existing images in output dir")
+    p.add_argument(
+        "--optimize-vector",
+        action="store_true",
+        help=(
+            "Enable experimental vector optimisation. Disabled by default because "
+            "it is not part of the preregistered pilot protocol."
+        ),
+    )
     return p.parse_args()
 
 
 def main():
     args = parse_args()
 
-    pipeline = RaceVectorPipeline(
+    pipeline = SkinToneSteeringPipeline(
         output_dir=args.output,
         num_inference_steps=args.steps,
     )
@@ -563,6 +603,7 @@ def main():
 
 
 def _full_run(pipeline, args):
+    seed_everything(args.seed)
     pipeline.load_model()
     pipeline.load_photos(
         light_dir=args.light_dir,
@@ -570,7 +611,11 @@ def _full_run(pipeline, args):
         max_photos=args.max_photos,
     )
     pipeline.check_photo_quality()
-    pipeline.extract_race_vector(radius=1.0, edge_weight=0.3)
+    pipeline.extract_race_vector(
+        radius=1.0,
+        edge_weight=0.3,
+        optimize=args.optimize_vector,
+    )
     pipeline.generate_base_image(seed=args.seed)
     pipeline.generate_counterfactuals(alphas=args.alphas)
     pipeline.evaluate_counterfactuals()

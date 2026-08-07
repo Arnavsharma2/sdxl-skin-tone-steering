@@ -1,0 +1,170 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,graphicx,microtype,url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+\title{Denoising-Time Steering Along a Paired Skin-Tone Direction in SDXL:\\
+A Reproducibility-First Pilot Study}
+\author{Anonymous Author(s)\\\small Replace before submission}
+\date{}
+
+\newcommand{\method}{stepwise latent steering}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We study whether a linear direction estimated from paired portrait latents can
+control visible skin tone in Stable Diffusion XL while preserving other image
+properties. The proposed method computes a paired mean difference in the VAE
+latent space, applies a spatial Gaussian mask, and distributes the resulting
+perturbation across denoising steps. A single-seed pilot produces coherent
+counterfactual images and motivates a confirmatory evaluation protocol.
+However, the checked-in pilot lacks valid face-identity and pose measurements,
+and its historical ``background SSIM'' values reduce to whole-image SSIM when
+face detection is unavailable. We therefore present the result as feasibility
+evidence, not evidence of identity preservation, disentanglement, or bias
+mitigation. Alongside the method, we contribute a claim--evidence register,
+deterministic encoding and cache behavior, provenance capture, missing-metric
+failure rules, and a preregisterable multi-seed comparison against prompt-only,
+post-hoc, and unmasked baselines. The work explicitly treats skin tone as a
+visual attribute and not as a proxy for race or ethnicity.
+\end{abstract}
+
+\section{Introduction}
+
+Latent diffusion models synthesize high-resolution images by denoising in a
+compressed representation rather than directly in pixel space
+\cite{rombach2022ldm}. SDXL extends this family with a larger U-Net and richer
+conditioning \cite{podell2023sdxl}. These models offer expressive control but
+also make it difficult to isolate one visual attribute without changing
+identity, pose, or composition.
+
+Linear semantic directions have been effective in GAN latent spaces
+\cite{shen2020interfacegan}. We ask whether an analogous direction, estimated
+from paired SDXL VAE encodings, can be used during diffusion sampling. Our
+technical hypothesis is that a denoiser can absorb small perturbations injected
+throughout sampling more coherently than a single post-hoc edit. Our scientific
+hypothesis is narrower: at a matched change in measured skin tone, stepwise
+masked injection will preserve non-target properties better than relevant
+baselines.
+
+We make three contributions. First, we specify the paired estimator and
+denoising-time intervention. Second, we audit a working pilot and distinguish
+observed evidence from unsupported claims. Third, we provide a confirmatory
+protocol and research artifact designed to report provenance, uncertainty,
+missingness, and failures.
+
+\section{Construct and scope}
+
+Race and ethnicity are social identities, not one-dimensional visual
+attributes. The intervention in this study is therefore called a
+\emph{skin-tone direction}. It must not be interpreted as changing, estimating,
+or classifying race. Even datasets designed to balance face categories expose
+the difficulty and consequences of reducing social categories to visual labels
+\cite{karkkainen2021fairface}. The present method is intended for controlled
+generative-model research and auditing, not profiling or decisions about
+people.
+
+\section{Method}
+
+Let $E(x)$ be the deterministic posterior-mode encoding of an image under the
+SDXL VAE. Given $n$ paired portraits $(x_i^{L},x_i^{D})$ generated with matched
+seed and composition but different skin-tone descriptors, the raw direction is
+\begin{equation}
+  v = \frac{1}{n}\sum_{i=1}^{n}\left[E(x_i^{D})-E(x_i^{L})\right].
+\end{equation}
+The pairing attempts to cancel seed-specific facial structure, although prompt
+conditioning and illumination remain potential confounders.
+
+We multiply $v$ by a spatial mask $M\in[0,1]^{H\times W}$ centered on the face:
+\begin{equation}
+  M(p)=w_e+(w_c-w_e)\exp\left[-3\left(\frac{\lVert p\rVert_2}{r}\right)^2\right],
+  \qquad \tilde v=M\odot v,
+\end{equation}
+where the pilot uses center weight $w_c=1$, edge weight $w_e=0.3$, and radius
+$r=1$. For $T$ reverse-diffusion steps and steering magnitude $\alpha$, the
+pipeline updates the scheduler latent after each step by
+\begin{equation}
+  z_t \leftarrow z_t + \frac{\alpha}{T}\tilde v.
+\end{equation}
+The implementation uses 25 DPM-Solver++ multistep updates, motivated by fast
+diffusion ODE solvers \cite{lu2022dpmsolver}, with classifier-free guidance 7.5.
+
+\section{Evaluation design}
+
+The target response and preservation outcomes must be measured separately.
+The primary planned outcome is face-embedding similarity, following the general
+embedding approach of FaceNet \cite{schroff2015facenet}, at a matched continuous
+skin-tone change. Secondary outcomes are LPIPS perceptual distance
+\cite{zhang2018lpips}, background-only SSIM \cite{wang2004ssim}, head-pose
+drift, face-detection failure, and monotonicity.
+
+The confirmatory design uses held-out seeds and four methods: prompt-only
+generation, post-hoc latent addition, unmasked stepwise injection, and masked
+stepwise injection. The planned configuration contains 30 held-out generation
+seeds and five alpha values. Comparisons are paired within seed. We will report
+means, standard deviations, medians, detector failures, and 95\% seed-level
+bootstrap confidence intervals; secondary confirmatory tests use Holm
+correction. A run cannot pass when a required metric is missing.
+
+\section{Pilot result}
+
+Figure~\ref{fig:pilot} shows one synthetic base portrait and four steered
+outputs. The current metadata records LPIPS values between 0.134 and 0.280 and
+historical SSIM values between 0.798 and 0.864 (Table~\ref{tab:pilot}). No valid
+face-embedding, landmark, or pose values were recorded. Because the historical
+background routine fell back to an all-background mask after face-detection
+failure, these SSIM values characterize the whole masked canvas rather than a
+validated background region. They are retained for auditability but are not
+treated as evidence of background preservation.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.95\textwidth]{../experiments/results/final_grid.png}
+  \caption{Single-seed pilot. Labels embedded in this historical figure should
+  be interpreted with the corrected evidence record: identity and pose were not
+  available, and the displayed ``background SSIM'' is not a validated
+  background-only measurement.}
+  \label{fig:pilot}
+\end{figure*}
+
+\begin{table}[t]
+\centering
+\caption{Checked-in pilot metadata. Dashes denote unavailable measurements.}
+\label{tab:pilot}
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+$\alpha$ & LPIPS $\downarrow$ & historical SSIM $\uparrow$ & face sim. \\
+\midrule
+$-1.50$ & 0.280 & 0.821 & -- \\
+$-0.75$ & 0.242 & 0.847 & -- \\
+$+0.75$ & 0.134 & 0.864 & -- \\
+$+1.50$ & 0.204 & 0.798 & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Limitations}
+
+The pilot has one evaluation seed, six training pairs, no held-out target
+measurement, and no valid biometric or pose metrics. Synthetic pairs may encode
+prompt wording, brightness, age, gender presentation, hair, or facial features
+alongside skin tone. A center Gaussian is not a semantic skin mask. The same
+generator creates training and evaluation images, so model-specific artifacts
+may dominate. Face embeddings and skin-tone estimators can themselves exhibit
+demographic error. Finally, the additive update is scheduler-dependent and has
+not been validated across model or library revisions.
+
+\section{Conclusion}
+
+The pilot establishes that denoising-time latent injection is implementable and
+can yield a coherent qualitative sweep. It does not establish identity
+preservation, disentanglement, or bias mitigation. The released research
+scaffold turns those assertions into falsifiable, prespecified questions and
+records the evidence needed to answer them.
+
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}

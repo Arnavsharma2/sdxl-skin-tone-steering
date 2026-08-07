@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, cite the archived release and accompanying paper."
+title: "Denoising-Time Skin-Tone Steering in SDXL"
+type: software
+version: 0.1.0
+date-released: 2026-08-07
+repository-code: "https://github.com/Arnavsharma2/Isolating-Race-Vectors-in-Latent-Space"
+authors:
+  - name: "Project contributors"
+keywords:
+  - latent diffusion
+  - counterfactual generation
+  - skin tone
+  - reproducible research

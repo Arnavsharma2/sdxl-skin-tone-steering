@@ -24,7 +24,7 @@ class ModelConfig:
 
 @dataclass
 class VectorConfig:
-    """Configuration for race vector extraction."""
+    """Configuration for latent-direction extraction."""
 
     method: str = "supervised"  # supervised, unsupervised, pca
     num_pairs: int = 100

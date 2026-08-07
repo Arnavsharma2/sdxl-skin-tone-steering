@@ -1,42 +1,40 @@
-"""
-Race vector extraction and discovery.
+"""Skin-tone direction extraction and analysis.
 
-This module implements methods for finding linear directions in latent space
-that correspond to racial/phenotypic attributes.
+The implementation estimates a visual skin-tone direction; it does not infer,
+represent, or change a person's race.  ``RaceVectorExtractor`` remains as a
+compatibility alias for older notebooks and scripts.
 """
 
-import torch
-import numpy as np
-from typing import List, Optional, Dict
 from pathlib import Path
+from typing import Dict, List, Optional
+
+import numpy as np
+import torch
 from sklearn.decomposition import PCA
 
 
-class RaceVectorExtractor:
+class SkinToneDirectionExtractor:
     """
-    Finds the "race" direction in the latent space.
+    Estimates a linear skin-tone direction in VAE latent space.
 
-    Ways to do it:
-    - Supervised: Learn from pairs of images (e.g. same person, different race)
-    - Unsupervised: PCA on a bunch of latents
-    - Optimization: Refine it to minimize identity loss
+    Supported estimators include paired differences, a difference of group
+    means, and a label-correlated PCA component.
 
     Example:
-        >>> extractor = RaceVectorExtractor(method='supervised')
-        >>> race_vector = extractor.extract_from_pairs(light_latents, dark_latents)
-        >>> optimized_vector = extractor.optimize_vector(race_vector, identity_loss_fn)
+        >>> extractor = SkinToneDirectionExtractor(method="paired_difference")
+        >>> direction = extractor.extract_from_pairs(light_latents, dark_latents)
     """
 
     def __init__(
         self,
-        method: str = "supervised",
+        method: str = "paired_difference",
         device: str = "cuda",
     ):
         """
         Initialize vector extractor.
 
         Args:
-            method: 'supervised', 'unsupervised', or 'pca'
+            method: ``paired_difference``, ``difference_of_means``, or ``pca``
             device: Device to run on
         """
         self.method = method
@@ -54,7 +52,7 @@ class RaceVectorExtractor:
         """
         Create a spatial mask that focuses on the center (where faces typically are).
 
-        This helps prevent the race vector from affecting background regions.
+        This helps attenuate the direction in background regions.
 
         Args:
             height: Mask height (typically 128 for SDXL latents)
@@ -71,7 +69,7 @@ class RaceVectorExtractor:
         # Create coordinate grids
         y = torch.linspace(-1, 1, height)
         x = torch.linspace(-1, 1, width)
-        yy, xx = torch.meshgrid(y, x, indexing='ij')
+        yy, xx = torch.meshgrid(y, x, indexing="ij")
 
         # Distance from center (normalized to 0-1.414)
         dist = torch.sqrt(xx**2 + yy**2)
@@ -80,7 +78,7 @@ class RaceVectorExtractor:
             # Gaussian falloff with configurable radius
             # Stronger falloff to reach edge_weight at edges
             sigma = radius
-            mask = torch.exp(-3 * (dist / sigma)**2)
+            mask = torch.exp(-3 * (dist / sigma) ** 2)
         elif falloff == "hard":
             # Hard circular mask - everything outside radius is edge_weight
             mask = (dist <= radius).float()
@@ -113,10 +111,16 @@ class RaceVectorExtractor:
                          Shape: (H, W) with values 0-1, where 1 = full weight
 
         Returns:
-            The extracted race vector
+            The extracted skin-tone direction.
         """
+        if not latents_a or not latents_b:
+            raise ValueError("Both latent groups must contain at least one sample")
         if len(latents_a) != len(latents_b):
             raise ValueError("Must have same number of latents in each group")
+
+        expected_shape = latents_a[0].shape
+        if any(lat.shape != expected_shape for lat in [*latents_a, *latents_b]):
+            raise ValueError("All latents must have the same shape")
 
         # Compute pairwise differences
         differences = []
@@ -149,7 +153,7 @@ class RaceVectorExtractor:
         normalize: bool = True,
     ) -> torch.Tensor:
         """
-        Extract race vector from two groups (unpaired).
+        Extract a skin-tone direction from two groups (unpaired).
 
         Approach: difference of means.
 
@@ -161,6 +165,12 @@ class RaceVectorExtractor:
         Returns:
             Race vector
         """
+        if not group_a_latents or not group_b_latents:
+            raise ValueError("Both latent groups must contain at least one sample")
+        expected_shape = group_a_latents[0].shape
+        if any(lat.shape != expected_shape for lat in [*group_a_latents, *group_b_latents]):
+            raise ValueError("All latents must have the same shape")
+
         # Compute means
         mean_a = torch.stack(group_a_latents).mean(dim=0)
         mean_b = torch.stack(group_b_latents).mean(dim=0)
@@ -181,7 +191,7 @@ class RaceVectorExtractor:
         n_components: int = 10,
     ) -> torch.Tensor:
         """
-        Extract race vector using PCA.
+        Extract a label-correlated direction using PCA.
 
         Find principal component that correlates most with race labels.
 
@@ -253,7 +263,7 @@ class RaceVectorExtractor:
             lambda_attribute: Weight for attribute change
 
         Returns:
-            Optimized race vector
+            Optimized direction.
         """
         vector = initial_vector.clone().requires_grad_(True)
         optimizer = torch.optim.Adam([vector], lr=lr)
@@ -294,12 +304,12 @@ class RaceVectorExtractor:
         n_components: int = 3,
     ) -> Dict[str, torch.Tensor]:
         """
-        Decompose race vector into orthogonal subcomponents.
+        Decompose a direction into orthogonal subcomponents.
 
         Useful for finer-grained control (e.g., skin tone, hair, features).
 
         Args:
-            race_vector: Full race vector
+            race_vector: Full direction (legacy parameter name).
             n_components: Number of subcomponents
 
         Returns:
@@ -327,20 +337,20 @@ class RaceVectorExtractor:
         return subvectors
 
     def save_vector(self, vector: torch.Tensor, path: Path):
-        """Save race vector to disk."""
+        """Save a direction tensor to disk."""
         torch.save(vector.cpu(), path)
-        print(f"Saved race vector to {path}")
+        print(f"Saved direction to {path}")
 
     def load_vector(self, path: Path) -> torch.Tensor:
-        """Load race vector from disk."""
+        """Load a direction tensor from disk."""
         vector = torch.load(path, map_location=self.device, weights_only=True)
-        print(f"Loaded race vector from {path}")
+        print(f"Loaded direction from {path}")
         return vector
 
 
 class VectorAnalyzer:
     """
-    Analyze properties of discovered race vectors.
+    Analyze properties of discovered latent directions.
 
     Tools for understanding:
     - Vector magnitude
@@ -401,3 +411,9 @@ class VectorAnalyzer:
         )
 
         return cosine_sim.item()
+
+
+# Backwards compatibility for the original public API. New code should use the
+# scientifically narrower name above: skin tone is observable appearance and
+# must not be used as a proxy for race or identity.
+RaceVectorExtractor = SkinToneDirectionExtractor

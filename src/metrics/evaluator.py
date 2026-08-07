@@ -47,6 +47,8 @@ class EvaluationResult:
     overall_score: float = 0.0
     pass_count: int = 0
     total_count: int = 0
+    evaluation_complete: bool = False
+    missing_required_metrics: Tuple[str, ...] = ()
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""
@@ -128,9 +130,15 @@ class CounterfactualEvaluator:
         result.total_pose_diff = structural.get("total_diff")
 
         # Evaluate disentanglement
-        result.is_disentangled, result.pass_count, result.total_count = (
+        (
+            result.is_disentangled,
+            result.pass_count,
+            result.total_count,
+            result.missing_required_metrics,
+        ) = (
             self._evaluate_disentanglement(result)
         )
+        result.evaluation_complete = not result.missing_required_metrics
 
         # Compute overall score
         result.overall_score = self._compute_overall_score(result)
@@ -142,14 +150,18 @@ class CounterfactualEvaluator:
 
     def _evaluate_disentanglement(
         self, result: EvaluationResult
-    ) -> Tuple[bool, int, int]:
+    ) -> Tuple[bool, int, int, Tuple[str, ...]]:
         """
         Checks if we successfully changed the race without messing up other stuff.
 
         Returns:
-            (is_disentangled, num_passed, num_total)
+            ``(is_disentangled, num_passed, num_total, missing_required)``.
         """
         checks = []
+        required = ("face_similarity", "lpips", "background_ssim")
+        missing_required = tuple(
+            name for name in required if getattr(result, name) is None
+        )
 
         # Check face similarity
         if result.face_similarity is not None:
@@ -172,15 +184,17 @@ class CounterfactualEvaluator:
             checks.append(result.total_pose_diff <= self.thresholds.pose_angle_diff)
 
         if len(checks) == 0:
-            return False, 0, 0
+            return False, 0, 0, missing_required
 
         num_passed = sum(checks)
         num_total = len(checks)
 
         # Require at least 80% of checks to pass
-        is_disentangled = (num_passed / num_total) >= 0.8
+        # A successful score requires the core metrics to be present. Missing
+        # face or mask models must never turn a partial evaluation into a pass.
+        is_disentangled = not missing_required and (num_passed / num_total) >= 0.8
 
-        return is_disentangled, num_passed, num_total
+        return is_disentangled, num_passed, num_total, missing_required
 
     def _compute_overall_score(self, result: EvaluationResult) -> float:
         """
@@ -264,6 +278,11 @@ class CounterfactualEvaluator:
 
         print("\nOverall Assessment:")
         print(f"  Passed: {result.pass_count}/{result.total_count} checks")
+        if result.missing_required_metrics:
+            print(
+                "  Incomplete: missing "
+                + ", ".join(result.missing_required_metrics)
+            )
         print(f"  Overall Score: {result.overall_score:.3f}")
         print(f"  Disentangled: {'YES' if result.is_disentangled else 'NO'}")
         print("=" * 60 + "\n")

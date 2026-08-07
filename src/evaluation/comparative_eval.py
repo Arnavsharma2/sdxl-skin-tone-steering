@@ -1,8 +1,8 @@
-"""
-Comparative Evaluation Script
+"""Legacy exploratory comparison script.
 
-This script implements rigorous evaluation for the Race Vector project, comparing
-the vector-based manipulation method against a standard prompt engineering baseline.
+This pre-protocol script compares post-hoc latent manipulation with a prompt
+baseline. It is retained for provenance and must not be used as the confirmatory
+runner described in ``docs/RESEARCH_PROTOCOL.md``.
 
 Usage:
     python3 src/evaluation/comparative_eval.py --num_samples 10 --batch_size 2
@@ -24,7 +24,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.models.stable_diffusion import StableDiffusionWrapper
-from src.latent.vector_discovery import RaceVectorExtractor
+from src.latent.vector_discovery import SkinToneDirectionExtractor
 from src.latent.manipulator import LatentManipulator
 from src.metrics.evaluator import CounterfactualEvaluator
 
@@ -51,7 +51,7 @@ class ComparativeEvaluator:
         self.evaluator = CounterfactualEvaluator(device=self.device)
         self.manipulator = LatentManipulator(device=self.device)
         
-        # Load Race Vector (Assumes it's already extracted, or we extract a fresh one)
+        # Load direction (assumes it is already extracted, or estimates a fresh one).
         # For this script, we'll try to load a cached one or extract on the fly if needed
         # But for robustness, let's just extract a fresh one quickly from the data folder
         # to ensure we're self-contained.
@@ -62,8 +62,8 @@ class ComparativeEvaluator:
 
     def _load_or_extract_vector(self):
         """Extracts vector from default data paths."""
-        print("Extracting fresh race vector for evaluation...")
-        extractor = RaceVectorExtractor(device=self.device)
+        print("Estimating a fresh skin-tone direction for evaluation...")
+        extractor = SkinToneDirectionExtractor(device=self.device)
         
         # Hardcoded paths as per project structure
         light_dir = PROJECT_ROOT / "data/photos/light_skin"
