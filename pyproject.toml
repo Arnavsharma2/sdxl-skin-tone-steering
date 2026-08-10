@@ -12,8 +12,8 @@ dependencies = [
   "accelerate>=0.20",
   "diffusers>=0.19",
   "matplotlib>=3.7",
-  "numpy>=1.24",
-  "opencv-python>=4.8",
+  "numpy>=1.24,<2",
+  "opencv-contrib-python>=4.8,<4.12",
   "pandas>=2.0",
   "Pillow>=9.5",
   "PyYAML>=6.0",
@@ -28,10 +28,10 @@ dependencies = [
 
 [project.optional-dependencies]
 evaluation = [
-  "facenet-pytorch>=2.5.3",
+  "facenet-pytorch==2.5.3",
   "insightface>=0.7.3",
-  "lpips>=0.1.4",
-  "mediapipe>=0.10",
+  "lpips==0.1.4",
+  "mediapipe==0.10.21",
   "onnxruntime>=1.15",
 ]
 dev = [
@@ -47,6 +47,7 @@ include = ["src*"]
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100

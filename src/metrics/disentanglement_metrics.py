@@ -7,13 +7,14 @@ This module implements metrics for measuring disentanglement quality:
 - DCI (Disentanglement, Completeness, Informativeness)
 """
 
-import torch
+from typing import Dict, List, Optional
+
 import numpy as np
-from typing import List, Dict, Optional
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import accuracy_score
+import torch
 from scipy import stats
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 
 
 class DisentanglementMetrics:
@@ -58,7 +59,6 @@ class DisentanglementMetrics:
         """
         # Stack and flatten latents
         latents_stacked = torch.stack(latents).cpu().numpy()
-        orig_shape = latents_stacked.shape
         latents_flat = latents_stacked.reshape(len(latents), -1)
 
         if n_components is None:
@@ -196,7 +196,7 @@ class DisentanglementMetrics:
             importance_dist = np.ones_like(importances) / len(importances)
         else:
             importance_dist = importances / importance_sum
-            
+
         disentanglement = 1.0 - stats.entropy(importance_dist) / np.log(len(importances) + 1e-8)
 
         # Informativeness: prediction accuracy

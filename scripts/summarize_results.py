@@ -19,6 +19,9 @@ METRICS = (
     "overall_ssim",
     "total_pose_diff",
     "overall_score",
+    "skin_tone_change",
+    "skin_delta_ita",
+    "skin_delta_e",
 )
 
 
@@ -35,6 +38,7 @@ def load_runs(root: Path) -> pd.DataFrame:
                     "method": result.get("method", run.get("method", "stepwise_masked")),
                     "alpha": result.get("alpha"),
                     "evaluation_complete": result.get("evaluation_complete", False),
+                    "counterfactual_success": result.get("counterfactual_success", False),
                     **{metric: result.get(metric) for metric in METRICS},
                 }
             )
@@ -102,6 +106,7 @@ def main() -> None:
         "metadata_files": int(long_df["run"].nunique()),
         "rows": int(len(long_df)),
         "complete_rows": int(long_df["evaluation_complete"].fillna(False).sum()),
+        "successful_rows": int(long_df["counterfactual_success"].fillna(False).sum()),
         "bootstrap_resamples": args.resamples,
     }
     (args.output / "audit.json").write_text(json.dumps(audit, indent=2) + "\n")

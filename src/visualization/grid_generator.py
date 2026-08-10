@@ -4,10 +4,10 @@ Counterfactual grid generation and visualization.
 This module creates visual grids for presenting counterfactual results.
 """
 
-import numpy as np
-from PIL import Image, ImageDraw, ImageFont
-from typing import List, Optional, Dict, Union
 from pathlib import Path
+from typing import Dict, List, Optional, Union
+
+from PIL import Image, ImageDraw, ImageFont
 
 
 class CounterfactualGridGenerator:
@@ -51,7 +51,7 @@ class CounterfactualGridGenerator:
         # Try to load a nice font
         try:
             self.font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
-        except:
+        except OSError:
             self.font = ImageFont.load_default()
 
     def generate_grid(
@@ -173,9 +173,13 @@ class CounterfactualGridGenerator:
                     metric_lines.append(f"Face Sim: {metric_dict['face_similarity']:.2f}")
                 if "landmark_rmse" in metric_dict and metric_dict["landmark_rmse"] is not None:
                     metric_lines.append(f"RMSE: {metric_dict['landmark_rmse']:.1f}px")
-                if "is_disentangled" in metric_dict:
-                    status = "YES" if metric_dict["is_disentangled"] else "NO"
-                    metric_lines.append(f"{status} Disentangled")
+                if metric_dict.get("skin_tone_change") is not None:
+                    metric_lines.append(
+                        f"Δ relative L*: {metric_dict['skin_tone_change']:+.1f}"
+                    )
+                if "counterfactual_success" in metric_dict:
+                    status = "VALID" if metric_dict["counterfactual_success"] else "INVALID"
+                    metric_lines.append(status)
 
                 # Draw metric lines
                 for i, line in enumerate(metric_lines):
