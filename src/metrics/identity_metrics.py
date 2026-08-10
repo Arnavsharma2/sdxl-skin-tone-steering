@@ -5,14 +5,22 @@ This module implements metrics to measure whether counterfactual images
 preserve the identity of the original person.
 """
 
-import torch
-import numpy as np
-from PIL import Image
-from typing import Union
+import hashlib
+import os
 import warnings
+from pathlib import Path
+from typing import Union
+
+import numpy as np
+import torch
+from PIL import Image
 
 # Suppress warnings from face detection libraries
 warnings.filterwarnings("ignore")
+
+FACENET_VGGFACE2_SHA256 = (
+    "281cebca8662831adb987a874bdcb36e73f5b1c6dc5ee5878f305e985625d99b"
+)
 
 
 class IdentityPreservationMetrics:
@@ -36,6 +44,7 @@ class IdentityPreservationMetrics:
         device: str = "cuda",
         use_arcface: bool = True,
         use_facenet: bool = False,
+        use_landmarks: bool = False,
     ):
         """
         Initialize identity metrics.
@@ -50,6 +59,7 @@ class IdentityPreservationMetrics:
         self.landmark_detector = None
         self.lpips_model = None
         self.model_type = None
+        self.use_landmarks = use_landmarks
 
         # Load face recognition model
         if use_arcface:
@@ -77,19 +87,37 @@ class IdentityPreservationMetrics:
     def _load_facenet(self):
         """Load FaceNet model for face recognition."""
         try:
-            from facenet_pytorch import InceptionResnetV1, MTCNN
+            from facenet_pytorch import MTCNN, InceptionResnetV1
 
             # FaceNet uses adaptive pooling which is unsupported on MPS — use CPU
             facenet_device = "cpu" if self.device == "mps" else self.device
 
             self.face_model = InceptionResnetV1(pretrained="vggface2").eval()
+            torch_home = Path(
+                os.path.expanduser(
+                    os.environ.get(
+                        "TORCH_HOME",
+                        os.path.join(os.environ.get("XDG_CACHE_HOME", "~/.cache"), "torch"),
+                    )
+                )
+            )
+            weights = torch_home / "checkpoints" / "20180402-114759-vggface2.pt"
+            digest = hashlib.sha256(weights.read_bytes()).hexdigest()
+            if digest != FACENET_VGGFACE2_SHA256:
+                raise RuntimeError(
+                    "FaceNet VGGFace2 checksum mismatch: "
+                    f"expected {FACENET_VGGFACE2_SHA256}, got {digest}"
+                )
             self.face_model.to(facenet_device)
             self.facenet_device = facenet_device
             self.mtcnn = MTCNN(
                 image_size=160,
                 margin=0,
                 device=facenet_device,
-                post_process=False,
+                # InceptionResnetV1's pretrained weights require MTCNN's
+                # fixed-image standardisation. Raw [0, 255] crops produce
+                # invalid embedding similarities.
+                post_process=True,
             )
             self.model_type = "facenet"
             print("Loaded FaceNet model")
@@ -174,7 +202,7 @@ class IdentityPreservationMetrics:
         faces2 = self.face_app.get(img2)
 
         if len(faces1) == 0 or len(faces2) == 0:
-            return 0.0  # No face detected
+            raise RuntimeError("ArcFace could not detect a face in both images")
 
         # Get embeddings (use first face)
         emb1 = faces1[0].embedding
@@ -207,7 +235,7 @@ class IdentityPreservationMetrics:
         face2 = self.mtcnn(img2)
 
         if face1 is None or face2 is None:
-            return 0.0  # No face detected
+            raise RuntimeError("MTCNN could not detect a face in both images")
 
         # Get embeddings (use facenet_device — may differ from self.device on MPS)
         fd = getattr(self, "facenet_device", self.device)
@@ -330,12 +358,13 @@ class IdentityPreservationMetrics:
             print(f"WARNING: Could not compute face similarity: {e}")
             metrics["face_similarity"] = None
 
-        # Landmark RMSE
-        try:
-            metrics["landmark_rmse"] = self.landmark_rmse(img1, img2)
-        except Exception as e:
-            print(f"WARNING: Could not compute landmark RMSE: {e}")
-            metrics["landmark_rmse"] = None
+        # The dlib predictor is optional and is not part of the fixed gate set.
+        metrics["landmark_rmse"] = None
+        if self.use_landmarks:
+            try:
+                metrics["landmark_rmse"] = self.landmark_rmse(img1, img2)
+            except Exception as e:
+                print(f"WARNING: Could not compute landmark RMSE: {e}")
 
         # Perceptual similarity
         try:

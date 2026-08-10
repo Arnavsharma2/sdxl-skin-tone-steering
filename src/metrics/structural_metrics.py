@@ -7,11 +7,14 @@ This module implements metrics for measuring preservation of:
 - Overall structure
 """
 
+from typing import Dict, Optional, Tuple, Union
+
+import cv2
 import numpy as np
 from PIL import Image
-from typing import Union, Dict, Tuple, Optional
 from skimage.metrics import structural_similarity as ssim
-import cv2
+
+from .face_landmarks import FaceLandmarkBackend
 
 
 class StructuralPreservationMetrics:
@@ -29,7 +32,11 @@ class StructuralPreservationMetrics:
         >>> print(f"Yaw difference: {pose_diff['yaw_diff']:.2f}°")
     """
 
-    def __init__(self, device: str = "cuda"):
+    def __init__(
+        self,
+        device: str = "cuda",
+        landmark_backend: Optional[FaceLandmarkBackend] = None,
+    ):
         """
         Initialize structural metrics.
 
@@ -37,35 +44,7 @@ class StructuralPreservationMetrics:
             device: Device to run on
         """
         self.device = device
-        self.face_detector = None
-        self.pose_estimator = None
-        self.face_mesh = None
-
-    def _load_face_detector(self):
-        """Load face detection model."""
-        if self.face_detector is not None:
-            return
-
-        try:
-            import mediapipe as mp
-
-            self.mp_face_detection = mp.solutions.face_detection
-            self.mp_face_mesh = mp.solutions.face_mesh
-
-            self.face_detector = self.mp_face_detection.FaceDetection(
-                min_detection_confidence=0.5
-            )
-            self.face_mesh = self.mp_face_mesh.FaceMesh(
-                static_image_mode=True,
-                max_num_faces=1,
-                refine_landmarks=True,
-                min_detection_confidence=0.5,
-            )
-            print("Loaded MediaPipe face detector")
-        except Exception as e:
-            print(f"WARNING: Could not load MediaPipe: {e}")
-            print("  Install with: pip install mediapipe")
-            self.face_detector = None
+        self.landmark_backend = landmark_backend or FaceLandmarkBackend()
 
     def detect_face_bbox(
         self,
@@ -80,32 +59,18 @@ class StructuralPreservationMetrics:
         Returns:
             (x, y, width, height) or None if no face detected
         """
-        self._load_face_detector()
-
-        if self.face_detector is None:
-            return None
-
-        # Convert to numpy RGB (PIL images are already RGB; MediaPipe expects RGB)
         if isinstance(img, Image.Image):
             img = np.array(img)
-        elif img.ndim == 3 and img.shape[2] == 3:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        # Detect face
-        results = self.face_detector.process(img)
-
-        if not results.detections:
+        result = self.landmark_backend.detect(img)
+        if result is None:
             return None
-
-        # Get first face
-        detection = results.detections[0]
-        bbox = detection.location_data.relative_bounding_box
-
         h, w = img.shape[:2]
-        x = int(bbox.xmin * w)
-        y = int(bbox.ymin * h)
-        width = int(bbox.width * w)
-        height = int(bbox.height * h)
+        xs = np.asarray([landmark.x for landmark in result.landmarks]) * w
+        ys = np.asarray([landmark.y for landmark in result.landmarks]) * h
+        x = int(np.floor(xs.min()))
+        y = int(np.floor(ys.min()))
+        width = int(np.ceil(xs.max()) - x)
+        height = int(np.ceil(ys.max()) - y)
 
         return (x, y, width, height)
 
@@ -158,6 +123,7 @@ class StructuralPreservationMetrics:
         img1: Union[Image.Image, np.ndarray],
         img2: Union[Image.Image, np.ndarray],
         mask: Optional[np.ndarray] = None,
+        counterfactual_mask: Optional[np.ndarray] = None,
     ) -> Optional[float]:
         """
         Compute SSIM on background region (non-face).
@@ -165,7 +131,9 @@ class StructuralPreservationMetrics:
         Args:
             img1: First image
             img2: Second image
-            mask: Face mask (1 = face, 0 = background). Auto-detected if None.
+            mask: Original face mask (1 = face, 0 = background).
+            counterfactual_mask: Counterfactual face mask. Auto-detected when
+                ``mask`` is not supplied; both masks are unioned.
 
         Returns:
             SSIM value in [0, 1]. >0.90 is good preservation.
@@ -188,11 +156,18 @@ class StructuralPreservationMetrics:
         # Create mask if not provided
         if mask is None:
             mask = self.create_face_mask(img1)
-            if not np.any(mask):
+            counterfactual_mask = self.create_face_mask(img2)
+            if not np.any(mask) or not np.any(counterfactual_mask):
                 # Without a detected face there is no defensible separation of
                 # foreground and background. Returning whole-image SSIM here
                 # would silently mislabel the metric.
                 return None
+            mask = np.maximum(mask, counterfactual_mask)
+        elif counterfactual_mask is not None:
+            mask = np.maximum(mask, counterfactual_mask)
+
+        if mask.shape != img1_gray.shape or not np.any(mask):
+            return None
 
         # Invert mask (we want background)
         bg_mask = 1 - mask
@@ -201,14 +176,16 @@ class StructuralPreservationMetrics:
         if bg_mask.sum() == 0:
             return 0.0  # No background
 
-        # Apply mask
-        img1_bg = img1_gray * bg_mask
-        img2_bg = img2_gray * bg_mask
-
-        # Compute SSIM
-        score = ssim(img1_bg, img2_bg, data_range=255)
-
-        return float(score)
+        # Compute a full SSIM map on the unmodified images, then average only
+        # genuinely background pixels. Multiplying the face by zero before a
+        # global SSIM call inflates the score with identical artificial pixels.
+        _, score_map = ssim(img1_gray, img2_gray, data_range=255, full=True)
+        valid_background = cv2.erode(
+            bg_mask.astype(np.uint8), np.ones((7, 7), dtype=np.uint8)
+        ).astype(bool)
+        if valid_background.sum() < 49:
+            return None
+        return float(np.mean(score_map[valid_background]))
 
     def overall_ssim(
         self,
@@ -258,85 +235,10 @@ class StructuralPreservationMetrics:
         Returns:
             Dict with 'yaw', 'pitch', 'roll' in degrees, or None if failed
         """
-        self._load_face_detector()
-
-        if self.face_mesh is None:
+        result = self.landmark_backend.detect(img)
+        if result is None or result.transformation_matrix is None:
             return None
-
-        # Convert to numpy RGB (PIL images are already RGB; MediaPipe expects RGB)
-        if isinstance(img, Image.Image):
-            img = np.array(img)
-        elif img.ndim == 3 and img.shape[2] == 3:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        # Detect face mesh
-        results = self.face_mesh.process(img)
-
-        if not results.multi_face_landmarks:
-            return None
-
-        # Get landmarks
-        landmarks = results.multi_face_landmarks[0]
-
-        # Estimate pose using key landmarks
-        # This is a simplified approach
-        h, w = img.shape[:2]
-
-        # Get key points (nose tip, chin, left eye, right eye, left mouth, right mouth)
-        nose = landmarks.landmark[1]
-        chin = landmarks.landmark[152]
-        left_eye = landmarks.landmark[33]
-        right_eye = landmarks.landmark[263]
-        left_mouth = landmarks.landmark[61]
-        right_mouth = landmarks.landmark[291]
-
-        # Convert to pixel coordinates
-        points_2d = np.array(
-            [
-                [nose.x * w, nose.y * h],
-                [chin.x * w, chin.y * h],
-                [left_eye.x * w, left_eye.y * h],
-                [right_eye.x * w, right_eye.y * h],
-                [left_mouth.x * w, left_mouth.y * h],
-                [right_mouth.x * w, right_mouth.y * h],
-            ],
-            dtype=np.float64,
-        )
-
-        # 3D model points
-        points_3d = np.array(
-            [
-                [0.0, 0.0, 0.0],  # Nose tip
-                [0.0, -330.0, -65.0],  # Chin
-                [-225.0, 170.0, -135.0],  # Left eye
-                [225.0, 170.0, -135.0],  # Right eye
-                [-150.0, -150.0, -125.0],  # Left mouth
-                [150.0, -150.0, -125.0],  # Right mouth
-            ],
-            dtype=np.float64,
-        )
-
-        # Camera matrix
-        focal_length = w
-        center = (w / 2, h / 2)
-        camera_matrix = np.array(
-            [[focal_length, 0, center[0]], [0, focal_length, center[1]], [0, 0, 1]],
-            dtype=np.float64,
-        )
-
-        # Distortion coefficients
-        dist_coeffs = np.zeros((4, 1))
-
-        # Solve PnP
-        success, rotation_vec, translation_vec = cv2.solvePnP(
-            points_3d, points_2d, camera_matrix, dist_coeffs
-        )
-
-        if not success:
-            return None
-
-        # Convert rotation vector to rotation matrix
-        rotation_mat, _ = cv2.Rodrigues(rotation_vec)
+        rotation_mat = result.transformation_matrix[:3, :3]
 
         # Calculate Euler angles
         sy = np.sqrt(rotation_mat[0, 0] ** 2 + rotation_mat[1, 0] ** 2)
@@ -383,9 +285,12 @@ class StructuralPreservationMetrics:
                 "total_diff": float("inf"),
             }
 
-        yaw_diff = abs(pose1["yaw"] - pose2["yaw"])
-        pitch_diff = abs(pose1["pitch"] - pose2["pitch"])
-        roll_diff = abs(pose1["roll"] - pose2["roll"])
+        def angular_difference(first: float, second: float) -> float:
+            return abs((first - second + 180.0) % 360.0 - 180.0)
+
+        yaw_diff = angular_difference(pose1["yaw"], pose2["yaw"])
+        pitch_diff = angular_difference(pose1["pitch"], pose2["pitch"])
+        roll_diff = angular_difference(pose1["roll"], pose2["roll"])
         total_diff = np.sqrt(yaw_diff**2 + pitch_diff**2 + roll_diff**2)
 
         return {

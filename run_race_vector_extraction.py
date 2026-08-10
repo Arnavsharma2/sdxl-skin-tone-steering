@@ -14,28 +14,28 @@ Requirements:
     - At least 3 photos in each directory
 """
 
-import sys
-import json
 import argparse
+import json
+import sys
 from pathlib import Path
-import torch
-import numpy as np
-from PIL import Image
+
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from PIL import Image
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.models.stable_diffusion import StableDiffusionWrapper
 from src.latent.vector_discovery import SkinToneDirectionExtractor, VectorAnalyzer
 from src.metrics.evaluator import CounterfactualEvaluator
-from src.visualization.grid_generator import CounterfactualGridGenerator
+from src.models.stable_diffusion import StableDiffusionWrapper
 from src.utils.reproducibility import (
     collect_provenance,
     seed_everything,
     stable_fingerprint,
 )
-
+from src.visualization.grid_generator import CounterfactualGridGenerator
 
 # ---------------------------------------------------------------------------
 # Prompts — crafted for consistent, evaluable portraits
@@ -243,8 +243,8 @@ class SkinToneSteeringPipeline:
         print("\nSTEP 4b: Running experimental vector optimisation...")
         print("-" * 70)
         try:
-            from facenet_pytorch import InceptionResnetV1
             import torch.nn.functional as F
+            from facenet_pytorch import InceptionResnetV1
 
             facenet = InceptionResnetV1(pretrained="vggface2").eval().to(self.device)
             for p in facenet.parameters():
@@ -378,7 +378,7 @@ class SkinToneSteeringPipeline:
         print("-" * 70)
 
         if alphas is None:
-            alphas = [-4, -2, 0, 2, 4]
+            alphas = [-1.5, -0.75, 0, 0.75, 1.5]
 
         self.alphas = alphas
         self.counterfactual_images = []
@@ -448,7 +448,9 @@ class SkinToneSteeringPipeline:
             if abs(alpha) < 0.01:
                 continue
             print(f"\n  α = {alpha:+.1f}")
-            result = self.evaluator.evaluate_pair(self.base_image, cf_img, verbose=True)
+            result = self.evaluator.evaluate_pair(
+                self.base_image, cf_img, alpha=alpha, verbose=True
+            )
             self.results.append((alpha, result))
 
         print("\nEvaluation complete.\n")
@@ -504,6 +506,9 @@ class SkinToneSteeringPipeline:
             "thresholds": (
                 vars(self.evaluator.thresholds) if self.evaluator is not None else None
             ),
+            "metric_provenance": (
+                self.evaluator.metric_provenance() if self.evaluator is not None else None
+            ),
             "provenance": collect_provenance(Path(__file__).parent),
             "results": [
                 {"alpha": a, **r.to_dict()}
@@ -527,16 +532,24 @@ class SkinToneSteeringPipeline:
         print(f"Counterfactuals:  {len(self.counterfactual_images)}")
 
         if self.results:
-            print("\n  α     FaceSim  BgSSIM  Pose°  Score  Disentangled")
+            print("\n  α     FaceSim  BgSSIM  Pose°  ΔrelL*  Score  Valid")
             print("  " + "-" * 55)
             for alpha, r in self.results:
                 fs  = f"{r.face_similarity:.3f}" if r.face_similarity is not None else "  N/A "
                 bg  = f"{r.background_ssim:.3f}" if r.background_ssim is not None else "  N/A "
                 pd_val = r.total_pose_diff
                 pd  = f"{pd_val:.1f}°" if (pd_val is not None and not np.isinf(pd_val)) else " N/A "
-                sc  = f"{r.overall_score:.3f}"
-                dis = "YES" if r.is_disentangled else " NO"
-                print(f"  {alpha:+5.1f}   {fs}    {bg}   {pd:>5}  {sc}     {dis}")
+                tone = (
+                    f"{r.skin_tone_change:+.2f}"
+                    if r.skin_tone_change is not None
+                    else " N/A "
+                )
+                sc = f"{r.overall_score:.3f}" if r.overall_score is not None else " N/A "
+                valid = "YES" if r.counterfactual_success else " NO"
+                print(
+                    f"  {alpha:+5.1f}   {fs}    {bg}   {pd:>5}  "
+                    f"{tone:>6}  {sc}  {valid}"
+                )
 
         print(f"\nOutputs in: {self.output_dir.absolute()}")
         print("  base_image.png           — unsteered base portrait")
@@ -556,8 +569,13 @@ def parse_args():
     p = argparse.ArgumentParser(description="Race vector extraction pipeline")
     p.add_argument("--steps", type=int, default=25,
                    help="Denoising steps (default 25 with DPM++ 2M)")
-    p.add_argument("--alphas", type=float, nargs="+", default=[-4, -2, 0, 2, 4],
-                   help="Alpha values for counterfactuals (default: -4 -2 0 2 4)")
+    p.add_argument(
+        "--alphas",
+        type=float,
+        nargs="+",
+        default=[-1.5, -0.75, 0, 0.75, 1.5],
+        help="Alpha values (default: -1.5 -0.75 0 0.75 1.5)",
+    )
     p.add_argument("--seed", type=int, default=999,
                    help="Generation seed for reproducibility")
     p.add_argument("--output", type=str, default="experiments/results",

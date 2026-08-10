@@ -25,6 +25,12 @@ evaluation:
   alphas: [-1.5, -0.75, 0.0, 0.75, 1.5]
   methods: [prompt_only, posthoc_latent, stepwise_unmasked, stepwise_masked]
   required_metrics: [skin_tone_change, face_similarity, lpips, background_ssim, pose_difference]
+  skin_tone_metric:
+    id: relative_cheek_CIELAB_Lstar_v1
+    face_regions: geometric_cheek_mask
+    illumination_reference: neutral_portrait_border
+    max_reference_lstar_shift: 8.0
+    minimum_directional_change: 2.0
   bootstrap:
     resamples: 10000
     confidence_level: 0.95
@@ -33,3 +39,4 @@ reporting:
   primary_outcome: identity_preservation_at_matched_skin_tone_change
   uncertainty: subject_level_bootstrap_confidence_interval
   report_failures_and_missingness: true
+  composite_score_is_primary: false

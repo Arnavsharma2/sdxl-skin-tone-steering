@@ -10,24 +10,24 @@ identity preservation.
 
 ## Research status
 
-**Pilot / pre-confirmatory.** The repository contains a working single-seed
-demonstration, a paper draft, and a preregisterable evaluation protocol. The
-checked-in pilot is useful qualitative evidence but is not a statistically
-powered result.
+**Pilot / pre-confirmatory.** The repository now contains a fail-closed metric
+pipeline, a re-analysis of the historical single-seed sweep, a paper draft,
+and a preregisterable evaluation protocol. The pilot is useful engineering
+evidence but is not a statistically powered result.
 
 | What the pilot establishes | What remains unestablished |
 |---|---|
 | A paired VAE-latent direction can be injected at every denoising step. | That the direction isolates skin tone rather than lighting or correlated features. |
-| One seed produced a coherent four-image appearance sweep. | Identity, pose, or true background preservation. |
-| LPIPS was 0.134–0.280 for the four edits. | Superiority to prompt-only, post-hoc, or unmasked baselines. |
+| The legacy sweep has a complete, monotonic rendered-colour response (Spearman ρ = -1.00). | Generalization beyond one seed or superiority to any baseline. |
+| Moderate steering (α = ±0.8) passed all five engineering gates with a 0.908 mean quality rubric. | Preservation at extreme settings: both ±1.5 edits failed at least one gate. |
 
-The historical run did not record valid face-similarity, landmark, or pose
-values. Its values labeled “background SSIM” used an all-background fallback
-after face-detection failure and therefore behave as whole-image SSIM. See the
-[claims and evidence register](docs/CLAIMS_AND_EVIDENCE.md) for the authoritative
-audit.
-
-![Pilot counterfactual grid](experiments/results/final_grid.png)
+The original grid labels remain invalid historical output: its “background
+SSIM” silently fell back to whole-image SSIM. The new
+[legacy re-analysis](experiments/legacy_reanalysis/README.md) reconstructs the
+panels, verifies every input hash, records model/package provenance, and makes
+the score unavailable whenever a required metric is missing. See the
+[metric specification](docs/METRIC_SPEC.md) and
+[claims register](docs/CLAIMS_AND_EVIDENCE.md).
 
 ## Method
 
@@ -71,6 +71,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install -e '.[evaluation,dev]'
+make metric-models
 make test
 ```
 
@@ -96,13 +97,23 @@ Each run records settings, results, package versions, git commit and dirty
 state, and hardware availability in `metadata.json`. Cached base images are
 keyed by model, prompts, seed, step count, and guidance scale.
 
+Re-evaluate any saved sweep without regeneration:
+
+```bash
+python3 scripts/evaluate_sweep.py experiments/runs/pilot_seed_999 \
+  --output experiments/evaluation --operating-max-alpha 0.75 --strict
+```
+
+`--strict` exits nonzero when face embeddings, LPIPS, masked background SSIM,
+pose, or the illumination-audited target response is missing.
+
 ## From pilot to paper result
 
 The [research protocol](docs/RESEARCH_PROTOCOL.md) fixes the full-study
 hypotheses, 30 held-out seeds, four baselines/ablations, required metrics,
 failure handling, and bootstrap analysis. Before making confirmatory claims:
 
-1. validate an illumination-aware continuous skin-tone outcome;
+1. externally validate the implemented illumination-audited skin-tone outcome;
 2. use train/held-out seed splits and run every prespecified method;
 3. report face-detector and metric missingness as outcomes;
 4. compare preservation at matched target-attribute change;

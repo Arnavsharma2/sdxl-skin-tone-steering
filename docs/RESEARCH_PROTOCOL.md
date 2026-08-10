@@ -43,8 +43,13 @@ The primary outcome is face-embedding similarity at a matched, prespecified
 skin-tone change. Secondary outcomes are LPIPS, background SSIM, pose drift,
 face-detection failure rate, and monotonicity of the target response.
 
-The current repository does not yet contain a validated target-attribute
-measurement. Before a confirmatory run, implement and validate either:
+The repository contains an auditable target-attribute measurement,
+`relative_cheek_CIELAB_Lstar_v1`, specified in `docs/METRIC_SPEC.md`. It uses
+geometric cheek regions, CIELAB colour, a neutral-background reference, and
+explicit illumination QC. It has deterministic synthetic tests and a complete
+legacy pilot re-analysis, but it has not been externally validated.
+
+Before a confirmatory run, validate either:
 
 - a calibrated skin-region color measure reported in a perceptually meaningful
   color space, with illumination sensitivity characterized; or
@@ -52,7 +57,9 @@ measurement. Before a confirmatory run, implement and validate either:
   error profile, and license recorded.
 
 Pixel brightness alone is not an acceptable primary measurement because it is
-confounded by lighting, exposure, and background.
+confounded by lighting, exposure, and background. The current relative-L*
+metric reduces first-order exposure sensitivity but does not eliminate local
+illumination or rendering confounds.
 
 ## Statistics
 
