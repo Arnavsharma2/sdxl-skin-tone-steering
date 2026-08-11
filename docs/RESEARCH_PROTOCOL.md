@@ -37,6 +37,13 @@ The confirmatory design is specified in `configs/full_study.yaml`.
 5. Compare methods at matched target-attribute change. Bootstrap by generation
    seed—not by image—to preserve within-seed dependence.
 
+The declared matrix contains 30 seeds × 4 methods × 5 alpha values = 600
+rows. Of these, 480 have nonzero alpha. Configuration loading rejects a matrix
+whose declared counts do not match its dimensions, any overlap among the 64
+direction-training seeds, 32 held-out pair seeds, and 30 evaluation seeds, or
+noncanonical metric names. All engineering thresholds are frozen explicitly
+in the study configuration.
+
 ## Outcomes
 
 The primary outcome is face-embedding similarity at a matched, prespecified
