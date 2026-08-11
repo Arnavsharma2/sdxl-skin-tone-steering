@@ -15,18 +15,18 @@ Args:
     --force  Regenerate even if images already exist
 """
 
-import sys
 import argparse
 import json
+import sys
 from pathlib import Path
-import torch
+
 import numpy as np
+import torch
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent))
 from src.models.stable_diffusion import StableDiffusionWrapper
 from src.utils.reproducibility import collect_provenance, seed_for_index
-
 
 # ---------------------------------------------------------------------------
 # Prompt templates — skin tone is the only variable; everything else is fixed
@@ -75,7 +75,7 @@ BASE_PROMPT = (
 # Seeds chosen to produce varied gender/age/facial structure while keeping
 # skin tone as the controlled variable. Using the same seed across both groups
 # at each index would produce the same face structure — intentional.
-SEEDS = [42, 137, 256, 512, 777, 1024, 2048, 3141]
+SEEDS = [42, 137, 256, 512, 777, 1536, 2048, 3141]
 
 
 def generate_group(
