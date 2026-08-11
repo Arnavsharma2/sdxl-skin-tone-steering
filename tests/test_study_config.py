@@ -122,3 +122,35 @@ def test_loading_rejects_training_evaluation_seed_overlap(tmp_path):
 
     with pytest.raises(ValueError, match="training and evaluation seeds overlap: 42"):
         ExperimentConfig.from_yaml(invalid_path)
+
+
+def test_matching_protocol_id_cannot_hide_threshold_drift(tmp_path):
+    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
+    document = yaml.safe_load(source.read_text())
+    document["thresholds"]["face_similarity"] = 0.80
+    invalid_path = tmp_path / "invalid.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match="thresholds do not match"):
+        ExperimentConfig.from_yaml(invalid_path)
+
+
+def test_matching_protocol_id_cannot_hide_alpha_grid_drift(tmp_path):
+    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
+    document = yaml.safe_load(source.read_text())
+    document["evaluation"]["alphas"][-1] = 1.25
+    invalid_path = tmp_path / "invalid.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match="evaluation.alphas do not match"):
+        ExperimentConfig.from_yaml(invalid_path)
+
+
+def test_protocol_loader_rejects_matching_id_with_field_drift(tmp_path):
+    document = load_protocol()
+    document["runtime"]["face_landmarker_delegate"] = "GPU"
+    invalid_path = tmp_path / "evaluation_protocol.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match="does not match metric code"):
+        load_protocol(invalid_path)

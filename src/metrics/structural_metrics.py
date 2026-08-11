@@ -169,6 +169,8 @@ class StructuralPreservationMetrics:
 
         if img1_gray.shape != img2_gray.shape:
             return None
+        if min(img1_gray.shape) < 7:
+            return None
 
         # Create mask if not provided
         if mask is None:

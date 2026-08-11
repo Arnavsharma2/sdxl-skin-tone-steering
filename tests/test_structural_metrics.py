@@ -140,3 +140,12 @@ def test_background_ssim_rejects_too_little_eroded_background():
     mask[:6, :6] = 0
 
     assert metrics.background_ssim(image, image, mask=mask) is None
+
+
+def test_background_ssim_rejects_images_smaller_than_ssim_window():
+    metrics = StructuralPreservationMetrics(device="cpu")
+    image = np.zeros((6, 8, 3), dtype=np.uint8)
+    mask = np.zeros((6, 8), dtype=np.uint8)
+    mask[:, 3:5] = 1
+
+    assert metrics.background_ssim(image, image, mask=mask) is None

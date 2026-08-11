@@ -30,17 +30,17 @@ silently excluded.
    Landmarker model;
 2. select bilateral cheek regions inside the face oval and exclude eyes,
    eyebrows, and lips geometrically;
-3. reject the lowest and highest 10% of cheek L* values;
-4. take median CIELAB L*, a*, and b* values;
+3. reject the lowest and highest 10% of cheek `L*` values;
+4. take median CIELAB `L*`, `a*`, and `b*` values;
 5. take median CIELAB values from neutral upper-border reference regions; and
 6. report `skin L* - reference L*`.
 
 The minimum valid skin and reference areas are 256 and 512 pixels. Masks must
 have the image shape, contain only binary values, and not overlap. The target
-change is invalid when reference L* changes by more than 8 points or reference
+change is invalid when reference `L*` changes by more than 8 points or reference
 chroma exceeds 14. Positive change means lighter rendered skin; negative means
 darker. The steering convention expects `alpha * skin_tone_change < 0` and at
-least 2 L* points of magnitude.
+least 2 `L*` points of magnitude.
 
 The reference corrects global exposure only to first order. Local lighting on
 the face is indistinguishable from a rendered-colour response and remains a
@@ -84,7 +84,7 @@ failure makes every pose outcome missing.
 ## Sweep monotonicity
 
 The frozen alpha order is `[-1.5, -0.75, 0, 0.75, 1.5]`. Spearman rho and the
-fraction of strictly decreasing adjacent relative-L* responses are calculated
+fraction of strictly decreasing adjacent `relative-L*` responses are calculated
 only when every unique expected alpha has a finite measurement. A duplicate,
 missing, unexpected, non-finite, or constant response invalidates the complete
 sweep. Monotonicity is never calculated from a complete-case subset.
@@ -93,7 +93,7 @@ sweep. Monotonicity is never calculated from a complete-case subset.
 
 The five gates are FaceNet cosine similarity ≥0.85, LPIPS ≤0.3, background
 SSIM ≥0.75, total pose drift ≤5°, and a correctly directed target change of at
-least 2 relative-L* points. All five must pass.
+least 2 `relative-L*` points. All five must pass.
 
 The fixed-weight 0–1 engineering rubric uses identity (30%), LPIPS similarity
 (20%), background SSIM (20%), pose (10%), and directional target response

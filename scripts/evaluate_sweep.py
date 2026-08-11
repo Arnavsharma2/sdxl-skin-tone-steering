@@ -15,6 +15,18 @@ from PIL import Image
 from src.metrics.evaluator import CounterfactualEvaluator
 from src.metrics.target_response import FROZEN_ALPHA_GRID, calculate_monotonicity
 
+EMPTY_PAIR_COLUMNS = (
+    "alpha",
+    "evaluation_complete",
+    "counterfactual_success",
+    "target_direction_correct",
+    "face_similarity",
+    "lpips",
+    "background_ssim",
+    "total_pose_diff",
+    "overall_score",
+)
+
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -35,6 +47,15 @@ def finite_mean(frame: pd.DataFrame, column: str) -> float | None:
     values = pd.to_numeric(frame[column], errors="coerce")
     values = values[np.isfinite(values)]
     return float(values.mean()) if len(values) else None
+
+
+def strict_validation_failed(summary: dict) -> bool:
+    """Return whether the frozen strict evaluation contract failed."""
+    return bool(
+        summary["evaluation_completion_rate"] < 1.0
+        or not summary["target_monotonicity_valid"]
+        or not summary["strictly_monotonic_target_response"]
+    )
 
 
 def evaluate(
@@ -78,7 +99,11 @@ def evaluate(
         row["image"] = str(path)
         rows.append(row)
 
-    frame = pd.DataFrame(rows).sort_values("alpha")
+    frame = (
+        pd.DataFrame(rows).sort_values("alpha")
+        if rows
+        else pd.DataFrame(columns=EMPTY_PAIR_COLUMNS)
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     frame.to_csv(output_dir / "pair_metrics.csv", index=False)
 
@@ -96,7 +121,9 @@ def evaluate(
         "pair_count": int(len(frame)),
         "complete_count": int(complete.sum()),
         "evaluation_completion_rate": float(complete.mean()) if len(frame) else 0.0,
-        "counterfactual_success_rate": float(frame["counterfactual_success"].mean()),
+        "counterfactual_success_rate": (
+            float(frame["counterfactual_success"].mean()) if len(frame) else 0.0
+        ),
         "target_direction_accuracy": (
             float(frame.loc[target_available, "target_direction_correct"].mean())
             if target_available.any()
@@ -123,12 +150,18 @@ def evaluate(
         ],
     }
     if operating_max_alpha is not None:
-        operating = frame[frame["alpha"].abs() <= operating_max_alpha]
+        operating = (
+            frame[frame["alpha"].abs() <= operating_max_alpha]
+            if len(frame)
+            else frame
+        )
         summary["exploratory_operating_band"] = {
             "max_abs_alpha": operating_max_alpha,
             "pair_count": int(len(operating)),
-            "counterfactual_success_rate": float(
-                operating["counterfactual_success"].mean()
+            "counterfactual_success_rate": (
+                float(operating["counterfactual_success"].mean())
+                if len(operating)
+                else 0.0
             ),
             "mean_face_similarity": finite_mean(operating, "face_similarity"),
             "mean_lpips": finite_mean(operating, "lpips"),
@@ -154,7 +187,7 @@ def main() -> None:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Exit nonzero if any required metric is missing",
+        help="Exit nonzero for missing metrics or invalid/non-monotonic target response",
     )
     args = parser.parse_args()
     summary = evaluate(
@@ -164,10 +197,7 @@ def main() -> None:
         operating_max_alpha=args.operating_max_alpha,
     )
     print(json.dumps(summary, indent=2))
-    if args.strict and (
-        summary["evaluation_completion_rate"] < 1.0
-        or not summary["target_monotonicity_valid"]
-    ):
+    if args.strict and strict_validation_failed(summary):
         raise SystemExit(2)
 
 

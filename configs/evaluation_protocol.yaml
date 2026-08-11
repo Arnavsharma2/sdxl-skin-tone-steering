@@ -34,11 +34,13 @@ metrics:
   target_response:
     id: relative_cheek_CIELAB_Lstar_v1
     input: uint8 RGB
+    face_regions_id: geometric_cheek_mask
     face_regions: bilateral geometric cheek mask inside MediaPipe face oval
     excluded_regions: [eyes, eyebrows, lips]
     skin_minimum_pixels_before_and_after_trim: 256
     lstar_trim_quantiles: [0.10, 0.90]
     statistic: median CIELAB L*, a*, b*
+    illumination_reference_id: neutral_portrait_border
     illumination_reference: median CIELAB over upper 42% of outer 16% borders
     reference_minimum_pixels: 512
     reference_max_chroma: 14.0

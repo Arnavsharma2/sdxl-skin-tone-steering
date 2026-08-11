@@ -9,7 +9,7 @@ ALPHAS = (-1.5, -0.75, 0.0, 0.75, 1.5)
 
 def test_strict_decreasing_target_response_is_monotonic():
     result = calculate_monotonicity(
-        zip(ALPHAS, (12.0, 8.0, 4.0, 1.0, -3.0)),
+        zip(ALPHAS, (12.0, 8.0, 4.0, 1.0, -3.0), strict=True),
         expected_alphas=ALPHAS,
     )
 
@@ -21,7 +21,7 @@ def test_strict_decreasing_target_response_is_monotonic():
 
 def test_partial_monotonicity_is_calculated_without_becoming_a_pass():
     result = calculate_monotonicity(
-        zip(ALPHAS, (12.0, 8.0, 9.0, 1.0, -3.0)),
+        zip(ALPHAS, (12.0, 8.0, 9.0, 1.0, -3.0), strict=True),
         expected_alphas=ALPHAS,
     )
 
@@ -35,9 +35,18 @@ def test_partial_monotonicity_is_calculated_without_becoming_a_pass():
     [
         ([(-1.5, 3.0), (-0.75, 2.0), (0.0, 1.0)], "missing_or_unexpected_alpha"),
         ([(-1.5, 3.0), (-0.75, 2.0), (0.0, 1.0), (0.75, 0.0), (0.75, -1.0)], "duplicate_alpha"),
-        (list(zip(ALPHAS, (3.0, 2.0, None, 0.0, -1.0))), "missing_target_measurement"),
-        (list(zip(ALPHAS, (3.0, 2.0, math.nan, 0.0, -1.0))), "nonfinite_target_measurement"),
-        (list(zip(ALPHAS, (1.0, 1.0, 1.0, 1.0, 1.0))), "constant_target_response"),
+        (
+            list(zip(ALPHAS, (3.0, 2.0, None, 0.0, -1.0), strict=True)),
+            "missing_target_measurement",
+        ),
+        (
+            list(zip(ALPHAS, (3.0, 2.0, math.nan, 0.0, -1.0), strict=True)),
+            "nonfinite_target_measurement",
+        ),
+        (
+            list(zip(ALPHAS, (1.0, 1.0, 1.0, 1.0, 1.0), strict=True)),
+            "constant_target_response",
+        ),
     ],
 )
 def test_invalid_sweeps_never_use_complete_case_subsets(measurements, reason):

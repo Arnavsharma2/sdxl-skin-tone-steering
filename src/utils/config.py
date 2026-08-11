@@ -355,6 +355,32 @@ class ExperimentConfig:
                 "evaluation.protocol_id must be "
                 f"{FROZEN_EVALUATION_PROTOCOL_ID}"
             )
+        from src.metrics.protocol import load_protocol
+
+        protocol = load_protocol()
+        if asdict(self.thresholds) != protocol["thresholds"]:
+            raise ValueError("thresholds do not match the frozen evaluation protocol")
+        if evaluation.required_metrics != protocol["required_pair_metrics"]:
+            raise ValueError(
+                "evaluation.required_metrics do not match the frozen evaluation protocol"
+            )
+        expected_alphas = protocol["metrics"]["monotonicity"]["expected_alphas"]
+        if evaluation.alphas != expected_alphas:
+            raise ValueError("evaluation.alphas do not match the frozen evaluation protocol")
+        target_protocol = protocol["metrics"]["target_response"]
+        expected_target_config = {
+            "id": target_protocol["id"],
+            "face_regions": target_protocol["face_regions_id"],
+            "illumination_reference": target_protocol["illumination_reference_id"],
+            "max_reference_lstar_shift": target_protocol[
+                "pair_max_absolute_reference_lstar_shift"
+            ],
+            "minimum_directional_change": self.thresholds.min_abs_skin_tone_change,
+        }
+        if asdict(evaluation.skin_tone_metric) != expected_target_config:
+            raise ValueError(
+                "evaluation.skin_tone_metric does not match the frozen evaluation protocol"
+            )
         if len(evaluation.seeds) != len(set(evaluation.seeds)):
             raise ValueError("evaluation.seeds must be unique")
         if not evaluation.methods:
