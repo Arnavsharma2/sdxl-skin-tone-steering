@@ -44,6 +44,26 @@ direction-training seeds, 32 held-out pair seeds, and 30 evaluation seeds, or
 noncanonical metric names. All engineering thresholds are frozen explicitly
 in the study configuration.
 
+### Executable generation methods
+
+`scripts/run_confirmatory.py` expands the configuration into the complete
+matrix and writes an auditable manifest without loading SDXL by default. For
+each seed, all methods use the same base portrait prompt, negative prompt,
+random seed, scheduler, inference-step count, guidance scale, dimensions, and
+alpha. The prompt-only baseline changes only a directional visible-skin-tone
+descriptor: the inner magnitude uses “subtly” and the outer magnitude uses
+“distinctly.” The three latent methods use one unmasked direction artifact:
+
+- `posthoc_latent` adds the total scaled direction to the final base latent;
+- `stepwise_unmasked` divides the same total scale across denoising steps; and
+- `stepwise_masked` applies the frozen spatial mask before the same stepwise
+  injection.
+
+Alpha zero reuses the exact base image for all four methods. Generation is
+disabled unless `--execute` is supplied with a direction artifact and model
+revision. This execution gate does not itself constitute approval to collect
+the confirmatory data.
+
 ## Outcomes
 
 The primary outcome is face-embedding similarity at a matched, prespecified
