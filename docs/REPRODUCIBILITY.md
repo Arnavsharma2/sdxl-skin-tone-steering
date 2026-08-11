@@ -31,6 +31,21 @@ settings, package versions, git commit, dirty-state flag, and hardware
 availability into `metadata.json`. The base-image cache is keyed by model,
 prompt, negative prompt, seed, step count, and guidance scale.
 
+Plan the confirmatory matrix without loading a model or generating images:
+
+```bash
+make confirmatory-plan
+```
+
+The resulting `study_manifest.json` records the parsed configuration and its
+SHA-256 hash, exact matrix, prompts, settings, thresholds, requested and
+resolved model revisions, direction-artifact hash, package and hardware
+environment, git commit and dirty state, per-image hashes, and machine-readable
+failures. Each `seeds/<seed>/metadata.json` is checkpointed independently.
+Actual generation additionally requires explicit `--execute`,
+`--model-revision`, and `--direction` arguments and must not be started before
+the protocol-validation and approval gates are satisfied.
+
 ## Determinism
 
 - VAE encoding uses the posterior mode by default.

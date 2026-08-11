@@ -1,4 +1,4 @@
-.PHONY: install metric-models test lint check pilot evaluate summarize paper clean-paper
+.PHONY: install metric-models test lint check pilot confirmatory-plan evaluate summarize paper clean-paper
 
 install:
 	python3 -m pip install -e '.[evaluation,dev]'
@@ -16,6 +16,9 @@ check: test lint
 
 pilot:
 	python3 run_race_vector_extraction.py --steps 25 --alphas -1.5 -0.75 0 0.75 1.5 --seed 999 --output experiments/runs/pilot_seed_999
+
+confirmatory-plan:
+	python3 scripts/run_confirmatory.py --config configs/full_study.yaml --output experiments/runs/confirmatory_v1
 
 evaluate:
 	python3 scripts/evaluate_sweep.py experiments/results --output experiments/evaluation --operating-max-alpha 0.75 --strict

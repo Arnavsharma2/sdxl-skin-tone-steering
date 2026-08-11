@@ -8,16 +8,17 @@ This module provides a clean interface for:
 - Caching latent codes
 """
 
-import torch
-import numpy as np
-from PIL import Image
-from typing import Optional, Tuple, List, Union
 from pathlib import Path
+from typing import List, Optional, Tuple, Union
+
+import numpy as np
+import torch
 from diffusers import (
-    StableDiffusionXLPipeline,
     AutoencoderKL,
     DPMSolverMultistepScheduler,
+    StableDiffusionXLPipeline,
 )
+from PIL import Image
 
 
 class StableDiffusionWrapper:
@@ -42,6 +43,7 @@ class StableDiffusionWrapper:
         device: str = "cuda",
         dtype: torch.dtype = torch.float16,
         model_id: str = "stabilityai/stable-diffusion-xl-base-1.0",
+        revision: Optional[str] = None,
         enable_xformers: bool = True,
         enable_cpu_offload: bool = False,
     ):
@@ -52,12 +54,14 @@ class StableDiffusionWrapper:
             device: Where to run it ('cuda' or 'cpu')
             dtype: Precision (torch.float16 or torch.float32)
             model_id: Which HuggingFace model to use
+            revision: Exact model revision requested from Hugging Face
             enable_xformers: Whether to use memory-efficient attention (saves VRAM)
             enable_cpu_offload: Whether to offload models to CPU when idle
         """
         self.device = device
         self.dtype = dtype
         self.model_id = model_id
+        self.requested_revision = revision
 
         print(f"Loading Stable Diffusion XL from {model_id}...")
 
@@ -66,6 +70,7 @@ class StableDiffusionWrapper:
             model_id,
             subfolder="vae",
             torch_dtype=dtype,
+            revision=revision,
         )
         self.vae.to(device)
         self.vae.eval()
@@ -76,6 +81,7 @@ class StableDiffusionWrapper:
             torch_dtype=dtype,
             use_safetensors=True,
             vae=self.vae,
+            revision=revision,
         )
 
         # DPM++ 2M Karras — significantly better quality per step than DDIM.
@@ -105,6 +111,12 @@ class StableDiffusionWrapper:
             print("Enabled model CPU offload")
         else:
             self.pipe.to(device)
+
+        self.resolved_revision = (
+            getattr(self.pipe.config, "_commit_hash", None)
+            or getattr(self.vae.config, "_commit_hash", None)
+            or revision
+        )
 
         print("Stable Diffusion loaded successfully.")
 
@@ -230,6 +242,8 @@ class StableDiffusionWrapper:
         guidance_scale: float = 7.5,
         seed: Optional[int] = None,
         return_latent: bool = True,
+        height: Optional[int] = None,
+        width: Optional[int] = None,
         **kwargs,
     ) -> Tuple[Image.Image, Optional[torch.Tensor]]:
         """
@@ -240,6 +254,8 @@ class StableDiffusionWrapper:
             negative_prompt: Negative prompt
             num_inference_steps: Number of denoising steps
             guidance_scale: Classifier-free guidance scale
+            height: Generated image height
+            width: Generated image width
             seed: Random seed for reproducibility
             return_latent: Also return final latent code
             **kwargs: Additional arguments for pipeline
@@ -254,6 +270,12 @@ class StableDiffusionWrapper:
         else:
             generator = None
 
+        size_kwargs = {
+            key: value
+            for key, value in {"height": height, "width": width}.items()
+            if value is not None
+        }
+
         # Generate
         output = self.pipe(
             prompt=prompt,
@@ -262,6 +284,7 @@ class StableDiffusionWrapper:
             guidance_scale=guidance_scale,
             generator=generator,
             output_type="pil" if not return_latent else "latent",
+            **size_kwargs,
             **kwargs,
         )
 
@@ -292,6 +315,8 @@ class StableDiffusionWrapper:
         negative_prompt: str = "",
         num_inference_steps: int = 25,
         guidance_scale: float = 7.5,
+        height: Optional[int] = None,
+        width: Optional[int] = None,
     ) -> Tuple[Image.Image, torch.Tensor]:
         """
         Generate an image steered by a skin-tone direction during denoising.
@@ -311,6 +336,8 @@ class StableDiffusionWrapper:
             negative_prompt: Negative guidance prompt
             num_inference_steps: Denoising steps (25 with DPM++ 2M ≈ DDIM 50)
             guidance_scale: CFG scale
+            height: Generated image height
+            width: Generated image width
 
         Returns:
             (steered_image, final_latent)
@@ -350,6 +377,11 @@ class StableDiffusionWrapper:
             latents = latents + alpha_per_step * rv
             return {"latents": latents}
 
+        size_kwargs = {
+            key: value
+            for key, value in {"height": height, "width": width}.items()
+            if value is not None
+        }
         output = self.pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -359,6 +391,7 @@ class StableDiffusionWrapper:
             output_type="latent",
             callback_on_step_end=steering_callback,
             callback_on_step_end_tensor_inputs=["latents"],
+            **size_kwargs,
         )
 
         latent = output.images
