@@ -19,6 +19,7 @@ CANONICAL_REQUIRED_METRICS = frozenset(
         "total_pose_diff",
     }
 )
+FROZEN_EVALUATION_PROTOCOL_ID = "tmlr_evaluation_protocol_v1"
 
 
 @dataclass
@@ -155,6 +156,7 @@ class EvaluationMatrixConfig:
 class EvaluationConfig:
     """Held-out generation and measurement protocol."""
 
+    protocol_id: str = FROZEN_EVALUATION_PROTOCOL_ID
     seeds: list[int] = field(default_factory=list)
     alphas: list[float] = field(default_factory=list)
     methods: list[str] = field(default_factory=list)
@@ -348,6 +350,11 @@ class ExperimentConfig:
 
         if not evaluation.seeds:
             raise ValueError("evaluation.seeds must not be empty")
+        if evaluation.protocol_id != FROZEN_EVALUATION_PROTOCOL_ID:
+            raise ValueError(
+                "evaluation.protocol_id must be "
+                f"{FROZEN_EVALUATION_PROTOCOL_ID}"
+            )
         if len(evaluation.seeds) != len(set(evaluation.seeds)):
             raise ValueError("evaluation.seeds must be unique")
         if not evaluation.methods:

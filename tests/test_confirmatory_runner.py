@@ -59,6 +59,7 @@ def test_plan_only_writes_complete_metadata_without_loading_model(tmp_path):
     first_seed = json.loads((tmp_path / "seeds" / "1000" / "metadata.json").read_text())
 
     assert manifest["status"] == "planned"
+    assert manifest["schema_version"] == "2.0"
     assert manifest["summary"] == {
         "completed_rows": 0,
         "failed_rows": 0,
@@ -69,6 +70,8 @@ def test_plan_only_writes_complete_metadata_without_loading_model(tmp_path):
     assert manifest["config"]["sha256"]
     assert manifest["provenance"]["git"]["commit"]
     assert manifest["thresholds"] == vars(runner.config.thresholds)
+    assert manifest["metric_protocol"]["document"]["status"] == "frozen"
+    assert len(manifest["metric_protocol"]["sha256"]) == 64
     assert first_seed["generation"]["negative_prompt"] == NEGATIVE_PROMPT
     assert len(first_seed["results"]) == 20
     assert all(result["status"] == "planned" for result in first_seed["results"])

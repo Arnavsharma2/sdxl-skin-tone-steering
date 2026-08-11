@@ -11,9 +11,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from PIL import Image
-from scipy.stats import spearmanr
 
 from src.metrics.evaluator import CounterfactualEvaluator
+from src.metrics.target_response import FROZEN_ALPHA_GRID, calculate_monotonicity
 
 
 def sha256(path: Path) -> str:
@@ -42,6 +42,7 @@ def evaluate(
     output_dir: Path,
     device: str,
     operating_max_alpha: float | None = None,
+    expected_alphas: tuple[float, ...] = FROZEN_ALPHA_GRID,
 ) -> dict:
     base_path = input_dir / "base_image.png"
     counterfactual_dir = input_dir / "counterfactuals"
@@ -55,19 +56,22 @@ def evaluate(
     evaluator = CounterfactualEvaluator(device=device)
     rows = []
     input_hashes = {str(base_path): sha256(base_path)}
-    sweep_measurements = []
+    sweep_measurements: list[tuple[float, float | None]] = []
 
     base_tone = evaluator.skin_tone_metrics.measure(base)
-    if base_tone is not None:
-        sweep_measurements.append((0.0, base_tone.relative_lstar))
+    if not any(parse_alpha(path) == 0 for path in image_paths):
+        sweep_measurements.append(
+            (0.0, None if base_tone is None else base_tone.relative_lstar)
+        )
 
     for path in image_paths:
         alpha = parse_alpha(path)
         image = Image.open(path).convert("RGB")
         input_hashes[str(path)] = sha256(path)
         tone = evaluator.skin_tone_metrics.measure(image)
-        if tone is not None:
-            sweep_measurements.append((alpha, tone.relative_lstar))
+        sweep_measurements.append(
+            (alpha, None if tone is None else tone.relative_lstar)
+        )
         if alpha == 0:
             continue
         row = evaluator.evaluate_pair(base, image, alpha=alpha).to_dict()
@@ -78,23 +82,15 @@ def evaluate(
     output_dir.mkdir(parents=True, exist_ok=True)
     frame.to_csv(output_dir / "pair_metrics.csv", index=False)
 
-    unique_sweep = {}
-    for alpha, relative_lstar in sweep_measurements:
-        unique_sweep[alpha] = relative_lstar
-    ordered = sorted(unique_sweep.items())
-    alphas = np.asarray([item[0] for item in ordered], dtype=float)
-    relative_lstar = np.asarray([item[1] for item in ordered], dtype=float)
-    rho = None
-    monotonic_fraction = None
-    if len(ordered) >= 3:
-        statistic = spearmanr(alphas, relative_lstar)
-        rho = float(statistic.statistic)
-        monotonic_fraction = float(np.mean(np.diff(relative_lstar) < 0))
+    monotonicity = calculate_monotonicity(
+        sweep_measurements,
+        expected_alphas=expected_alphas,
+    )
 
     complete = frame["evaluation_complete"].astype(bool)
     target_available = frame["target_direction_correct"].notna()
     summary = {
-        "schema_version": "2.0",
+        "schema_version": "3.0",
         "status": "pilot" if len(frame) < 30 else "requires_protocol_audit",
         "construct": "rendered visual skin tone; not race or ethnicity",
         "pair_count": int(len(frame)),
@@ -106,8 +102,13 @@ def evaluate(
             if target_available.any()
             else None
         ),
-        "skin_tone_monotonic_spearman_rho": rho,
-        "adjacent_monotonic_fraction": monotonic_fraction,
+        "skin_tone_monotonic_spearman_rho": monotonicity.spearman_rho,
+        "adjacent_monotonic_fraction": monotonicity.adjacent_monotonic_fraction,
+        "strictly_monotonic_target_response": monotonicity.strictly_monotonic,
+        "target_monotonicity_valid": monotonicity.valid,
+        "target_monotonicity_failure": monotonicity.reason,
+        "target_monotonicity_expected_alphas": list(monotonicity.expected_alphas),
+        "target_monotonicity_observed_alphas": list(monotonicity.observed_alphas),
         "mean_face_similarity": finite_mean(frame, "face_similarity"),
         "mean_lpips": finite_mean(frame, "lpips"),
         "mean_background_ssim": finite_mean(frame, "background_ssim"),
@@ -163,7 +164,10 @@ def main() -> None:
         operating_max_alpha=args.operating_max_alpha,
     )
     print(json.dumps(summary, indent=2))
-    if args.strict and summary["evaluation_completion_rate"] < 1.0:
+    if args.strict and (
+        summary["evaluation_completion_rate"] < 1.0
+        or not summary["target_monotonicity_valid"]
+    ):
         raise SystemExit(2)
 
 

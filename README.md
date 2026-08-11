@@ -63,7 +63,7 @@ existing links and notebooks do not break. New code uses
 
 ## Setup
 
-Python 3.10 or 3.11 is recommended. SDXL requires substantial memory and model
+Python 3.10 through 3.12 is supported. SDXL requires substantial memory and model
 access under its upstream license.
 
 ```bash
@@ -74,6 +74,12 @@ python3 -m pip install -e '.[evaluation,dev]'
 make metric-models
 make test
 ```
+
+The frozen metric protocol is
+[`configs/evaluation_protocol.yaml`](configs/evaluation_protocol.yaml). Audited
+evaluation is fail-closed and currently supports Linux only (Python
+`>=3.10,<3.13`, MediaPipe `0.10.21`, CPU delegate). Plan-only confirmatory
+manifest generation remains portable and does not load SDXL.
 
 Generate paired synthetic inputs and run the pilot:
 
@@ -105,7 +111,8 @@ python3 scripts/evaluate_sweep.py experiments/runs/pilot_seed_999 \
 ```
 
 `--strict` exits nonzero when face embeddings, LPIPS, masked background SSIM,
-pose, or the illumination-audited target response is missing.
+pose, the illumination-audited target response, or complete-sweep
+monotonicity is invalid.
 
 ## From pilot to paper result
 

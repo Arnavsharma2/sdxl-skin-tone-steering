@@ -11,7 +11,8 @@ import pandas as pd
 from PIL import Image
 
 from .face_landmarks import FaceLandmarkBackend
-from .identity_metrics import FACENET_VGGFACE2_SHA256, IdentityPreservationMetrics
+from .identity_metrics import IdentityPreservationMetrics
+from .protocol import load_protocol, protocol_record
 from .skin_tone_metrics import SkinToneMetrics
 from .structural_metrics import StructuralPreservationMetrics
 
@@ -99,6 +100,10 @@ class CounterfactualEvaluator:
     ) -> None:
         self.device = device
         self.thresholds = thresholds or EvaluationThresholds()
+        self.protocol = load_protocol()
+        if asdict(self.thresholds) != self.protocol["thresholds"]:
+            raise ValueError("Evaluator thresholds do not match the frozen metric protocol")
+        FaceLandmarkBackend.validate_runtime()
         self.identity_metrics = IdentityPreservationMetrics(
             device=device, use_arcface=False, use_facenet=True
         )
@@ -108,8 +113,7 @@ class CounterfactualEvaluator:
         )
         self.skin_tone_metrics = SkinToneMetrics(landmark_backend=landmark_backend)
 
-    @staticmethod
-    def metric_provenance() -> dict:
+    def metric_provenance(self) -> dict:
         packages = {}
         for package in (
             "facenet-pytorch",
@@ -124,19 +128,28 @@ class CounterfactualEvaluator:
                 packages[package] = metadata.version(package)
             except metadata.PackageNotFoundError:
                 packages[package] = None
+        artifacts = {
+            name: result.to_dict()
+            for name, result in self.identity_metrics.artifact_verifications.items()
+        }
+        landmark_backend = self.structural_metrics.landmark_backend
+        if landmark_backend.artifact_verification is not None:
+            artifacts["mediapipe_face_landmarker"] = (
+                landmark_backend.artifact_verification.to_dict()
+            )
+        required_artifacts = set(self.protocol["required_artifacts"])
         return {
+            "protocol": protocol_record(),
             "face_embedding": "InceptionResnetV1 pretrained=vggface2; MTCNN standardised crop",
-            "face_embedding_weight_sha256": FACENET_VGGFACE2_SHA256,
             "perceptual": "LPIPS AlexNet",
-            "alexnet_weight_sha256": (
-                "7be5be791159472b1fbf3c69796f7cb30dca7ad8466c2df70058c37116cdee02"
-            ),
-            "face_mask_and_pose": "MediaPipe Tasks Face Landmarker, CPU, checksum-pinned asset",
-            "face_landmarker_model_sha256": (
-                "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff"
-            ),
+            "face_mask_and_pose": "MediaPipe Tasks Face Landmarker, CPU, checksum-verified asset",
             "target_attribute": SkinToneMetrics.metric_name,
             "background": "mean SSIM map over eroded union-background mask",
+            "artifact_verifications": artifacts,
+            "all_required_artifacts_verified": (
+                set(artifacts) == required_artifacts
+                and all(record["verified"] for record in artifacts.values())
+            ),
             "packages": packages,
         }
 
