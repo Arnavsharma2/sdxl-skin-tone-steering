@@ -6,6 +6,9 @@ import pytest
 import yaml
 
 from src.metrics.evaluator import EvaluationThresholds
+from src.metrics.protocol import PROTOCOL_ID, load_protocol, protocol_record
+from src.metrics.skin_tone_metrics import SkinToneMetrics
+from src.metrics.structural_metrics import StructuralPreservationMetrics
 from src.utils.config import ExperimentConfig
 
 REPOSITORY_ROOT = Path(__file__).parents[1]
@@ -28,6 +31,7 @@ def test_study_configs_load_and_declare_complete_matrix(
     assert config.evaluation.matrix.expected_nonzero_alpha_rows == expected_nonzero_rows
     assert "total_pose_diff" in config.evaluation.required_metrics
     assert "pose_difference" not in config.evaluation.required_metrics
+    assert config.evaluation.protocol_id == PROTOCOL_ID
 
 
 def test_confirmatory_training_and_evaluation_seeds_are_disjoint():
@@ -48,6 +52,43 @@ def test_confirmatory_thresholds_match_evaluator_defaults():
     config = ExperimentConfig.from_yaml(REPOSITORY_ROOT / "configs" / "full_study.yaml")
 
     assert asdict(config.thresholds) == asdict(EvaluationThresholds())
+
+
+def test_frozen_protocol_matches_configuration_and_records_actual_checksum():
+    config = ExperimentConfig.from_yaml(REPOSITORY_ROOT / "configs" / "full_study.yaml")
+    protocol = load_protocol()
+    record = protocol_record()
+
+    assert protocol["status"] == "frozen"
+    assert protocol["protocol_id"] == config.evaluation.protocol_id
+    assert protocol["thresholds"] == asdict(config.thresholds)
+    assert set(protocol["required_pair_metrics"]) == set(
+        config.evaluation.required_metrics
+    )
+    assert protocol["metrics"]["monotonicity"]["expected_alphas"] == (
+        config.evaluation.alphas
+    )
+    assert len(record["sha256"]) == 64
+    assert record["size_bytes"] > 0
+
+
+def test_frozen_mask_parameters_match_metric_code():
+    protocol = load_protocol()["metrics"]
+    skin = SkinToneMetrics(landmark_backend=object())
+
+    assert skin.min_skin_pixels == protocol["target_response"][
+        "skin_minimum_pixels_before_and_after_trim"
+    ]
+    assert skin.min_reference_pixels == protocol["target_response"][
+        "reference_minimum_pixels"
+    ]
+    assert list(skin.trim_quantiles) == protocol["target_response"][
+        "lstar_trim_quantiles"
+    ]
+    assert StructuralPreservationMetrics.background_erosion_kernel == 7
+    assert StructuralPreservationMetrics.minimum_background_pixels == protocol[
+        "background_ssim"
+    ]["minimum_background_pixels"]
 
 
 def test_confirmatory_config_round_trip(tmp_path):
@@ -81,3 +122,35 @@ def test_loading_rejects_training_evaluation_seed_overlap(tmp_path):
 
     with pytest.raises(ValueError, match="training and evaluation seeds overlap: 42"):
         ExperimentConfig.from_yaml(invalid_path)
+
+
+def test_matching_protocol_id_cannot_hide_threshold_drift(tmp_path):
+    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
+    document = yaml.safe_load(source.read_text())
+    document["thresholds"]["face_similarity"] = 0.80
+    invalid_path = tmp_path / "invalid.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match="thresholds do not match"):
+        ExperimentConfig.from_yaml(invalid_path)
+
+
+def test_matching_protocol_id_cannot_hide_alpha_grid_drift(tmp_path):
+    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
+    document = yaml.safe_load(source.read_text())
+    document["evaluation"]["alphas"][-1] = 1.25
+    invalid_path = tmp_path / "invalid.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match="evaluation.alphas do not match"):
+        ExperimentConfig.from_yaml(invalid_path)
+
+
+def test_protocol_loader_rejects_matching_id_with_field_drift(tmp_path):
+    document = load_protocol()
+    document["runtime"]["face_landmarker_delegate"] = "GPU"
+    invalid_path = tmp_path / "evaluation_protocol.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match="does not match metric code"):
+        load_protocol(invalid_path)

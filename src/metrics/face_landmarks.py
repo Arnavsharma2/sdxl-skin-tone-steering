@@ -1,18 +1,24 @@
-"""CPU-only, checksum-pinned MediaPipe Tasks face landmarks."""
+"""CPU-only, checksum-verified MediaPipe Tasks face landmarks."""
 
 from __future__ import annotations
 
-import hashlib
 import os
+import platform
+import sys
 from dataclasses import dataclass
+from importlib import metadata
 from pathlib import Path
 from typing import Optional, Union
 
 import numpy as np
 from PIL import Image
 
+from .artifacts import ArtifactVerification, inspect_artifact, require_verified
+
 MODEL_SHA256 = "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff"
 MODEL_FILENAME = "face_landmarker.task"
+MEDIAPIPE_VERSION = "0.10.21"
+SUPPORTED_SYSTEMS = ("Linux",)
 
 
 @dataclass(frozen=True)
@@ -33,18 +39,54 @@ class FaceLandmarkBackend:
         )
         self.landmarker = None
         self._mp = None
+        self.artifact_verification: ArtifactVerification | None = None
+
+    @staticmethod
+    def validate_runtime(
+        system: str | None = None,
+        python_version: tuple[int, int] | None = None,
+    ) -> None:
+        """Reject platforms on which the frozen task cannot run headlessly."""
+        detected = system or platform.system()
+        if detected not in SUPPORTED_SYSTEMS:
+            raise RuntimeError(
+                "Unsupported MediaPipe evaluation runtime: "
+                f"{detected or 'unknown'}. The frozen protocol supports Linux only. "
+                "MediaPipe 0.10.21 Face Landmarker requires an OpenGL pixel format "
+                "on macOS even with the CPU delegate, so headless macOS is rejected "
+                "instead of returning missing or fallback metrics."
+            )
+        version = python_version or sys.version_info[:2]
+        if not (version >= (3, 10) and version < (3, 13)):
+            raise RuntimeError(
+                "Unsupported metric Python runtime: expected >=3.10,<3.13; "
+                f"found {version[0]}.{version[1]}"
+            )
 
     def _load(self) -> None:
         if self.landmarker is not None:
             return
-        if not self.model_path.is_file():
+        self.artifact_verification = inspect_artifact(
+            self.model_path,
+            MODEL_SHA256,
+            name="MediaPipe Face Landmarker",
+        )
+        if self.artifact_verification.status == "missing":
             raise RuntimeError(
                 f"Missing {self.model_path}; run `make metric-models` before evaluation"
             )
-        digest = hashlib.sha256(self.model_path.read_bytes()).hexdigest()
-        if digest != MODEL_SHA256:
+        require_verified(self.artifact_verification)
+        self.validate_runtime()
+        try:
+            installed_version = metadata.version("mediapipe")
+        except metadata.PackageNotFoundError as exc:
             raise RuntimeError(
-                f"Face Landmarker checksum mismatch: expected {MODEL_SHA256}, got {digest}"
+                f"MediaPipe {MEDIAPIPE_VERSION} is required for audited evaluation"
+            ) from exc
+        if installed_version != MEDIAPIPE_VERSION:
+            raise RuntimeError(
+                "Unsupported MediaPipe version: "
+                f"expected {MEDIAPIPE_VERSION}, found {installed_version}"
             )
         try:
             import mediapipe as mp
@@ -71,9 +113,9 @@ class FaceLandmarkBackend:
         if isinstance(image, Image.Image):
             return np.asarray(image.convert("RGB"))
         array = np.asarray(image)
-        if array.ndim != 3 or array.shape[2] != 3:
-            raise ValueError("Expected an RGB image with shape (height, width, 3)")
-        return array.astype(np.uint8, copy=False)
+        if array.ndim != 3 or array.shape[2] != 3 or array.dtype != np.uint8:
+            raise ValueError("Expected a uint8 RGB image with shape (height, width, 3)")
+        return array
 
     def detect(
         self, image: Union[Image.Image, np.ndarray]

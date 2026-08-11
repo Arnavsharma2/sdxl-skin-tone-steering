@@ -57,22 +57,26 @@ class SkinToneMetrics:
         min_reference_pixels: int = 512,
         max_reference_chroma: float = 14.0,
         max_reference_shift: float = 8.0,
+        trim_quantiles: tuple[float, float] = (0.10, 0.90),
         landmark_backend: Optional[FaceLandmarkBackend] = None,
     ) -> None:
         self.min_skin_pixels = min_skin_pixels
         self.min_reference_pixels = min_reference_pixels
         self.max_reference_chroma = max_reference_chroma
         self.max_reference_shift = max_reference_shift
+        self.trim_quantiles = trim_quantiles
         self.landmark_backend = landmark_backend or FaceLandmarkBackend()
+        if not 0 <= trim_quantiles[0] < trim_quantiles[1] <= 1:
+            raise ValueError("trim_quantiles must be ordered within [0, 1]")
 
     @staticmethod
     def _as_rgb(image: Union[Image.Image, np.ndarray]) -> np.ndarray:
         if isinstance(image, Image.Image):
             return np.asarray(image.convert("RGB"))
         array = np.asarray(image)
-        if array.ndim != 3 or array.shape[2] != 3:
-            raise ValueError("Expected an RGB image with shape (height, width, 3)")
-        return array.astype(np.uint8, copy=False)
+        if array.ndim != 3 or array.shape[2] != 3 or array.dtype != np.uint8:
+            raise ValueError("Expected a uint8 RGB image with shape (height, width, 3)")
+        return array
 
     @staticmethod
     def _fill_feature(mask: np.ndarray, landmarks, indices, width: int, height: int) -> None:
@@ -157,8 +161,14 @@ class SkinToneMetrics:
         skin_mask = self.create_skin_mask(rgb) if skin_mask is None else skin_mask
         if skin_mask is None:
             return None
-        skin_mask = np.asarray(skin_mask, dtype=bool)
-        if skin_mask.shape != image_shape or int(skin_mask.sum()) < self.min_skin_pixels:
+        skin_mask = np.asarray(skin_mask)
+        if (
+            skin_mask.shape != image_shape
+            or not np.all((skin_mask == 0) | (skin_mask == 1))
+        ):
+            return None
+        skin_mask = skin_mask.astype(bool)
+        if int(skin_mask.sum()) < self.min_skin_pixels:
             return None
 
         reference_mask = (
@@ -166,10 +176,16 @@ class SkinToneMetrics:
             if reference_mask is None
             else reference_mask
         )
-        reference_mask = np.asarray(reference_mask, dtype=bool)
+        reference_mask = np.asarray(reference_mask)
         if (
             reference_mask.shape != image_shape
-            or int(reference_mask.sum()) < self.min_reference_pixels
+            or not np.all((reference_mask == 0) | (reference_mask == 1))
+        ):
+            return None
+        reference_mask = reference_mask.astype(bool)
+        if (
+            int(reference_mask.sum()) < self.min_reference_pixels
+            or np.any(skin_mask & reference_mask)
         ):
             return None
 
@@ -178,7 +194,7 @@ class SkinToneMetrics:
         reference_values = lab[reference_mask]
 
         # Reject extreme highlights and shadows before taking robust medians.
-        low, high = np.quantile(skin_values[:, 0], [0.10, 0.90])
+        low, high = np.quantile(skin_values[:, 0], self.trim_quantiles)
         skin_values = skin_values[(skin_values[:, 0] >= low) & (skin_values[:, 0] <= high)]
         if len(skin_values) < self.min_skin_pixels:
             return None

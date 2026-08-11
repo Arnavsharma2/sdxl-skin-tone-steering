@@ -2,7 +2,7 @@
 
 ## Environments
 
-Use Python 3.10 or 3.11. Install with:
+Use Python 3.10 through 3.12. Install with:
 
 ```bash
 python3 -m venv .venv
@@ -42,9 +42,17 @@ SHA-256 hash, exact matrix, prompts, settings, thresholds, requested and
 resolved model revisions, direction-artifact hash, package and hardware
 environment, git commit and dirty state, per-image hashes, and machine-readable
 failures. Each `seeds/<seed>/metadata.json` is checkpointed independently.
+It also embeds `tmlr_evaluation_protocol_v1` and the actual SHA-256 of that
+protocol file. Recording the protocol in plan-only mode does not load SDXL.
 Actual generation additionally requires explicit `--execute`,
 `--model-revision`, and `--direction` arguments and must not be started before
 the protocol-validation and approval gates are satisfied.
+
+Audited metric execution is supported only on Linux with Python
+`>=3.10,<3.13`, MediaPipe `0.10.21`, and the CPU Face Landmarker delegate.
+Headless macOS is rejected before graph construction because the pinned wheel
+still requires an unavailable OpenGL pixel format there. Use Linux for
+evaluation; do not substitute a detector or whole-image metric.
 
 ## Determinism
 
@@ -62,6 +70,8 @@ versioned DOI or release asset and record SHA-256 hashes:
 - long-form result table and aggregate table;
 - metadata for every attempted run, including failures;
 - vector artifact if released, with training-data manifest;
+- every metric artifact verification record, including path, expected and
+  actual SHA-256, byte size, and status;
 - paper figures and the script or command that generated each figure;
 - environment lock file or container digest.
 

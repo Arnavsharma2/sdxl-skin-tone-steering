@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 from PIL import Image
@@ -5,11 +7,13 @@ from PIL import Image
 pytest.importorskip("cv2")
 pytest.importorskip("skimage")
 
+from src.metrics.artifacts import ArtifactVerification  # noqa: E402
 from src.metrics.evaluator import (  # noqa: E402
     CounterfactualEvaluator,
     EvaluationResult,
     EvaluationThresholds,
 )
+from src.metrics.protocol import load_protocol  # noqa: E402
 from src.metrics.structural_metrics import StructuralPreservationMetrics  # noqa: E402
 
 
@@ -89,3 +93,34 @@ def test_background_ssim_averages_only_real_background():
     changed_background = original.copy()
     changed_background[:, :12] = 30
     assert metrics.background_ssim(original, changed_background, mask=face_mask) < 0.95
+
+
+def test_provenance_reports_actual_artifact_verifications_not_expected_hash_aliases():
+    evaluator = CounterfactualEvaluator.__new__(CounterfactualEvaluator)
+    evaluator.protocol = load_protocol()
+    records = {}
+    for name, specification in evaluator.protocol["required_artifacts"].items():
+        records[name] = ArtifactVerification(
+            name=name,
+            path=f"/verified/{name}",
+            expected_sha256=specification["sha256"],
+            actual_sha256=specification["sha256"],
+            size_bytes=123,
+            status="verified",
+            verified=True,
+        )
+    landmark = records.pop("mediapipe_face_landmarker")
+    evaluator.identity_metrics = SimpleNamespace(artifact_verifications=records)
+    evaluator.structural_metrics = SimpleNamespace(
+        landmark_backend=SimpleNamespace(artifact_verification=landmark)
+    )
+
+    provenance = evaluator.metric_provenance()
+
+    assert provenance["all_required_artifacts_verified"]
+    assert all(
+        item["actual_sha256"] == item["expected_sha256"]
+        for item in provenance["artifact_verifications"].values()
+    )
+    assert "face_embedding_weight_sha256" not in provenance
+    assert "alexnet_weight_sha256" not in provenance

@@ -15,3 +15,13 @@ def test_unverified_model_is_rejected(tmp_path):
     backend = FaceLandmarkBackend(model)
     with pytest.raises(RuntimeError, match="checksum mismatch"):
         backend._load()
+
+
+def test_frozen_runtime_accepts_linux_and_rejects_macos():
+    FaceLandmarkBackend.validate_runtime("Linux", (3, 12))
+
+    with pytest.raises(RuntimeError, match="supports Linux only"):
+        FaceLandmarkBackend.validate_runtime("Darwin", (3, 12))
+
+    with pytest.raises(RuntimeError, match=r">=3.10,<3.13"):
+        FaceLandmarkBackend.validate_runtime("Linux", (3, 13))

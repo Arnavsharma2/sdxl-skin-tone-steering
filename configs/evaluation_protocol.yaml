@@ -1,0 +1,92 @@
+schema_version: "1.0"
+protocol_id: tmlr_evaluation_protocol_v1
+status: frozen
+construct: rendered visual skin tone; not race or ethnicity
+runtime:
+  supported_operating_systems: [Linux]
+  python: ">=3.10,<3.13"
+  mediapipe: "0.10.21"
+  face_landmarker_delegate: CPU
+  unsupported_runtime_behavior: fail before MediaPipe graph construction
+required_artifacts:
+  mediapipe_face_landmarker:
+    location: models/face_landmarker.task
+    sha256: 64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff
+  facenet_vggface2:
+    location: ${TORCH_HOME}/checkpoints/20180402-114759-vggface2.pt
+    sha256: 281cebca8662831adb987a874bdcb36e73f5b1c6dc5ee5878f305e985625d99b
+  mtcnn_pnet:
+    location: facenet_pytorch/data/pnet.pt
+    sha256: a2a71925e0b9996a42f63e47efc1ca19043e69558b5c523b978d611dfae49c8f
+  mtcnn_rnet:
+    location: facenet_pytorch/data/rnet.pt
+    sha256: bbb937de72efc9ef83b186c49f5f558467a1d7e3453a8ece0d71a886633f6a86
+  mtcnn_onet:
+    location: facenet_pytorch/data/onet.pt
+    sha256: 165bfbe42940416ccfb977545cf0e976d5bf321f67083ae2aaaa5c764280118d
+  alexnet_backbone:
+    location: ${TORCH_HOME}/hub/checkpoints/alexnet-owt-7be5be79.pth
+    sha256: 7be5be791159472b1fbf3c69796f7cb30dca7ad8466c2df70058c37116cdee02
+  lpips_alex_v0.1:
+    location: lpips/weights/v0.1/alex.pth
+    sha256: df73285e35b22355a2df87cdb6b70b343713b667eddbda73e1977e0c860835c0
+metrics:
+  target_response:
+    id: relative_cheek_CIELAB_Lstar_v1
+    input: uint8 RGB
+    face_regions_id: geometric_cheek_mask
+    face_regions: bilateral geometric cheek mask inside MediaPipe face oval
+    excluded_regions: [eyes, eyebrows, lips]
+    skin_minimum_pixels_before_and_after_trim: 256
+    lstar_trim_quantiles: [0.10, 0.90]
+    statistic: median CIELAB L*, a*, b*
+    illumination_reference_id: neutral_portrait_border
+    illumination_reference: median CIELAB over upper 42% of outer 16% borders
+    reference_minimum_pixels: 512
+    reference_max_chroma: 14.0
+    pair_max_absolute_reference_lstar_shift: 8.0
+    outcome: delta of (skin L* - reference L*)
+    direction_gate: alpha * target change < 0
+  identity_similarity:
+    detector: MTCNN image_size=160 margin=0 post_process=true
+    embedding: InceptionResnetV1 pretrained=vggface2
+    outcome: cosine similarity in [-1, 1]
+  perceptual_distance:
+    id: LPIPS AlexNet v0.1
+    preprocessing: uint8 RGB mapped to one NCHW batch in [-1, 1]
+  pose:
+    source: MediaPipe 4x4 facial transformation matrix
+    validation: finite proper orthonormal 3x3 rotation block
+    angles: yaw, pitch, roll in degrees with circular absolute differences
+    outcome: Euclidean norm of yaw, pitch, and roll differences
+  background_ssim:
+    input: same-size uint8 images converted to grayscale
+    face_region: union of 1.5x expanded face boxes from both images
+    background: inverse union mask eroded with a 7x7 kernel
+    minimum_background_pixels: 49
+    outcome: mean full SSIM map over valid background pixels only
+  monotonicity:
+    expected_alphas: [-1.5, -0.75, 0.0, 0.75, 1.5]
+    minimum_points: 3
+    outcome: Spearman rho and fraction of strictly decreasing adjacent responses
+    invalid_when: duplicate, missing, unexpected, nonfinite, or constant response
+required_pair_metrics:
+  [skin_tone_change, target_direction_correct, face_similarity, lpips,
+   background_ssim, total_pose_diff]
+thresholds:
+  face_similarity: 0.85
+  landmark_rmse: 5.0
+  lpips: 0.3
+  background_ssim: 0.75
+  pose_angle_diff: 5.0
+  min_abs_skin_tone_change: 2.0
+failure_semantics:
+  face_detection: invalid metric and incomplete row; count in failure rate
+  skin_or_reference_mask: invalid target metric and incomplete row
+  unstable_illumination: invalid target change and incomplete row
+  pose: invalid metric and incomplete row
+  background_mask: invalid metric and incomplete row
+  identity_preprocessing_or_detection: invalid metric and incomplete row
+  artifact_verification: missing, unreadable, or checksum mismatch fails closed
+  monotonicity: invalid sweep; never calculate on a complete-case subset
+  fallbacks: prohibited

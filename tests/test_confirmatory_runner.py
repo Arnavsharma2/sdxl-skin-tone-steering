@@ -59,6 +59,7 @@ def test_plan_only_writes_complete_metadata_without_loading_model(tmp_path):
     first_seed = json.loads((tmp_path / "seeds" / "1000" / "metadata.json").read_text())
 
     assert manifest["status"] == "planned"
+    assert manifest["schema_version"] == "2.0"
     assert manifest["summary"] == {
         "completed_rows": 0,
         "failed_rows": 0,
@@ -69,6 +70,8 @@ def test_plan_only_writes_complete_metadata_without_loading_model(tmp_path):
     assert manifest["config"]["sha256"]
     assert manifest["provenance"]["git"]["commit"]
     assert manifest["thresholds"] == vars(runner.config.thresholds)
+    assert manifest["metric_protocol"]["document"]["status"] == "frozen"
+    assert len(manifest["metric_protocol"]["sha256"]) == 64
     assert first_seed["generation"]["negative_prompt"] == NEGATIVE_PROMPT
     assert len(first_seed["results"]) == 20
     assert all(result["status"] == "planned" for result in first_seed["results"])
@@ -182,14 +185,13 @@ def test_generation_adapters_support_all_four_methods(tmp_path):
 def test_synthetic_execution_checkpoints_hashes_for_every_method(tmp_path):
     document = yaml.safe_load(CONFIG_PATH.read_text())
     document["evaluation"]["seeds"] = [1000]
-    document["evaluation"]["alphas"] = [0.0, 0.75]
     document["evaluation"]["matrix"] = {
         "pairing_unit": "seed",
         "expected_seeds": 1,
         "expected_methods": 4,
-        "expected_alphas": 2,
-        "expected_rows": 8,
-        "expected_nonzero_alpha_rows": 4,
+        "expected_alphas": 5,
+        "expected_rows": 20,
+        "expected_nonzero_alpha_rows": 16,
     }
     config_path = tmp_path / "synthetic.yaml"
     config_path.write_text(yaml.safe_dump(document))
@@ -212,7 +214,7 @@ def test_synthetic_execution_checkpoints_hashes_for_every_method(tmp_path):
     metadata = json.loads((tmp_path / "run" / "seeds" / "1000" / "metadata.json").read_text())
     assert manifest["status"] == "complete"
     assert manifest["model"]["resolved_revision"] == "resolved-model-commit"
-    assert manifest["summary"]["completed_rows"] == 8
+    assert manifest["summary"]["completed_rows"] == 20
     assert manifest["summary"]["failed_rows"] == 0
     assert manifest["summary"]["unattempted_rows"] == 0
     assert {result["method"] for result in metadata["results"]} == set(

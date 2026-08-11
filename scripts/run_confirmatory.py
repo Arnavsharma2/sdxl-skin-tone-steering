@@ -26,6 +26,7 @@ import torch
 import torch.nn.functional as F
 
 from src.latent.vector_discovery import SkinToneDirectionExtractor
+from src.metrics.protocol import protocol_record
 from src.utils.config import ExperimentConfig
 from src.utils.reproducibility import collect_provenance, seed_everything, stable_fingerprint
 
@@ -35,7 +36,7 @@ SUPPORTED_METHODS = (
     "stepwise_unmasked",
     "stepwise_masked",
 )
-RUNNER_SCHEMA_VERSION = "1.0"
+RUNNER_SCHEMA_VERSION = "2.0"
 PROMPT_POLICY_ID = "matched_portrait_prompt_with_directional_descriptor_v1"
 
 BASE_PROMPT = (
@@ -246,6 +247,7 @@ class ConfirmatoryRunner:
         self.config_sha256 = sha256_file(self.config_path)
         self.provenance = collect_provenance(self.project_root)
         self.direction_metadata = self._direction_metadata()
+        self.metric_protocol = protocol_record()
         self.run_id = stable_fingerprint(
             {
                 "study_id": self.config.study_id,
@@ -336,7 +338,7 @@ class ConfirmatoryRunner:
             "direction_artifact": deepcopy(self.direction_metadata),
             "generation": self.generation_settings(),
             "thresholds": asdict(self.config.thresholds),
-            "metric_protocol": asdict(self.config.evaluation.skin_tone_metric),
+            "metric_protocol": deepcopy(self.metric_protocol),
             "matrix": {
                 **asdict(self.config.evaluation.matrix),
                 "methods": list(self.config.evaluation.methods),
@@ -383,6 +385,7 @@ class ConfirmatoryRunner:
             "direction_artifact": deepcopy(self.direction_metadata),
             "generation": self.generation_settings(),
             "thresholds": asdict(self.config.thresholds),
+            "metric_protocol": deepcopy(self.metric_protocol),
             "provenance": self.provenance,
             "base_artifact": base_artifact,
             "failures": failures,
