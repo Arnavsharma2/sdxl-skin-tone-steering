@@ -153,15 +153,24 @@ class SkinToneMetrics:
     ) -> Optional[SkinToneMeasurement]:
         """Measure median CIELAB cheek colour with a neutral-background reference."""
         rgb = self._as_rgb(image)
-        skin_mask = self.create_skin_mask(rgb) if skin_mask is None else skin_mask.astype(bool)
-        if skin_mask is None or int(skin_mask.sum()) < self.min_skin_pixels:
+        image_shape = rgb.shape[:2]
+        skin_mask = self.create_skin_mask(rgb) if skin_mask is None else skin_mask
+        if skin_mask is None:
             return None
+        skin_mask = np.asarray(skin_mask, dtype=bool)
+        if skin_mask.shape != image_shape or int(skin_mask.sum()) < self.min_skin_pixels:
+            return None
+
         reference_mask = (
             self.create_reference_mask(rgb)
             if reference_mask is None
-            else reference_mask.astype(bool)
+            else reference_mask
         )
-        if int(reference_mask.sum()) < self.min_reference_pixels:
+        reference_mask = np.asarray(reference_mask, dtype=bool)
+        if (
+            reference_mask.shape != image_shape
+            or int(reference_mask.sum()) < self.min_reference_pixels
+        ):
             return None
 
         lab = cv2.cvtColor(rgb.astype(np.float32) / 255.0, cv2.COLOR_RGB2LAB)

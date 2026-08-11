@@ -25,12 +25,22 @@ METRICS = (
 )
 
 
+def _success_value(result: dict) -> tuple[object, str]:
+    """Read the current success field or its legacy compatibility alias."""
+    if "counterfactual_success" in result:
+        return result["counterfactual_success"], "counterfactual_success"
+    if "is_disentangled" in result:
+        return result["is_disentangled"], "legacy_is_disentangled"
+    return None, "unreported"
+
+
 def load_runs(root: Path) -> pd.DataFrame:
     rows: list[dict] = []
     for path in sorted(root.rglob("metadata.json")):
         with path.open(encoding="utf-8") as handle:
             run = json.load(handle)
         for result in run.get("results", []):
+            success, success_source = _success_value(result)
             rows.append(
                 {
                     "run": str(path.parent),
@@ -38,7 +48,8 @@ def load_runs(root: Path) -> pd.DataFrame:
                     "method": result.get("method", run.get("method", "stepwise_masked")),
                     "alpha": result.get("alpha"),
                     "evaluation_complete": result.get("evaluation_complete", False),
-                    "counterfactual_success": result.get("counterfactual_success", False),
+                    "counterfactual_success": success,
+                    "counterfactual_success_source": success_source,
                     **{metric: result.get(metric) for metric in METRICS},
                 }
             )
@@ -86,6 +97,23 @@ def summarize(df: pd.DataFrame, resamples: int = 10_000) -> pd.DataFrame:
     return pd.DataFrame(records)
 
 
+def build_audit(long_df: pd.DataFrame, *, resamples: int) -> dict:
+    """Summarize coverage without counting unreported success fields as failures."""
+    success = long_df["counterfactual_success"].astype("boolean")
+    return {
+        "metadata_files": int(long_df["run"].nunique()),
+        "rows": int(len(long_df)),
+        "complete_rows": int(long_df["evaluation_complete"].fillna(False).sum()),
+        "successful_rows": int(success.fillna(False).sum()),
+        "unsuccessful_rows": int(success.eq(False).fillna(False).sum()),
+        "unreported_success_rows": int(success.isna().sum()),
+        "legacy_success_rows": int(
+            long_df["counterfactual_success_source"].eq("legacy_is_disentangled").sum()
+        ),
+        "bootstrap_resamples": resamples,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("input", type=Path, help="Directory containing run metadata.json files")
@@ -102,13 +130,7 @@ def main() -> None:
     long_df.to_csv(args.output / "results_long.csv", index=False)
     summary.to_csv(args.output / "summary.csv", index=False)
 
-    audit = {
-        "metadata_files": int(long_df["run"].nunique()),
-        "rows": int(len(long_df)),
-        "complete_rows": int(long_df["evaluation_complete"].fillna(False).sum()),
-        "successful_rows": int(long_df["counterfactual_success"].fillna(False).sum()),
-        "bootstrap_resamples": args.resamples,
-    }
+    audit = build_audit(long_df, resamples=args.resamples)
     (args.output / "audit.json").write_text(json.dumps(audit, indent=2) + "\n")
     print(f"Wrote {args.output / 'results_long.csv'}")
     print(f"Wrote {args.output / 'summary.csv'}")

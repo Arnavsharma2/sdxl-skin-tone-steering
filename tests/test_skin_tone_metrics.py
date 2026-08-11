@@ -43,3 +43,31 @@ def test_large_reference_shift_invalidates_target_change(monkeypatch):
     comparison = metrics.compare(original, shifted)
     assert not comparison["illumination_stable"]
     assert comparison["skin_tone_change"] is None
+
+
+def test_incorrect_skin_mask_shape_fails_closed():
+    metrics = SkinToneMetrics(min_skin_pixels=100, min_reference_pixels=100)
+    image, _, reference_mask = portrait((190, 135, 105))
+    incorrect_skin_mask = np.ones((100, 101), dtype=bool)
+
+    measurement = metrics.measure(
+        image,
+        skin_mask=incorrect_skin_mask,
+        reference_mask=reference_mask,
+    )
+
+    assert measurement is None
+
+
+def test_incorrect_reference_mask_shape_fails_closed():
+    metrics = SkinToneMetrics(min_skin_pixels=100, min_reference_pixels=100)
+    image, skin_mask, _ = portrait((190, 135, 105))
+    incorrect_reference_mask = np.ones((100, 101), dtype=bool)
+
+    measurement = metrics.measure(
+        image,
+        skin_mask=skin_mask,
+        reference_mask=incorrect_reference_mask,
+    )
+
+    assert measurement is None
