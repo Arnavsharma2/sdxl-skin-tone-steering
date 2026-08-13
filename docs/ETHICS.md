@@ -26,6 +26,10 @@ reinforce racial essentialism.
 Prefer synthetic portraits. For any real images, document consent, provenance,
 license, retention, and deletion. Do not commit face images or embeddings that
 could identify people. Treat face embeddings as sensitive biometric data.
+The confirmatory storage rules are machine-readable in
+`configs/collection_policy.yaml`: only synthetic SDXL portraits are allowed in
+the matrix, generated runs must remain ignored, face embeddings may not be
+persisted, and collection approval does not authorize publication or release.
 
 ## Measurement risks
 

@@ -10,10 +10,12 @@ identity preservation.
 
 ## Research status
 
-**Pilot / pre-confirmatory.** The repository now contains a fail-closed metric
-pipeline, a re-analysis of the historical single-seed sweep, a paper draft,
-and a preregisterable evaluation protocol. The pilot is useful engineering
-evidence but is not a statistically powered result.
+**Pilot / pre-confirmatory; collection blocked.** The repository now contains
+a fail-closed metric pipeline, a re-analysis of the historical single-seed
+sweep, a paper draft, a frozen evaluation/statistical protocol, and a Step 6
+readiness harness. The pilot and synthetic validation fixtures are useful
+engineering evidence but are not externally validated or statistically
+powered confirmatory results.
 
 | What the pilot establishes | What remains unestablished |
 |---|---|
@@ -27,7 +29,9 @@ SSIM” silently fell back to whole-image SSIM. The new
 panels, verifies every input hash, records model/package provenance, and makes
 the score unavailable whenever a required metric is missing. See the
 [metric specification](docs/METRIC_SPEC.md) and
-[claims register](docs/CLAIMS_AND_EVIDENCE.md).
+[claims register](docs/CLAIMS_AND_EVIDENCE.md). The exact precollection
+criteria and current evidence boundary are in the
+[Step 6 readiness specification](docs/STEP6_READINESS.md).
 
 ## Method
 
@@ -80,6 +84,18 @@ The frozen metric protocol is
 evaluation is fail-closed and currently supports Linux only (Python
 `>=3.10,<3.13`, MediaPipe `0.10.21`, CPU delegate). Plan-only confirmatory
 manifest generation remains portable and does not load SDXL.
+
+Build a deterministic, non-generative readiness report:
+
+```bash
+make readiness
+```
+
+The current report must remain blocked until external target-metric evidence,
+a supported Linux runtime, all metric artifacts, immutable SDXL/direction
+provenance, and explicit collection approval are supplied. Confirmatory
+`--execute` now also requires a passing `--readiness-report` bound to the exact
+config, model revision, and direction hash.
 
 Generate paired synthetic inputs and run the pilot:
 

@@ -1,0 +1,33 @@
+schema_version: "1.0"
+policy_id: tmlr_confirmatory_storage_privacy_v1
+status: active_pre_collection
+scope: skin_tone_steering_confirmatory_v1
+inputs:
+  synthetic_sdxl_portraits_only: true
+  real_person_images: prohibited
+  external_validation_inputs:
+    allowed_only_outside_confirmatory_matrix: true
+    require_documented_consent_or_license: true
+    require_minimum_necessary_access: true
+outputs:
+  generated_run_root: experiments/runs/
+  must_be_gitignored: true
+  commit_generated_portraits: prohibited
+  commit_face_embeddings: prohibited
+  persist_face_embeddings: prohibited
+  persist_only_aggregate_identity_similarity: true
+access:
+  least_privilege: true
+  public_upload_before_review: prohibited
+  external_submission_before_review: prohibited
+retention:
+  review_at_study_close: true
+  deletion_or_archival_decision_must_be_recorded: true
+publication:
+  separate_license_privacy_and_misuse_review_required: true
+  dataset_release_by_collection_approval: false
+  model_release_by_collection_approval: false
+  paper_submission_by_collection_approval: false
+incident_response:
+  stop_collection_on_scope_or_storage_violation: true
+  preserve_failure_metadata_without_preserving_disallowed_inputs: true

@@ -4,8 +4,8 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{xcolor}
 
-\title{Denoising-Time Steering Along a Paired Skin-Tone Direction in SDXL:\\
-A Reproducibility-First Pilot Study}
+\title{A Reproducibility-First Evaluation of Denoising-Time Skin-Tone
+Steering in SDXL}
 \author{Anonymous Author(s)\\\small Replace before submission}
 \date{}
 
@@ -27,9 +27,12 @@ face detection is unavailable. We therefore present the result as feasibility
 evidence, not evidence of identity preservation, disentanglement, or bias
 mitigation. Alongside the method, we contribute a claim--evidence register,
 deterministic encoding and cache behavior, provenance capture, missing-metric
-failure rules, and a preregisterable multi-seed comparison against prompt-only,
-post-hoc, and unmasked baselines. The work explicitly treats skin tone as a
-visual attribute and not as a proxy for race or ethnicity.
+failure rules, a frozen multi-seed comparison against prompt-only, post-hoc,
+and unmasked baselines, and a fail-closed precollection readiness gate. The
+work explicitly treats skin tone as a visual attribute and not as a proxy for
+race or ethnicity. Confirmatory collection remains blocked pending external
+target-metric validation, supported runtime and artifact verification, exact
+generation provenance, and explicit approval.
 \end{abstract}
 
 \section{Introduction}
@@ -109,6 +112,16 @@ means, standard deviations, medians, detector failures, and 95\% seed-level
 bootstrap confidence intervals; secondary confirmatory tests use Holm
 correction. A run cannot pass when a required metric is missing.
 
+Before confirmatory collection, all seven criteria in
+\texttt{tmlr\_collection\_readiness\_v1} must pass: held-out calibrated-
+instrument validation of the target metric, synthetic illumination and color
+sensitivity checks, the supported Linux metric runtime, checksum-verified
+metric weights, immutable SDXL and direction provenance, the storage/privacy
+policy, and an approval record bound to those exact inputs. The current
+non-generative validation passes only the deterministic synthetic checks and
+the versioned storage/privacy policy. It therefore provides implementation
+evidence but no confirmatory outcome or external-validity claim.
+
 \section{Pilot result}
 
 Figure~\ref{fig:pilot} shows one synthetic base portrait and four steered
@@ -154,7 +167,10 @@ prompt wording, brightness, age, gender presentation, hair, or facial features
 alongside skin tone. A center Gaussian is not a semantic skin mask. The same
 generator creates training and evaluation images, so model-specific artifacts
 may dominate. Face embeddings and skin-tone estimators can themselves exhibit
-demographic error. Finally, the additive update is scheduler-dependent and has
+demographic error. The relative-cheek CIELAB measure reduces a uniform exposure
+shift in a synthetic fixture but remains confounded by local face illumination;
+it has not been validated against calibrated measurements in the intended
+portrait domain. Finally, the additive update is scheduler-dependent and has
 not been validated across model or library revisions.
 
 \section{Conclusion}

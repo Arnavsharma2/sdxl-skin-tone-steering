@@ -9,6 +9,7 @@
 | Stepwise injection is better than post-hoc editing. | Qualitative development observation only. | Hypothesis. | Prespecified paired baseline and ablation. |
 | The method mitigates model bias. | No downstream audit or fairness outcome. | Unsupported and removed from project summary. | A defined harm model, audit task, baseline disparity, intervention, and uncertainty analysis. |
 | The direction represents race. | Skin-tone prompts and image brightness cannot establish race. | Rejected. | Not promotable; the construct is invalid. |
+| The target metric has deterministic fail-closed color and sensitivity behavior. | Step 6 synthetic uint8 RGB fixtures cover known color changes, uniform and local illumination, exact QC boundaries, invalid masks/detection, nonfinite input, checksum drift, and runtime drift. | Supported only as an implementation claim. | Held-out calibrated-instrument portrait validation under `tmlr_collection_readiness_v1`. |
 
 The legacy re-analysis is derived from composite PNG crops and has one
 generation seed; it is not a substitute for the prespecified confirmatory
