@@ -179,6 +179,48 @@ class ReportingConfig:
 
 
 @dataclass
+class MatchedChangeConfig:
+    """Frozen construction of preservation curves at matched target change."""
+
+    target_metric: str = "skin_tone_change"
+    scale: str = "absolute"
+    interpolation: str = "linear"
+    tie_handling: str = "mean_preservation_at_exact_target_change"
+    extrapolation: str = "prohibited"
+    support: str = "within_seed_method_pair_intersection"
+    minimum_abs_target_change: float = 2.0
+    grid_points: int = 101
+    minimum_unique_points_per_curve: int = 2
+    require_complete_monotonic_sweep: bool = True
+
+
+@dataclass
+class AnalysisComparisonConfig:
+    """One prespecified matched-change method contrast."""
+
+    id: str = ""
+    hypothesis: str = ""
+    role: str = "secondary"
+    method_a: str = ""
+    method_b: str = ""
+    metric: str = ""
+    favorable_direction: str = "higher"
+
+
+@dataclass
+class AnalysisConfig:
+    """Frozen confirmatory analysis settings."""
+
+    version: str = "tmlr_statistical_analysis_v1"
+    status: str = "frozen"
+    rng_seed: int = 20260813
+    paired_test: str = "two_sided_seed_sign_flip_randomization"
+    randomization_resamples: int = 10_000
+    matched_change: MatchedChangeConfig = field(default_factory=MatchedChangeConfig)
+    comparisons: list[AnalysisComparisonConfig] = field(default_factory=list)
+
+
+@dataclass
 class DataConfig:
     """Configuration for data handling."""
 
@@ -220,6 +262,7 @@ class ExperimentConfig:
     direction: DirectionConfig = field(default_factory=DirectionConfig)
     evaluation: EvaluationConfig = field(default_factory=EvaluationConfig)
     reporting: ReportingConfig = field(default_factory=ReportingConfig)
+    analysis: AnalysisConfig = field(default_factory=AnalysisConfig)
 
     # Experiment metadata
     experiment_name: str = "default"
@@ -305,6 +348,19 @@ class ExperimentConfig:
 
         if "reporting" in config_dict:
             config.reporting = ReportingConfig(**config_dict["reporting"])
+
+        if "analysis" in config_dict:
+            analysis_dict = config_dict["analysis"].copy()
+            if "matched_change" in analysis_dict:
+                analysis_dict["matched_change"] = MatchedChangeConfig(
+                    **analysis_dict["matched_change"]
+                )
+            if "comparisons" in analysis_dict:
+                analysis_dict["comparisons"] = [
+                    AnalysisComparisonConfig(**comparison)
+                    for comparison in analysis_dict["comparisons"]
+                ]
+            config.analysis = AnalysisConfig(**analysis_dict)
 
         if "data" in config_dict:
             data_dict = config_dict["data"].copy()
@@ -421,6 +477,15 @@ class ExperimentConfig:
 
         if matrix.pairing_unit != "seed" or evaluation.bootstrap.cluster_unit != "seed":
             raise ValueError("evaluation matrix and bootstrap must both use seed as the unit")
+        if (
+            evaluation.bootstrap.resamples != 10_000
+            or evaluation.bootstrap.confidence_level != 0.95
+        ):
+            raise ValueError(
+                "evaluation.bootstrap must use 10000 resamples and 0.95 confidence"
+            )
+        if evaluation.multiplicity_correction != "holm":
+            raise ValueError("evaluation.multiplicity_correction must be holm")
 
         expected_rows = len(evaluation.seeds) * len(evaluation.methods) * len(evaluation.alphas)
         nonzero_alphas = sum(alpha != 0 for alpha in evaluation.alphas)
@@ -447,6 +512,80 @@ class ExperimentConfig:
                 "skin-tone minimum_directional_change must match "
                 "thresholds.min_abs_skin_tone_change"
             )
+
+        analysis = self.analysis
+        matched = analysis.matched_change
+        if analysis.version != "tmlr_statistical_analysis_v1":
+            raise ValueError("analysis.version must be tmlr_statistical_analysis_v1")
+        if analysis.status != "frozen":
+            raise ValueError("analysis.status must be frozen")
+        if analysis.rng_seed != 20260813:
+            raise ValueError("analysis.rng_seed must be the frozen seed 20260813")
+        if analysis.paired_test != "two_sided_seed_sign_flip_randomization":
+            raise ValueError(
+                "analysis.paired_test must be two_sided_seed_sign_flip_randomization"
+            )
+        if analysis.randomization_resamples != evaluation.bootstrap.resamples:
+            raise ValueError(
+                "analysis.randomization_resamples must equal evaluation.bootstrap.resamples"
+            )
+        expected_matched = {
+            "target_metric": "skin_tone_change",
+            "scale": "absolute",
+            "interpolation": "linear",
+            "tie_handling": "mean_preservation_at_exact_target_change",
+            "extrapolation": "prohibited",
+            "support": "within_seed_method_pair_intersection",
+            "minimum_abs_target_change": self.thresholds.min_abs_skin_tone_change,
+            "grid_points": 101,
+            "minimum_unique_points_per_curve": 2,
+            "require_complete_monotonic_sweep": True,
+        }
+        if asdict(matched) != expected_matched:
+            raise ValueError("analysis.matched_change does not match the frozen definition")
+        # The explicitly exploratory pilot has no confirmatory family. Frozen
+        # settings above still validate so an omitted family cannot hide drift.
+        if not analysis.comparisons:
+            if self.status == "pilot" and self.reporting.primary_outcome == (
+                "engineering_feasibility_only"
+            ):
+                return
+            raise ValueError("analysis.comparisons must not be empty")
+        comparison_ids = [comparison.id for comparison in analysis.comparisons]
+        if len(comparison_ids) != len(set(comparison_ids)) or any(
+            not comparison_id for comparison_id in comparison_ids
+        ):
+            raise ValueError("analysis comparison ids must be non-empty and unique")
+        roles = [comparison.role for comparison in analysis.comparisons]
+        if roles.count("primary") != 1 or any(
+            role not in {"primary", "secondary"} for role in roles
+        ):
+            raise ValueError("analysis must declare one primary and zero or more secondaries")
+        preservation_metrics = set(evaluation.required_metrics) - {
+            "skin_tone_change",
+            "target_direction_correct",
+        }
+        for comparison in analysis.comparisons:
+            if comparison.method_a not in evaluation.methods:
+                raise ValueError(
+                    f"analysis comparison {comparison.id} has unknown method_a"
+                )
+            if comparison.method_b not in evaluation.methods:
+                raise ValueError(
+                    f"analysis comparison {comparison.id} has unknown method_b"
+                )
+            if comparison.method_a == comparison.method_b:
+                raise ValueError(
+                    f"analysis comparison {comparison.id} must compare different methods"
+                )
+            if comparison.metric not in preservation_metrics:
+                raise ValueError(
+                    f"analysis comparison {comparison.id} has unsupported metric"
+                )
+            if comparison.favorable_direction not in {"higher", "lower"}:
+                raise ValueError(
+                    f"analysis comparison {comparison.id} has invalid favorable_direction"
+                )
 
     def to_yaml(self, path: str):
         """
@@ -494,6 +633,7 @@ class ExperimentConfig:
             "direction": asdict(self.direction),
             "evaluation": asdict(self.evaluation),
             "reporting": asdict(self.reporting),
+            "analysis": asdict(self.analysis),
             "data": data_dict,
             "logging": logging_dict,
         }

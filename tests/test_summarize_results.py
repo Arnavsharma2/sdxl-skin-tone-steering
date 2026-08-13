@@ -1,7 +1,12 @@
 import json
 import math
 
-from scripts.summarize_results import bootstrap_mean_ci, build_audit, load_runs
+from scripts.summarize_results import (
+    bootstrap_mean_ci,
+    build_audit,
+    load_runs,
+    run_legacy_summary,
+)
 
 
 def test_bootstrap_interval_contains_sample_mean():
@@ -48,3 +53,30 @@ def test_audit_separates_unreported_success_from_unsuccessful_rows(tmp_path):
     assert audit["successful_rows"] == 0
     assert audit["unsuccessful_rows"] == 1
     assert audit["unreported_success_rows"] == 1
+
+
+def test_legacy_summary_is_explicitly_exploratory(tmp_path):
+    run_dir = tmp_path / "pilot"
+    run_dir.mkdir()
+    (run_dir / "metadata.json").write_text(
+        json.dumps(
+            {
+                "seed": 999,
+                "results": [
+                    {
+                        "method": "stepwise_masked",
+                        "alpha": 0.75,
+                        "evaluation_complete": True,
+                        "face_similarity": 0.9,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    audit = run_legacy_summary(run_dir, tmp_path / "summary", resamples=100)
+
+    assert audit["summary_role"] == "pilot_exploratory_descriptive"
+    assert audit["confirmatory_analysis"] is False
+    assert (tmp_path / "summary" / "summary.csv").is_file()

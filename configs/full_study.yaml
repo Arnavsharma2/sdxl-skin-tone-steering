@@ -61,3 +61,49 @@ reporting:
   uncertainty: seed_cluster_bootstrap_confidence_interval
   report_failures_and_missingness: true
   composite_score_is_primary: false
+analysis:
+  version: tmlr_statistical_analysis_v1
+  status: frozen
+  rng_seed: 20260813
+  paired_test: two_sided_seed_sign_flip_randomization
+  randomization_resamples: 10000
+  matched_change:
+    target_metric: skin_tone_change
+    scale: absolute
+    interpolation: linear
+    tie_handling: mean_preservation_at_exact_target_change
+    extrapolation: prohibited
+    support: within_seed_method_pair_intersection
+    minimum_abs_target_change: 2.0
+    grid_points: 101
+    minimum_unique_points_per_curve: 2
+    require_complete_monotonic_sweep: true
+  comparisons:
+    - id: h2_identity_masked_vs_prompt
+      hypothesis: H2
+      role: primary
+      method_a: stepwise_masked
+      method_b: prompt_only
+      metric: face_similarity
+      favorable_direction: higher
+    - id: h3_background_masked_vs_unmasked
+      hypothesis: H3
+      role: secondary
+      method_a: stepwise_masked
+      method_b: stepwise_unmasked
+      metric: background_ssim
+      favorable_direction: higher
+    - id: h4_identity_masked_vs_posthoc
+      hypothesis: H4
+      role: secondary
+      method_a: stepwise_masked
+      method_b: posthoc_latent
+      metric: face_similarity
+      favorable_direction: higher
+    - id: h4_lpips_masked_vs_posthoc
+      hypothesis: H4
+      role: secondary
+      method_a: stepwise_masked
+      method_b: posthoc_latent
+      metric: lpips
+      favorable_direction: lower

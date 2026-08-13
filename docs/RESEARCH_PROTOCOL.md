@@ -90,14 +90,21 @@ illumination or rendering confounds.
 
 ## Statistics
 
-- Report means, standard deviations, medians, and 95% subject-level bootstrap
-  confidence intervals.
-- Use paired method contrasts within each seed.
-- Correct confirmatory secondary tests using Holm's method.
-- Report effect sizes and intervals; do not interpret threshold crossing alone
-  as evidence.
-- Report missing values and detector failures by method and alpha. Never drop
-  them silently or treat missing metrics as passes.
+The exact analysis is frozen in
+[`docs/STATISTICAL_ANALYSIS.md`](STATISTICAL_ANALYSIS.md) and the machine-readable
+`analysis` block of `configs/full_study.yaml` before confirmatory collection.
+It uses paired method contrasts within generation seed, linear interpolation
+over positive-width within-seed common support in absolute target change, and
+prohibits extrapolation. Exact target-change ties are averaged before
+interpolation.
+
+The confirmatory estimate requires all prespecified seeds. A missing or invalid
+seed leaves it unavailable rather than silently complete-case filtering. The
+analysis uses the frozen 10,000-resample seed-cluster bootstrap with RNG seed
+`20260813`, two-sided paired seed sign-flip tests, and Holm correction for the
+prespecified secondary family. It reports effect sizes and intervals, plus
+means, standard deviations, medians, missing values, detector failures,
+generation failures, and file-integrity failures by method and alpha.
 
 ## Ablations
 
@@ -112,6 +119,8 @@ illumination or rendering confounds.
 The seed list, alpha grid, methods, and primary analysis are fixed before the
 confirmatory run. Exclude an image only for a machine-readable generation or
 file-integrity error. Face-detection failure is an outcome, not an exclusion.
+An excluded generation/file row remains in the planned denominator and makes
+any affected confirmatory matched-change contrast unavailable.
 
 ## Claim policy
 
