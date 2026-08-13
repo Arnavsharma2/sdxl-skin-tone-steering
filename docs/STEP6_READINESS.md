@@ -13,6 +13,9 @@ The machine-readable authority is
 `tmlr_collection_readiness_v1`. It was defined before confirmatory collection
 and requires all seven criteria below. The report schema is
 [`schemas/step6_readiness_report.schema.json`](../schemas/step6_readiness_report.schema.json).
+Reproducible post-Step 6 environment, artifact, external-validation,
+provenance, and approval instructions are in
+[`POST_STEP6_READINESS.md`](POST_STEP6_READINESS.md).
 
 ## Acceptance criteria
 
@@ -68,7 +71,7 @@ readiness-bound revision.
 ## Running the non-generative harness
 
 ```bash
-python3 scripts/validate_readiness.py \
+python3 -m scripts.validate_readiness \
   --output experiments/readiness/step6_readiness.json
 ```
 
@@ -77,6 +80,10 @@ external evidence, generation provenance, or approval is supplied. `--strict`
 writes the same audit report and exits 2 when blocked. Frozen metric locations
 can be overridden explicitly with repeatable `--artifact NAME=PATH` arguments;
 every override is still checksum-verified.
+
+`python3 -m scripts.download_metric_models` downloads all seven artifacts from
+the upstream registry to an ignored local cache and writes an override
+manifest. It does not grant redistribution rights.
 
 A future complete invocation additionally supplies:
 

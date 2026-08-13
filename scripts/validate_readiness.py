@@ -23,6 +23,23 @@ def _artifact_overrides(values: list[str]) -> dict[str, Path]:
     return overrides
 
 
+def _artifact_manifest(path: Path | None) -> dict[str, Path]:
+    if path is None:
+        return {}
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise argparse.ArgumentTypeError(f"cannot read --artifact-manifest: {exc}") from exc
+    if document.get("registry_id") != "tmlr_metric_artifact_sources_v1":
+        raise argparse.ArgumentTypeError("unexpected artifact-manifest registry_id")
+    values = document.get("artifact_overrides")
+    if not isinstance(values, dict) or not values:
+        raise argparse.ArgumentTypeError("artifact manifest has no artifact_overrides")
+    if not all(isinstance(name, str) and isinstance(value, str) for name, value in values.items()):
+        raise argparse.ArgumentTypeError("artifact manifest paths must be strings")
+    return {name: Path(value) for name, value in values.items()}
+
+
 def write_json(path: Path, payload: dict) -> None:
     """Atomically write a sorted machine-readable report."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -55,6 +72,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=Path("configs/validation_sources.yaml"),
     )
+    parser.add_argument(
+        "--metric-artifact-registry",
+        type=Path,
+        default=Path("configs/metric_artifacts.yaml"),
+    )
     parser.add_argument("--external-validation", type=Path)
     parser.add_argument("--generation-provenance", type=Path)
     parser.add_argument("--approval", type=Path)
@@ -64,6 +86,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=[],
         metavar="NAME=PATH",
         help="Override one frozen metric-artifact location; repeat as needed",
+    )
+    parser.add_argument(
+        "--artifact-manifest",
+        type=Path,
+        help="Use checksum-reverified paths written by download_metric_models.py",
     )
     parser.add_argument(
         "--output",
@@ -82,8 +109,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
         overrides = _artifact_overrides(args.artifact)
+        manifest_overrides = _artifact_manifest(args.artifact_manifest)
     except argparse.ArgumentTypeError as exc:
         raise SystemExit(str(exc)) from exc
+    duplicates = sorted(set(overrides) & set(manifest_overrides))
+    if duplicates:
+        raise SystemExit(f"artifact override duplicated by manifest: {', '.join(duplicates)}")
+    overrides = {**manifest_overrides, **overrides}
     report = build_readiness_report(
         project_root=args.project_root,
         study_config_path=args.config,
@@ -91,6 +123,7 @@ def main(argv: list[str] | None = None) -> int:
         readiness_protocol_path=args.readiness_protocol,
         storage_policy_path=args.storage_policy,
         source_registry_path=args.source_registry,
+        metric_artifact_registry_path=args.metric_artifact_registry,
         external_validation_path=args.external_validation,
         generation_provenance_path=args.generation_provenance,
         approval_path=args.approval,

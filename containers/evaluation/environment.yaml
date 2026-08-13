@@ -1,0 +1,17 @@
+schema_version: "1.0"
+environment_id: tmlr_linux_evaluation_py312_v1
+platform: linux/amd64
+base_image:
+  name: python:3.12.11-slim-bookworm
+  manifest_sha256: c00fc7b44d844b6da22861ec24af43968a5200eac4ec607b4725d585165d6b49
+debian_snapshot: 20260801T000000Z
+python_package_indexes:
+  default: https://pypi.org/simple
+  pytorch_cpu: https://download.pytorch.org/whl/cpu
+requirements_lock:
+  path: requirements/evaluation-linux-py312.lock
+  sha256: 9d08ba68a2a81fdc24c49571a84f7712b46e1873f07fb47fa7eca675a07ccc04
+scope:
+  evaluation_and_repository_verification_only: true
+  sdxl_generation_dependencies_included: false
+  model_weights_included: false

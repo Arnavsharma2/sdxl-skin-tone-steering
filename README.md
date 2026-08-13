@@ -97,6 +97,11 @@ provenance, and explicit collection approval are supplied. Confirmatory
 `--execute` now also requires a passing `--readiness-report` bound to the exact
 config, model revision, and direction hash.
 
+The pinned Linux image, official metric-artifact registry, held-out instrument
+validation analysis, and pending provenance/approval templates are documented
+in [`docs/POST_STEP6_READINESS.md`](docs/POST_STEP6_READINESS.md). These tools
+do not themselves provide external evidence or authorization.
+
 Generate paired synthetic inputs and run the pilot:
 
 ```bash

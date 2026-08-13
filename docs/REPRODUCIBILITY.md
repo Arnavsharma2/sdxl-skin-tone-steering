@@ -11,8 +11,11 @@ python3 -m pip install --upgrade pip
 python3 -m pip install -e '.[evaluation,dev]'
 ```
 
-The package ranges support development; a paper release must also archive an
-exact lock file or container digest. Record the SDXL model revision and weight
+The package ranges support development. The supported Linux evaluation path is
+pinned in `containers/evaluation/Dockerfile` and the hash-locked
+`requirements/evaluation-linux-py312.lock`; see
+[`POST_STEP6_READINESS.md`](POST_STEP6_READINESS.md). A paper release must also
+archive the built container digest. Record the SDXL model revision and weight
 hash after accepting its license. Hardware backends may not be bitwise
 identical, so do not mix CUDA, MPS, and CPU within one statistical comparison.
 

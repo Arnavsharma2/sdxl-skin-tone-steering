@@ -1,0 +1,11 @@
+schema_version: "1.0"
+validation_id: replace_with_stable_validation_id
+metric_id: relative_cheek_CIELAB_Lstar_v1
+observations:
+  path: private/observations.csv
+  sha256: replace_with_64_lowercase_hex
+analysis:
+  minimum_reference_change: 2.0
+  confidence_level: 0.95
+  bootstrap_resamples: 10000
+  rng_seed: 20260813

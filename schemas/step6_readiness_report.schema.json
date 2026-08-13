@@ -57,7 +57,8 @@
         "evaluation_protocol",
         "readiness_protocol",
         "storage_policy",
-        "source_registry"
+        "source_registry",
+        "metric_artifact_registry"
       ]
     },
     "inputs": {"type": "object"},
