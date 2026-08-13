@@ -195,6 +195,54 @@ def test_analysis_definition_rejects_bootstrap_and_support_drift(tmp_path):
         ExperimentConfig.from_yaml(invalid_path)
 
 
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        ("empty_id", "ids"),
+        ("duplicate_id", "ids"),
+        ("no_primary", "one primary"),
+        ("unknown_method", "unknown method_a"),
+        ("identical_methods", "different methods"),
+        ("unsupported_metric", "unsupported metric"),
+        ("invalid_direction", "invalid favorable_direction"),
+    ],
+)
+def test_analysis_definition_rejects_comparison_family_drift(tmp_path, mutation, message):
+    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
+    document = yaml.safe_load(source.read_text())
+    comparisons = document["analysis"]["comparisons"]
+    if mutation == "empty_id":
+        comparisons[0]["id"] = ""
+    elif mutation == "duplicate_id":
+        comparisons[1]["id"] = comparisons[0]["id"]
+    elif mutation == "no_primary":
+        comparisons[0]["role"] = "secondary"
+    elif mutation == "unknown_method":
+        comparisons[0]["method_a"] = "unknown"
+    elif mutation == "identical_methods":
+        comparisons[0]["method_b"] = comparisons[0]["method_a"]
+    elif mutation == "unsupported_metric":
+        comparisons[0]["metric"] = "overall_score"
+    elif mutation == "invalid_direction":
+        comparisons[0]["favorable_direction"] = "sideways"
+    invalid_path = tmp_path / f"{mutation}.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match=message):
+        ExperimentConfig.from_yaml(invalid_path)
+
+
+def test_nonpilot_cannot_omit_confirmatory_comparisons(tmp_path):
+    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
+    document = yaml.safe_load(source.read_text())
+    document["analysis"]["comparisons"] = []
+    invalid_path = tmp_path / "missing_comparisons.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match="comparisons must not be empty"):
+        ExperimentConfig.from_yaml(invalid_path)
+
+
 def test_protocol_loader_rejects_matching_id_with_field_drift(tmp_path):
     document = load_protocol()
     document["runtime"]["face_landmarker_delegate"] = "GPU"

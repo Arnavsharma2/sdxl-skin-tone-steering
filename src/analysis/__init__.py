@@ -5,6 +5,7 @@ from .statistics import (
     analyze_comparisons,
     holm_adjust,
     matched_seed_contrast,
+    paired_sign_flip_pvalue,
     seed_cluster_bootstrap_ci,
 )
 
@@ -13,5 +14,6 @@ __all__ = [
     "analyze_comparisons",
     "holm_adjust",
     "matched_seed_contrast",
+    "paired_sign_flip_pvalue",
     "seed_cluster_bootstrap_ci",
 ]

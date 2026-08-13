@@ -86,6 +86,7 @@ Generate paired synthetic inputs and run the pilot:
 ```bash
 python3 generate_training_data.py --n 8
 make pilot
+make summarize
 ```
 
 Direct CLI use remains available:

@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 
 import numpy as np
 import pandas as pd
@@ -234,7 +235,12 @@ def test_analyze_comparisons_pairs_within_seed_and_requires_every_seed():
     config.evaluation.seeds = [1, 2]
     config.evaluation.bootstrap.resamples = 200
     config.analysis.randomization_resamples = 200
-    config.analysis.comparisons = [comparison()]
+    primary = comparison()
+    config.analysis.comparisons = [
+        primary,
+        replace(primary, id="secondary_one", role="secondary"),
+        replace(primary, id="secondary_two", role="secondary"),
+    ]
     frame = pd.DataFrame(
         method_rows(1, "stepwise_masked", effect=1.0)
         + method_rows(1, "prompt_only")
@@ -244,9 +250,13 @@ def test_analyze_comparisons_pairs_within_seed_and_requires_every_seed():
 
     seed_results, aggregate = analyze_comparisons(frame, config)
 
-    assert seed_results["effect_a_minus_b"].tolist() == pytest.approx([1.0, 3.0])
+    assert seed_results.loc[
+        seed_results["comparison_id"].eq("synthetic"), "effect_a_minus_b"
+    ].tolist() == pytest.approx([1.0, 3.0])
     assert aggregate.loc[0, "estimate_a_minus_b"] == pytest.approx(2.0)
     assert aggregate.loc[0, "included_seed_count"] == 2
+    assert aggregate.loc[0, "holm_reason"] == "primary_not_in_secondary_family"
+    assert aggregate.loc[1:, "holm_adjusted_p"].notna().all()
 
     incomplete = frame.loc[~((frame["seed"] == 2) & (frame["method"] == "prompt_only"))]
     _, failed = analyze_comparisons(incomplete, config)
@@ -316,6 +326,24 @@ def test_failure_normalisation_reports_detector_generation_integrity_and_missing
     )
     assert complete_with_failure["generation_failure"]
     assert not complete_with_failure["analysis_row_valid"]
+
+    misleading_reason = _normalise_planned_result(
+        planned,
+        {
+            **planned,
+            "status": "complete",
+            "image_sha256": "image",
+            "base_image_sha256": "base",
+            "evaluation_complete": True,
+            "failure_reasons": ["no_face_detection_failure"],
+            **{
+                metric: (True if metric == "target_direction_correct" else 1.0)
+                for metric in config.evaluation.required_metrics
+            },
+        },
+        config,
+    )
+    assert not misleading_reason["face_detection_failure"]
 
 
 def test_lower_is_better_contrast_records_favorable_sign():
@@ -411,7 +439,9 @@ def test_analysis_bundle_preserves_matrix_and_machine_readable_failures(tmp_path
     output = tmp_path / "summary"
     audit = run_analysis(run_dir, output, config_path)
 
+    assert audit["expected_rows"] == 40
     assert audit["observed_long_rows"] == 40
+    assert audit["valid_analysis_rows"] == 38
     assert audit["face_detection_failure_rows"] == 1
     assert audit["file_integrity_failure_rows"] == 1
     assert not audit["confirmatory_analysis_computable"]

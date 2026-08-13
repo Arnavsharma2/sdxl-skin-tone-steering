@@ -64,6 +64,16 @@ any prespecified confirmatory estimate is unavailable. See
 [`STATISTICAL_ANALYSIS.md`](STATISTICAL_ANALYSIS.md) for the exact estimands,
 support rules, deterministic RNG, Holm family, and failure behavior.
 
+Schema, matrix, config-hash, protocol-hash, and per-seed metadata-hash
+mismatches intentionally fail before any analysis output is written: the input
+cannot be associated safely with the frozen study. This is distinct from
+well-formed but incomplete results, for which the audit bundle is written and
+`--strict` exits 2 afterward.
+
+`make summarize` remains the exploratory pilot workflow and writes no
+confirmatory estimates. `make confirmatory-summarize` invokes the strict frozen
+analysis shown above.
+
 Audited metric execution is supported only on Linux with Python
 `>=3.10,<3.13`, MediaPipe `0.10.21`, and the CPU Face Landmarker delegate.
 Headless macOS is rejected before graph construction because the pinned wheel

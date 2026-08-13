@@ -1,4 +1,4 @@
-.PHONY: install metric-models test lint check pilot confirmatory-plan evaluate summarize paper clean-paper
+.PHONY: install metric-models test lint check pilot confirmatory-plan evaluate summarize confirmatory-summarize paper clean-paper
 
 install:
 	python3 -m pip install -e '.[evaluation,dev]'
@@ -24,6 +24,9 @@ evaluate:
 	python3 scripts/evaluate_sweep.py experiments/results --output experiments/evaluation --operating-max-alpha 0.75 --strict
 
 summarize:
+	python3 scripts/summarize_results.py experiments/runs/pilot_seed_999 --output experiments/summary/pilot --legacy-descriptive
+
+confirmatory-summarize:
 	python3 scripts/summarize_results.py experiments/runs/confirmatory_v1 --config configs/full_study.yaml --output experiments/summary --strict
 
 paper:

@@ -55,6 +55,7 @@ def analysis_code_provenance() -> dict[str, Any]:
             check=True,
             capture_output=True,
             text=True,
+            timeout=30,
         ).stdout.strip()
         dirty = bool(
             subprocess.run(
@@ -63,9 +64,10 @@ def analysis_code_provenance() -> dict[str, Any]:
                 check=True,
                 capture_output=True,
                 text=True,
+                timeout=30,
             ).stdout.strip()
         )
-    except (OSError, subprocess.CalledProcessError):
+    except (OSError, subprocess.SubprocessError):
         commit, dirty = None, None
     return {"analysis_code_commit": commit, "analysis_code_dirty": dirty}
 
@@ -161,7 +163,7 @@ def _normalise_planned_result(
         {
             "failure_reasons": json.dumps(reasons, separators=(",", ":")),
             "failure_reason_count": len(reasons),
-            "face_detection_failure": any("face_detection_failure" in reason for reason in reasons),
+            "face_detection_failure": "face_detection_failure" in set(reasons),
             "generation_failure": any(
                 reason.startswith("generation_failure:")
                 or reason.startswith("failure:base_generation:")
@@ -628,11 +630,41 @@ def build_audit(long_df: pd.DataFrame, *, resamples: int) -> dict:
     }
 
 
+def run_legacy_summary(root: Path, output: Path, *, resamples: int) -> dict[str, Any]:
+    """Write historical exploratory pilot outputs without confirmatory inference."""
+    long_df = load_runs(root)
+    if long_df.empty:
+        raise ValueError(f"No result rows found under {root}")
+    summary = summarize(long_df, resamples=resamples)
+    audit = build_audit(long_df, resamples=resamples)
+    audit.update(
+        {
+            "schema_version": "legacy_descriptive_v1",
+            "summary_role": "pilot_exploratory_descriptive",
+            "confirmatory_analysis": False,
+        }
+    )
+    output.mkdir(parents=True, exist_ok=True)
+    long_df.to_csv(output / "results_long.csv", index=False)
+    summary.to_csv(output / "summary.csv", index=False)
+    (output / "audit.json").write_text(
+        json.dumps(audit, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    return audit
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("input", type=Path, help="Confirmatory run containing study_manifest.json")
+    parser.add_argument("input", type=Path, help="Confirmatory run or legacy pilot directory")
     parser.add_argument("--output", type=Path, default=Path("experiments/summary"))
     parser.add_argument("--config", type=Path, default=Path("configs/full_study.yaml"))
+    parser.add_argument("--resamples", type=int, default=10_000)
+    parser.add_argument(
+        "--legacy-descriptive",
+        action="store_true",
+        help="Write exploratory pilot summaries; never run confirmatory contrasts",
+    )
     parser.add_argument(
         "--strict",
         action="store_true",
@@ -643,6 +675,13 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if args.legacy_descriptive:
+        if args.strict:
+            raise ValueError("--strict is only available for confirmatory analysis")
+        audit = run_legacy_summary(args.input, args.output, resamples=args.resamples)
+        print(f"Wrote exploratory pilot summary to {args.output}")
+        print(f"Complete evaluations: {audit['complete_rows']}/{audit['rows']}")
+        return
     audit = run_analysis(args.input, args.output, args.config)
     print(f"Wrote audited analysis outputs to {args.output}")
     print(

@@ -515,10 +515,6 @@ class ExperimentConfig:
 
         analysis = self.analysis
         matched = analysis.matched_change
-        # Pilot and legacy configurations predate confirmatory inference and do
-        # not declare comparisons. Their evaluation protocol remains valid.
-        if not analysis.comparisons:
-            return
         if analysis.version != "tmlr_statistical_analysis_v1":
             raise ValueError("analysis.version must be tmlr_statistical_analysis_v1")
         if analysis.status != "frozen":
@@ -547,6 +543,14 @@ class ExperimentConfig:
         }
         if asdict(matched) != expected_matched:
             raise ValueError("analysis.matched_change does not match the frozen definition")
+        # The explicitly exploratory pilot has no confirmatory family. Frozen
+        # settings above still validate so an omitted family cannot hide drift.
+        if not analysis.comparisons:
+            if self.status == "pilot" and self.reporting.primary_outcome == (
+                "engineering_feasibility_only"
+            ):
+                return
+            raise ValueError("analysis.comparisons must not be empty")
         comparison_ids = [comparison.id for comparison in analysis.comparisons]
         if len(comparison_ids) != len(set(comparison_ids)) or any(
             not comparison_id for comparison_id in comparison_ids
@@ -557,11 +561,9 @@ class ExperimentConfig:
             role not in {"primary", "secondary"} for role in roles
         ):
             raise ValueError("analysis must declare one primary and zero or more secondaries")
-        preservation_metrics = {
-            "face_similarity",
-            "lpips",
-            "background_ssim",
-            "total_pose_diff",
+        preservation_metrics = set(evaluation.required_metrics) - {
+            "skin_tone_change",
+            "target_direction_correct",
         }
         for comparison in analysis.comparisons:
             if comparison.method_a not in evaluation.methods:
