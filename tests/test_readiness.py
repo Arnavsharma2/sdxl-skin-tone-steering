@@ -330,10 +330,23 @@ def test_execution_gate_rebuilds_bound_inputs_and_rejects_blockers(tmp_path, mon
         artifact.write_bytes(f"metric fixture {name}".encode())
         artifact_overrides[name] = artifact
         frozen_artifacts[name] = {"location": artifact.name, "sha256": digest(artifact)}
+    metric_registry_document = yaml.safe_load(
+        (ROOT / "configs" / "metric_artifacts.yaml").read_text()
+    )
+    for name, specification in frozen_artifacts.items():
+        metric_registry_document["artifacts"][name]["protocol_location"] = specification["location"]
+        metric_registry_document["artifacts"][name]["sha256"] = specification["sha256"]
+    metric_registry = tmp_path / "metric_artifacts.yaml"
+    metric_registry.write_text(yaml.safe_dump(metric_registry_document, sort_keys=False))
     monkeypatch.setattr(
         readiness_module,
         "load_protocol",
         lambda *_args, **_kwargs: {"required_artifacts": frozen_artifacts},
+    )
+    monkeypatch.setattr(
+        readiness_module,
+        "DEFAULT_METRIC_ARTIFACT_REGISTRY_PATH",
+        metric_registry,
     )
     monkeypatch.setattr(
         readiness_module,
@@ -350,6 +363,7 @@ def test_execution_gate_rebuilds_bound_inputs_and_rejects_blockers(tmp_path, mon
             generation_provenance_path=provenance,
             approval_path=approval,
             artifact_overrides=artifact_overrides,
+            metric_artifact_registry_path=metric_registry,
         )
     )
     assert report["decision"]["collection_ready"]

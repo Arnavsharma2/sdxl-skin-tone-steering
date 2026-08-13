@@ -44,6 +44,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_READINESS_PROTOCOL_PATH = PROJECT_ROOT / "configs" / "step6_readiness.yaml"
 DEFAULT_STORAGE_POLICY_PATH = PROJECT_ROOT / "configs" / "collection_policy.yaml"
 DEFAULT_SOURCE_REGISTRY_PATH = PROJECT_ROOT / "configs" / "validation_sources.yaml"
+DEFAULT_METRIC_ARTIFACT_REGISTRY_PATH = PROJECT_ROOT / "configs" / "metric_artifacts.yaml"
 
 
 class ReadinessError(ValueError):
@@ -123,6 +124,38 @@ def _validate_readiness_protocol(document: Mapping[str, Any]) -> None:
         raise ReadinessError("Readiness criterion set or order has drifted")
     if not all(value.get("required") is True for value in criteria.values()):
         raise ReadinessError("Every Step 6 readiness criterion must remain required")
+
+
+def _validate_metric_artifact_registry(
+    document: Mapping[str, Any], metric_protocol: Mapping[str, Any]
+) -> None:
+    if document.get("schema_version") != "1.0" or document.get("registry_id") != (
+        "tmlr_metric_artifact_sources_v1"
+    ):
+        raise ReadinessError("Unexpected metric-artifact source registry")
+    policy = document.get("policy", {})
+    if (
+        policy.get("local_evaluation_downloads_only") is not True
+        or policy.get("commit_downloaded_weights") != "prohibited"
+        or policy.get("redistribution_without_separate_review") != "prohibited"
+        or policy.get("checksum_algorithm") != "sha256"
+    ):
+        raise ReadinessError("Metric-artifact source policy has drifted")
+    frozen = metric_protocol["required_artifacts"]
+    artifacts = document.get("artifacts")
+    if not isinstance(artifacts, dict) or tuple(artifacts) != tuple(frozen):
+        raise ReadinessError("Metric-artifact source set or order has drifted")
+    for name, item in artifacts.items():
+        if not isinstance(item, dict):
+            raise ReadinessError(f"Metric-artifact source {name} is not a mapping")
+        if item.get("protocol_location") != frozen[name]["location"]:
+            raise ReadinessError(f"Metric-artifact location drifted for {name}")
+        if item.get("sha256") != frozen[name]["sha256"]:
+            raise ReadinessError(f"Metric-artifact checksum drifted for {name}")
+        if not str(item.get("source_url", "")).startswith("https://"):
+            raise ReadinessError(f"Metric-artifact upstream URL missing for {name}")
+        if not str(item.get("weight_redistribution_status", "")).startswith("unresolved_"):
+            raise ReadinessError(f"Metric-artifact licensing gap was removed for {name}")
 
 
 def _portrait(
@@ -618,6 +651,7 @@ def _resolve_artifact_path(
 
 def _artifact_criterion(
     metric_protocol: Mapping[str, Any],
+    source_registry: Mapping[str, Any],
     *,
     project_root: Path,
     overrides: Mapping[str, Path],
@@ -632,7 +666,18 @@ def _artifact_criterion(
             name=name,
         )
         result = inspect_artifact(path, specification["sha256"], name=name)
-        evidence.append(result.to_dict())
+        item = result.to_dict()
+        source = source_registry["artifacts"][name]
+        item.update(
+            {
+                "source_url": source["source_url"],
+                "source_revision": source["source_revision"],
+                "code_license": source["code_license"],
+                "weight_redistribution_status": source["weight_redistribution_status"],
+                "redistribution_authorized": False,
+            }
+        )
+        evidence.append(item)
         if not result.verified:
             blockers.append(_block(f"metric_artifact_{result.status}", f"{name}: {result.status}"))
     return _criterion(
@@ -904,6 +949,7 @@ def build_readiness_report(
     readiness_protocol_path: Path,
     storage_policy_path: Path,
     source_registry_path: Path,
+    metric_artifact_registry_path: Path = DEFAULT_METRIC_ARTIFACT_REGISTRY_PATH,
     external_validation_path: Path | None = None,
     generation_provenance_path: Path | None = None,
     approval_path: Path | None = None,
@@ -916,10 +962,13 @@ def build_readiness_report(
     readiness_protocol_path = readiness_protocol_path.resolve()
     storage_policy_path = storage_policy_path.resolve()
     source_registry_path = source_registry_path.resolve()
+    metric_artifact_registry_path = metric_artifact_registry_path.resolve()
     readiness = _load_yaml(readiness_protocol_path)
     _validate_readiness_protocol(readiness)
     config = ExperimentConfig.from_yaml(study_config_path)
     metric_protocol = load_protocol(evaluation_protocol_path)
+    metric_artifact_registry = _load_yaml(metric_artifact_registry_path)
+    _validate_metric_artifact_registry(metric_artifact_registry, metric_protocol)
     if readiness["study_id"] != config.study_id:
         raise ReadinessError("Readiness study_id does not match the frozen study")
     if readiness["evaluation_protocol_id"] != config.evaluation.protocol_id:
@@ -964,6 +1013,7 @@ def build_readiness_report(
     runtime = _runtime_criterion()
     artifacts = _artifact_criterion(
         metric_protocol,
+        metric_artifact_registry,
         project_root=project_root,
         overrides=artifact_overrides or {},
     )
@@ -1012,6 +1062,7 @@ def build_readiness_report(
             "readiness_protocol": readiness_record,
             "storage_policy": _file_record(storage_policy_path),
             "source_registry": _file_record(source_registry_path),
+            "metric_artifact_registry": _file_record(metric_artifact_registry_path),
         },
         "inputs": {
             "external_validation_id": validation_id,
@@ -1080,6 +1131,7 @@ def validate_collection_readiness_report(
         "readiness_protocol": readiness_protocol_sha256,
         "storage_policy": storage_policy_sha256,
         "source_registry": source_registry_sha256,
+        "metric_artifact_registry": sha256_file(DEFAULT_METRIC_ARTIFACT_REGISTRY_PATH)[0],
     }
     for name, expected_sha256 in expected_authorities.items():
         record = authorities.get(name, {})
@@ -1128,11 +1180,24 @@ def validate_collection_readiness_report(
         _reverify_artifact_verification(item, label="external_validation_artifact")
     metric_evidence = by_id["checksum_verified_metric_artifacts"]["evidence"]
     frozen_artifacts = load_protocol()["required_artifacts"]
+    metric_registry = _load_yaml(DEFAULT_METRIC_ARTIFACT_REGISTRY_PATH)
+    _validate_metric_artifact_registry(metric_registry, load_protocol())
     if {item.get("name") for item in metric_evidence} != set(frozen_artifacts):
         raise ReadinessError("Metric-artifact evidence set is incomplete")
     for item in metric_evidence:
         if item.get("expected_sha256") != frozen_artifacts[item["name"]]["sha256"]:
             raise ReadinessError("Metric-artifact expected checksum drifted")
+        registered = metric_registry["artifacts"][item["name"]]
+        for field in (
+            "source_url",
+            "source_revision",
+            "code_license",
+            "weight_redistribution_status",
+        ):
+            if item.get(field) != registered[field]:
+                raise ReadinessError(f"Metric-artifact {field} drifted")
+        if item.get("redistribution_authorized") is not False:
+            raise ReadinessError("Metric-artifact evidence cannot authorize redistribution")
         _reverify_artifact_verification(item, label="metric_artifact")
     provenance_evidence = by_id["immutable_generation_provenance"]["evidence"]
     if len(provenance_evidence) != 1 or provenance_evidence[0].get("status") != "passed":
@@ -1168,6 +1233,7 @@ def validate_collection_readiness_report(
         readiness_protocol_path=Path(authorities["readiness_protocol"]["path"]),
         storage_policy_path=Path(authorities["storage_policy"]["path"]),
         source_registry_path=Path(authorities["source_registry"]["path"]),
+        metric_artifact_registry_path=Path(authorities["metric_artifact_registry"]["path"]),
         external_validation_path=Path(external_evidence[0]["record"]["path"]),
         generation_provenance_path=Path(provenance_evidence[0]["record"]["path"]),
         approval_path=Path(approval_evidence[0]["record"]["path"]),

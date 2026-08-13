@@ -27,6 +27,9 @@ experiments/legacy_reanalysis/counterfactuals/
 data/generated/
 data/embeddings/
 models/*.task
+.artifacts/
+external_validation/private/
+external_validation/output/
 
 # Jupyter
 .ipynb_checkpoints/

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Held-out instrument-validation analysis manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "validation_id", "metric_id", "observations", "analysis"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "validation_id": {"type": "string", "minLength": 1},
+    "metric_id": {"const": "relative_cheek_CIELAB_Lstar_v1"},
+    "observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_reference_change", "confidence_level", "bootstrap_resamples", "rng_seed"],
+      "properties": {
+        "minimum_reference_change": {"const": 2.0},
+        "confidence_level": {"const": 0.95},
+        "bootstrap_resamples": {"type": "integer", "minimum": 1000},
+        "rng_seed": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

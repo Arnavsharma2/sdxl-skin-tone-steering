@@ -1,0 +1,19 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Linux CPU evaluation and deterministic repository verification only.
+# Generation dependencies are intentionally excluded from this environment.
+facenet-pytorch==2.5.3
+lpips==0.1.4
+mediapipe==0.10.21
+numpy==1.26.4
+opencv-contrib-python==4.11.0.86
+pandas==2.3.2
+Pillow==10.2.0
+pytest==8.4.2
+PyYAML==6.0.2
+ruff==0.13.2
+scikit-image==0.25.2
+scikit-learn==1.7.2
+scipy==1.16.2
+torch==2.2.2+cpu
+torchvision==0.17.2+cpu
