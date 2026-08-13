@@ -298,6 +298,25 @@ def test_failure_normalisation_reports_detector_generation_integrity_and_missing
     assert complete_without_hashes["file_integrity_failure"]
     assert not complete_without_hashes["analysis_row_valid"]
 
+    complete_with_failure = _normalise_planned_result(
+        planned,
+        {
+            **planned,
+            "status": "complete",
+            "image_sha256": "image",
+            "base_image_sha256": "base",
+            "evaluation_complete": True,
+            "failure": {"stage": "row_generation", "exception_type": "RuntimeError"},
+            **{
+                metric: (True if metric == "target_direction_correct" else 1.0)
+                for metric in config.evaluation.required_metrics
+            },
+        },
+        config,
+    )
+    assert complete_with_failure["generation_failure"]
+    assert not complete_with_failure["analysis_row_valid"]
+
 
 def test_lower_is_better_contrast_records_favorable_sign():
     frame = pd.DataFrame(

@@ -163,13 +163,21 @@ def _normalise_planned_result(
             "failure_reason_count": len(reasons),
             "face_detection_failure": any("face_detection_failure" in reason for reason in reasons),
             "generation_failure": any(
-                reason.startswith("generation_failure:") for reason in reasons
+                reason.startswith("generation_failure:")
+                or reason.startswith("failure:base_generation:")
+                or reason.startswith("failure:row_generation:")
+                or reason.startswith("failure:setup:")
+                for reason in reasons
             ),
             "file_integrity_failure": any(
                 reason.startswith("file_integrity_failure:") for reason in reasons
             ),
             "analysis_row_valid": bool(
-                generation_valid and integrity_valid and required_metric_valid and reported_complete
+                generation_valid
+                and integrity_valid
+                and required_metric_valid
+                and reported_complete
+                and not reasons
             ),
         }
     )
