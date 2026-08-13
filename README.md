@@ -48,7 +48,7 @@ posterior mode for reproducibility.
 paper/                         LaTeX pilot manuscript and bibliography
 docs/                          protocol, ethics, claims, reproducibility
 configs/                       pilot and planned confirmatory study manifests
-scripts/summarize_results.py   long-form aggregation + seed bootstrap intervals
+scripts/summarize_results.py   frozen matched-change analysis + audit outputs
 tests/                         lightweight unit tests
 src/models/                    SDXL generation, encoding, and stepwise steering
 src/latent/                    direction estimation and latent manipulation
@@ -86,7 +86,6 @@ Generate paired synthetic inputs and run the pilot:
 ```bash
 python3 generate_training_data.py --n 8
 make pilot
-make summarize
 ```
 
 Direct CLI use remains available:
@@ -129,6 +128,12 @@ failure handling, and bootstrap analysis. Before making confirmatory claims:
 
 The manuscript source is [paper/main.tex](paper/main.tex). Build it with
 `make paper` after installing a TeX distribution with `latexmk`.
+
+The matched-change estimator, complete-seed availability rule, seed-cluster
+bootstrap, paired randomization tests, Holm family, deterministic RNG, and
+failure outputs are frozen in the
+[statistical analysis specification](docs/STATISTICAL_ANALYSIS.md). Running the
+analysis does not load SDXL or generate portraits.
 
 ## Responsible use
 

@@ -10,7 +10,7 @@ test:
 	python3 -m pytest
 
 lint:
-	python3 -m ruff check scripts tests src/metrics src/utils/reproducibility.py src/latent/vector_discovery.py
+	python3 -m ruff check scripts tests src/analysis src/metrics src/utils/reproducibility.py src/latent/vector_discovery.py
 
 check: test lint
 
@@ -24,7 +24,7 @@ evaluate:
 	python3 scripts/evaluate_sweep.py experiments/results --output experiments/evaluation --operating-max-alpha 0.75 --strict
 
 summarize:
-	python3 scripts/summarize_results.py experiments/runs --output experiments/summary
+	python3 scripts/summarize_results.py experiments/runs/confirmatory_v1 --config configs/full_study.yaml --output experiments/summary --strict
 
 paper:
 	cd paper && latexmk -pdf -interaction=nonstopmode main.tex

@@ -48,6 +48,22 @@ Actual generation additionally requires explicit `--execute`,
 `--model-revision`, and `--direction` arguments and must not be started before
 the protocol-validation and approval gates are satisfied.
 
+After evaluation metadata have been attached to every planned result row, run
+the frozen statistical analysis with:
+
+```bash
+python3 scripts/summarize_results.py experiments/runs/confirmatory_v1 \
+  --config configs/full_study.yaml --output experiments/summary --strict
+```
+
+The command never generates images or loads SDXL. It verifies config and
+protocol hashes against the study manifest, preserves all planned cells, and
+writes long-form, descriptive, seed-contrast, confirmatory, failure-count, and
+JSON audit outputs. `--strict` writes the audit bundle first and then exits 2 if
+any prespecified confirmatory estimate is unavailable. See
+[`STATISTICAL_ANALYSIS.md`](STATISTICAL_ANALYSIS.md) for the exact estimands,
+support rules, deterministic RNG, Holm family, and failure behavior.
+
 Audited metric execution is supported only on Linux with Python
 `>=3.10,<3.13`, MediaPipe `0.10.21`, and the CPU Face Landmarker delegate.
 Headless macOS is rejected before graph construction because the pinned wheel
@@ -59,6 +75,10 @@ evaluation; do not substitute a detector or whole-image metric.
 - VAE encoding uses the posterior mode by default.
 - Python, NumPy, and PyTorch are seeded by the CLI seed.
 - Generation seed is shared within a counterfactual set.
+- Statistical resampling uses whole generation seeds with all paired methods
+  and alphas retained; it never resamples image rows.
+- Confirmatory bootstrap and sign-flip streams use recorded analysis seed
+  `20260813` and comparison-specific deterministic stream derivation.
 - Full bitwise determinism is not promised across hardware or library versions.
 
 ## Artifact policy

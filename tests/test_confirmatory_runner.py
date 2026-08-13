@@ -68,6 +68,10 @@ def test_plan_only_writes_complete_metadata_without_loading_model(tmp_path):
     }
     assert len(manifest["rows"]) == 600
     assert manifest["config"]["sha256"]
+    assert manifest["config"]["parsed"]["analysis"]["version"] == (
+        "tmlr_statistical_analysis_v1"
+    )
+    assert manifest["config"]["parsed"]["analysis"]["rng_seed"] == 20260813
     assert manifest["provenance"]["git"]["commit"]
     assert manifest["thresholds"] == vars(runner.config.thresholds)
     assert manifest["metric_protocol"]["document"]["status"] == "frozen"

@@ -48,6 +48,28 @@ def test_confirmatory_training_and_evaluation_seeds_are_disjoint():
     assert set(config.direction.held_out_seeds()).isdisjoint(config.evaluation.seeds)
 
 
+def test_confirmatory_analysis_settings_are_frozen_before_collection():
+    config = ExperimentConfig.from_yaml(REPOSITORY_ROOT / "configs" / "full_study.yaml")
+
+    assert config.analysis.version == "tmlr_statistical_analysis_v1"
+    assert config.analysis.status == "frozen"
+    assert config.analysis.rng_seed == 20260813
+    assert config.evaluation.bootstrap.resamples == 10_000
+    assert config.evaluation.bootstrap.cluster_unit == "seed"
+    assert config.analysis.randomization_resamples == 10_000
+    assert config.analysis.matched_change.grid_points == 101
+    assert config.analysis.matched_change.extrapolation == "prohibited"
+    assert [comparison.id for comparison in config.analysis.comparisons] == [
+        "h2_identity_masked_vs_prompt",
+        "h3_background_masked_vs_unmasked",
+        "h4_identity_masked_vs_posthoc",
+        "h4_lpips_masked_vs_posthoc",
+    ]
+    assert [comparison.role for comparison in config.analysis.comparisons].count(
+        "primary"
+    ) == 1
+
+
 def test_confirmatory_thresholds_match_evaluator_defaults():
     config = ExperimentConfig.from_yaml(REPOSITORY_ROOT / "configs" / "full_study.yaml")
 
@@ -143,6 +165,33 @@ def test_matching_protocol_id_cannot_hide_alpha_grid_drift(tmp_path):
     invalid_path.write_text(yaml.safe_dump(document))
 
     with pytest.raises(ValueError, match="evaluation.alphas do not match"):
+        ExperimentConfig.from_yaml(invalid_path)
+
+
+def test_analysis_definition_rejects_bootstrap_and_support_drift(tmp_path):
+    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
+    document = yaml.safe_load(source.read_text())
+    document["analysis"]["randomization_resamples"] = 9_999
+    invalid_path = tmp_path / "invalid_resamples.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match="randomization_resamples"):
+        ExperimentConfig.from_yaml(invalid_path)
+
+    document = yaml.safe_load(source.read_text())
+    document["analysis"]["matched_change"]["extrapolation"] = "linear"
+    invalid_path = tmp_path / "invalid_extrapolation.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match="matched_change"):
+        ExperimentConfig.from_yaml(invalid_path)
+
+    document = yaml.safe_load(source.read_text())
+    document["analysis"]["rng_seed"] = 7
+    invalid_path = tmp_path / "invalid_rng.yaml"
+    invalid_path.write_text(yaml.safe_dump(document))
+
+    with pytest.raises(ValueError, match="frozen seed"):
         ExperimentConfig.from_yaml(invalid_path)
 
 
