@@ -300,6 +300,12 @@ def load_confirmatory_results(
                 duplicate_keys.add(key)
             else:
                 metadata_results[key] = result
+    unexpected_metadata_keys = sorted(set(metadata_results) - set(expected_keys))
+    if unexpected_metadata_keys:
+        raise ValueError(
+            "Seed metadata contains cells outside the frozen evaluation matrix: "
+            f"{unexpected_metadata_keys[:5]}"
+        )
 
     source_commit = manifest.get("provenance", {}).get("git", {}).get("commit")
     if not source_commit:
@@ -322,6 +328,12 @@ def load_confirmatory_results(
             config,
             integrity_reasons=_file_integrity_reasons(root, planned, result, file_cache),
         )
+        if result is not None and result.get("row_id") != planned.get("row_id"):
+            reasons = json.loads(row["failure_reasons"])
+            reasons.append("result_row_id_mismatch")
+            row["failure_reasons"] = json.dumps(sorted(set(reasons)), separators=(",", ":"))
+            row["failure_reason_count"] = len(set(reasons))
+            row["analysis_row_valid"] = False
         if key in duplicate_keys:
             reasons = json.loads(row["failure_reasons"])
             reasons.append("duplicate_result_row")
