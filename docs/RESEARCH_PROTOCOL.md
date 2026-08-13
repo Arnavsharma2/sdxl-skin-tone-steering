@@ -61,8 +61,12 @@ descriptor: the inner magnitude uses “subtly” and the outer magnitude uses
 
 Alpha zero reuses the exact base image for all four methods. Generation is
 disabled unless `--execute` is supplied with a direction artifact and model
-revision. This execution gate does not itself constitute approval to collect
-the confirmatory data.
+revision. It also requires a passing `tmlr_collection_readiness_v1` report
+bound to the exact configuration, metric protocol, model revision, direction
+hash, external validation, and explicit approval. The model's resolved
+revision must equal the requested immutable revision. See
+[`STEP6_READINESS.md`](STEP6_READINESS.md). None of these mechanical checks by
+itself constitutes or authenticates approval to collect the confirmatory data.
 
 ## Outcomes
 

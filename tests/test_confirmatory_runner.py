@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 
@@ -16,10 +17,43 @@ from scripts.run_confirmatory import (
     build_plan,
     prompt_for_alpha,
 )
+from src.metrics.protocol import protocol_record
 from src.utils.config import ExperimentConfig
+from src.validation.readiness import REQUIRED_CRITERIA
 
 REPOSITORY_ROOT = Path(__file__).parents[1]
 CONFIG_PATH = REPOSITORY_ROOT / "configs" / "full_study.yaml"
+MODEL_REVISION = "a" * 40
+
+
+def file_digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write_passing_readiness(path, config_path, direction_path, model_revision=MODEL_REVISION):
+    report = {
+        "schema_version": "1.0",
+        "readiness_id": "tmlr_collection_readiness_v1",
+        "study_id": "skin_tone_steering_confirmatory_v1",
+        "decision": {"collection_ready": True, "blockers": []},
+        "authorities": {
+            "study_config": {"sha256": file_digest(config_path)},
+            "evaluation_protocol": {"sha256": protocol_record()["sha256"]},
+        },
+        "inputs": {
+            "generation_provenance": {
+                "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
+                "model_revision": model_revision,
+                "direction_sha256": file_digest(direction_path),
+            }
+        },
+        "criteria": [
+            {"criterion_id": criterion_id, "required": True, "status": "passed"}
+            for criterion_id in REQUIRED_CRITERIA
+        ],
+    }
+    path.write_text(json.dumps(report))
+    return path
 
 
 def test_confirmatory_plan_contains_exact_declared_matrix():
@@ -87,12 +121,19 @@ def test_execute_requires_revision_and_direction_artifact(tmp_path):
     with pytest.raises(ValueError, match="--model-revision"):
         runner._validate_execution_inputs()
 
-    runner.model_revision = "model-commit"
+    runner.model_revision = MODEL_REVISION
     with pytest.raises(ValueError, match="--direction"):
         runner._validate_execution_inputs()
 
+    direction_path = tmp_path / "direction.pt"
+    torch.save(torch.ones((1, 4, 2, 2)), direction_path)
+    runner.direction_path = direction_path
+    runner.direction_metadata = runner._direction_metadata()
+    with pytest.raises(ValueError, match="--readiness-report"):
+        runner._validate_execution_inputs()
 
-def test_setup_failure_is_checkpointed_without_marking_rows_attempted(tmp_path):
+
+def test_setup_failure_is_checkpointed_without_marking_rows_attempted(tmp_path, monkeypatch):
     direction_path = tmp_path / "direction.pt"
     torch.save(torch.ones((1, 4, 2, 2)), direction_path)
 
@@ -103,11 +144,18 @@ def test_setup_failure_is_checkpointed_without_marking_rows_attempted(tmp_path):
         CONFIG_PATH,
         tmp_path / "run",
         direction_path=direction_path,
-        model_revision="model-commit",
+        model_revision=MODEL_REVISION,
+        readiness_report_path=write_passing_readiness(
+            tmp_path / "readiness.json", CONFIG_PATH, direction_path
+        ),
         device="cpu",
         model_factory=fail_model_setup,
     )
     runner.provenance["git"]["dirty"] = False
+    monkeypatch.setattr(
+        "scripts.run_confirmatory.validate_collection_readiness_report",
+        lambda *_args, **_kwargs: {},
+    )
 
     with pytest.raises(RuntimeError, match="synthetic setup failure"):
         runner.execute()
@@ -133,9 +181,9 @@ def test_direction_resize_and_mask_preserve_latent_shape():
 
 
 class FakeModel:
-    def __init__(self):
+    def __init__(self, resolved_revision=MODEL_REVISION):
         self.calls = []
-        self.resolved_revision = "resolved-model-commit"
+        self.resolved_revision = resolved_revision
 
     def generate_from_prompt(self, **kwargs):
         self.calls.append(("prompt_only", kwargs))
@@ -186,7 +234,7 @@ def test_generation_adapters_support_all_four_methods(tmp_path):
     assert torch.equal(stepwise_calls[1][1]["race_vector"], masked_direction)
 
 
-def test_synthetic_execution_checkpoints_hashes_for_every_method(tmp_path):
+def test_synthetic_execution_checkpoints_hashes_for_every_method(tmp_path, monkeypatch):
     document = yaml.safe_load(CONFIG_PATH.read_text())
     document["evaluation"]["seeds"] = [1000]
     document["evaluation"]["matrix"] = {
@@ -202,22 +250,30 @@ def test_synthetic_execution_checkpoints_hashes_for_every_method(tmp_path):
     direction_path = tmp_path / "direction.pt"
     torch.save(torch.ones((1, 4, 2, 2)), direction_path)
     fake_model = FakeModel()
+    readiness_path = write_passing_readiness(
+        tmp_path / "readiness.json", config_path, direction_path
+    )
     runner = ConfirmatoryRunner(
         config_path,
         tmp_path / "run",
         direction_path=direction_path,
-        model_revision="requested-model-commit",
+        model_revision=MODEL_REVISION,
+        readiness_report_path=readiness_path,
         device="cpu",
         model_factory=lambda *_args: fake_model,
     )
     runner.provenance["git"]["dirty"] = False
+    monkeypatch.setattr(
+        "scripts.run_confirmatory.validate_collection_readiness_report",
+        lambda *_args, **_kwargs: {},
+    )
 
     runner.execute()
 
     manifest = json.loads((tmp_path / "run" / "study_manifest.json").read_text())
     metadata = json.loads((tmp_path / "run" / "seeds" / "1000" / "metadata.json").read_text())
     assert manifest["status"] == "complete"
-    assert manifest["model"]["resolved_revision"] == "resolved-model-commit"
+    assert manifest["model"]["resolved_revision"] == MODEL_REVISION
     assert manifest["summary"]["completed_rows"] == 20
     assert manifest["summary"]["failed_rows"] == 0
     assert manifest["summary"]["unattempted_rows"] == 0

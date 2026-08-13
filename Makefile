@@ -1,4 +1,4 @@
-.PHONY: install metric-models test lint check pilot confirmatory-plan evaluate summarize confirmatory-summarize paper clean-paper
+.PHONY: install metric-models test lint check pilot readiness confirmatory-plan evaluate summarize confirmatory-summarize paper clean-paper
 
 install:
 	python3 -m pip install -e '.[evaluation,dev]'
@@ -10,12 +10,15 @@ test:
 	python3 -m pytest
 
 lint:
-	python3 -m ruff check scripts tests src/analysis src/metrics src/utils/reproducibility.py src/latent/vector_discovery.py
+	python3 -m ruff check scripts tests src/analysis src/metrics src/validation src/utils/reproducibility.py src/latent/vector_discovery.py
 
 check: test lint
 
 pilot:
 	python3 run_race_vector_extraction.py --steps 25 --alphas -1.5 -0.75 0 0.75 1.5 --seed 999 --output experiments/runs/pilot_seed_999
+
+readiness:
+	python3 scripts/validate_readiness.py --output experiments/readiness/step6_readiness.json
 
 confirmatory-plan:
 	python3 scripts/run_confirmatory.py --config configs/full_study.yaml --output experiments/runs/confirmatory_v1

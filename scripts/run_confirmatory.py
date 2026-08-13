@@ -2,9 +2,10 @@
 """Plan or execute the frozen matched confirmatory generation matrix.
 
 Planning is the default and never loads SDXL. Expensive generation requires
-the explicit ``--execute`` flag plus an exact model revision and direction
-artifact. The runner writes a study manifest and one checkpointed metadata
-file per evaluation seed so failures remain auditable.
+the explicit ``--execute`` flag, an exact model revision and direction
+artifact, and a passing Step 6 readiness report bound to those inputs. The
+runner writes a study manifest and one checkpointed metadata file per
+evaluation seed so failures remain auditable.
 """
 
 from __future__ import annotations
@@ -29,6 +30,12 @@ from src.latent.vector_discovery import SkinToneDirectionExtractor
 from src.metrics.protocol import protocol_record
 from src.utils.config import ExperimentConfig
 from src.utils.reproducibility import collect_provenance, seed_everything, stable_fingerprint
+from src.validation.readiness import (
+    DEFAULT_READINESS_PROTOCOL_PATH,
+    DEFAULT_SOURCE_REGISTRY_PATH,
+    DEFAULT_STORAGE_POLICY_PATH,
+    validate_collection_readiness_report,
+)
 
 SUPPORTED_METHODS = (
     "prompt_only",
@@ -232,6 +239,7 @@ class ConfirmatoryRunner:
         *,
         direction_path: str | Path | None = None,
         model_revision: str | None = None,
+        readiness_report_path: str | Path | None = None,
         device: str | None = None,
         model_factory: ModelFactory | None = None,
     ) -> None:
@@ -240,6 +248,9 @@ class ConfirmatoryRunner:
         self.output_dir = Path(output_dir).resolve()
         self.direction_path = Path(direction_path).resolve() if direction_path else None
         self.model_revision = model_revision
+        self.readiness_report_path = (
+            Path(readiness_report_path).resolve() if readiness_report_path else None
+        )
         self.device = device or self._default_device()
         self.config = ExperimentConfig.from_yaml(self.config_path)
         self.rows = build_plan(self.config)
@@ -248,6 +259,7 @@ class ConfirmatoryRunner:
         self.provenance = collect_provenance(self.project_root)
         self.direction_metadata = self._direction_metadata()
         self.metric_protocol = protocol_record()
+        self.readiness_metadata = self._readiness_metadata()
         self.run_id = stable_fingerprint(
             {
                 "study_id": self.config.study_id,
@@ -301,6 +313,21 @@ class ConfirmatoryRunner:
             "size_bytes": self.direction_path.stat().st_size,
         }
 
+    def _readiness_metadata(self) -> dict[str, Any]:
+        if self.readiness_report_path is None:
+            return {"path": None, "sha256": None, "size_bytes": None}
+        if not self.readiness_report_path.is_file():
+            return {
+                "path": str(self.readiness_report_path),
+                "sha256": None,
+                "size_bytes": None,
+            }
+        return {
+            "path": str(self.readiness_report_path),
+            "sha256": sha256_file(self.readiness_report_path),
+            "size_bytes": self.readiness_report_path.stat().st_size,
+        }
+
     def generation_settings(self) -> dict[str, Any]:
         width, height = self.config.data.image_size
         return {
@@ -336,6 +363,7 @@ class ConfirmatoryRunner:
                 "resolved_revision": None,
             },
             "direction_artifact": deepcopy(self.direction_metadata),
+            "collection_readiness": deepcopy(self.readiness_metadata),
             "generation": self.generation_settings(),
             "thresholds": asdict(self.config.thresholds),
             "metric_protocol": deepcopy(self.metric_protocol),
@@ -383,6 +411,7 @@ class ConfirmatoryRunner:
             "model_id": self.config.model.name,
             "model_revision": resolved_revision or self.model_revision,
             "direction_artifact": deepcopy(self.direction_metadata),
+            "collection_readiness": deepcopy(self.readiness_metadata),
             "generation": self.generation_settings(),
             "thresholds": asdict(self.config.thresholds),
             "metric_protocol": deepcopy(self.metric_protocol),
@@ -411,8 +440,22 @@ class ConfirmatoryRunner:
             raise ValueError("--execute requires --model-revision")
         if self.direction_path is None or not self.direction_path.is_file():
             raise ValueError("--execute requires an existing --direction artifact")
+        if self.readiness_report_path is None or not self.readiness_report_path.is_file():
+            raise ValueError("--execute requires an existing --readiness-report")
         if self.provenance["git"]["dirty"]:
             raise ValueError("Refusing confirmatory execution from a dirty worktree")
+        validate_collection_readiness_report(
+            self.readiness_report_path,
+            study_id=self.config.study_id,
+            study_config_sha256=self.config_sha256,
+            evaluation_protocol_sha256=self.metric_protocol["sha256"],
+            readiness_protocol_sha256=sha256_file(DEFAULT_READINESS_PROTOCOL_PATH),
+            storage_policy_sha256=sha256_file(DEFAULT_STORAGE_POLICY_PATH),
+            source_registry_sha256=sha256_file(DEFAULT_SOURCE_REGISTRY_PATH),
+            model_id=self.config.model.name,
+            model_revision=self.model_revision,
+            direction_sha256=self.direction_metadata["sha256"],
+        )
 
     def _model_kwargs(self, prompt: str, seed: int) -> dict[str, Any]:
         generation = self.generation_settings()
@@ -488,6 +531,11 @@ class ConfirmatoryRunner:
             masked_direction = _masked_direction(direction, self.config)
             model = self.model_factory(self.config, self.model_revision, self.device)
             resolved_revision = getattr(model, "resolved_revision", None)
+            if resolved_revision != self.model_revision:
+                raise RuntimeError(
+                    "Loaded SDXL revision does not match the readiness-bound exact revision: "
+                    f"requested {self.model_revision}, resolved {resolved_revision}"
+                )
             manifest["model"]["resolved_revision"] = resolved_revision
             write_json(manifest_path, manifest)
         except Exception as error:
@@ -641,6 +689,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--direction", type=Path, help="Unmasked direction tensor artifact")
     parser.add_argument("--model-revision", help="Exact Hugging Face model revision")
+    parser.add_argument(
+        "--readiness-report",
+        type=Path,
+        help="Passing Step 6 report bound to the exact config, model, and direction",
+    )
     parser.add_argument("--device", choices=("cuda", "mps", "cpu"))
     parser.add_argument(
         "--execute",
@@ -657,6 +710,7 @@ def main(argv: list[str] | None = None) -> int:
         args.output,
         direction_path=args.direction,
         model_revision=args.model_revision,
+        readiness_report_path=args.readiness_report,
         device=args.device,
     )
     manifest_path = runner.execute() if args.execute else runner.write_plan()

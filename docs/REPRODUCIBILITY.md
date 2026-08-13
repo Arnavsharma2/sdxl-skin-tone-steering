@@ -46,7 +46,21 @@ It also embeds `tmlr_evaluation_protocol_v1` and the actual SHA-256 of that
 protocol file. Recording the protocol in plan-only mode does not load SDXL.
 Actual generation additionally requires explicit `--execute`,
 `--model-revision`, and `--direction` arguments and must not be started before
-the protocol-validation and approval gates are satisfied.
+the protocol-validation and approval gates are satisfied. The runner now also
+requires `--readiness-report`; it rejects a blocked report, authority-hash
+drift, model/direction mismatch, or a loaded model revision that differs from
+the exact readiness-bound revision.
+
+Create the non-generative Step 6 report with:
+
+```bash
+make readiness
+```
+
+The default report is expected to be blocked and is written under the ignored
+`experiments/readiness/` directory. See
+[`STEP6_READINESS.md`](STEP6_READINESS.md) for the exact external-validation,
+runtime, checksum, provenance, privacy, and approval inputs required to pass.
 
 After evaluation metadata have been attached to every planned result row, run
 the frozen statistical analysis with:

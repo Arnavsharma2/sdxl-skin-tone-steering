@@ -21,6 +21,7 @@ env/
 experiments/results/
 experiments/runs/
 experiments/summary/
+experiments/readiness/
 experiments/legacy_reanalysis/base_image.png
 experiments/legacy_reanalysis/counterfactuals/
 data/generated/

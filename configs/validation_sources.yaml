@@ -1,0 +1,89 @@
+schema_version: "1.0"
+registry_id: tmlr_target_metric_sources_v1
+sources:
+  - id: cie_11664_4_2019
+    title: "Colorimetry — Part 4: CIE 1976 L*a*b* colour space"
+    authority: International Commission on Illumination and ISO
+    source_type: primary_standard
+    url: https://www.cie.co.at/publications/colorimetry-part-4-cie-1976-lab-colour-space-1
+    identifier: ISO/CIE 11664-4:2019(E)
+    license: copyrighted_standard_summary_public; full_standard_not_redistributed
+    relevance: Defines CIELAB coordinates and their intended colorimetric interpretation.
+    limitation: Standardizing CIELAB does not validate cheek-region selection or robustness to portrait illumination.
+  - id: weatherall_coombs_1992
+    title: Skin Color Measurements in Terms of CIELAB Color Space Values
+    authority: Journal of Investigative Dermatology
+    source_type: primary_empirical_article
+    url: https://doi.org/10.1111/1523-1747.ep12616156
+    identifier: doi:10.1111/1523-1747.ep12616156
+    license: publisher_copyright; bibliographic_record_and_summary_only
+    relevance: Reports instrument-based human-skin CIELAB measurements and motivates quantitative color communication.
+    limitation: Instrument measurements on skin do not validate this image, detector, mask, or neutral-border procedure.
+  - id: he_et_al_2022
+    title: Development of an image-based measurement system for human facial skin colour
+    authority: Color Research and Application
+    source_type: primary_empirical_article
+    url: https://doi.org/10.1002/col.22737
+    identifier: doi:10.1002/col.22737
+    license: author_manuscript_available; reuse_terms_not_established_for_calibration_data
+    relevance: Evaluates calibrated image-based facial-skin color against instrument measurements.
+    limitation: Its calibrated capture system and learned mappings are not the repository metric and cannot be imported as validation results.
+  - id: opencv_color_conversion
+    title: OpenCV color-space conversion implementation
+    authority: OpenCV project
+    source_type: primary_software_documentation
+    url: https://docs.opencv.org/4.x/d8/d01/group__imgproc__color__conversions.html
+    identifier: cvtColor COLOR_RGB2Lab
+    license: Apache-2.0
+    relevance: Documents the RGB-to-CIELAB implementation used by the metric and normalized float-input convention.
+    limitation: Software conformance is not evidence of construct validity.
+  - id: opencv_license
+    title: OpenCV license
+    authority: OpenCV project
+    source_type: primary_software_license
+    url: https://github.com/opencv/opencv/blob/4.x/LICENSE
+    identifier: Apache-2.0
+    license: Apache-2.0
+    relevance: Records the implementation license for the color conversion dependency.
+    limitation: Does not establish licenses for model weights, calibration data, or this repository.
+  - id: mediapipe_repository
+    title: MediaPipe source repository and license
+    authority: Google AI Edge
+    source_type: primary_software_repository
+    url: https://github.com/google-ai-edge/mediapipe
+    identifier: Apache-2.0
+    license: Apache-2.0 for repository code; exact downloaded task-model redistribution terms need confirmation
+    relevance: Upstream implementation and documented license for the face-landmark dependency.
+    limitation: Repository licensing alone does not prove performance parity or redistribution rights for the separately downloaded model bundle.
+  - id: facenet_pytorch_license
+    title: facenet-pytorch license
+    authority: facenet-pytorch maintainers
+    source_type: primary_software_license
+    url: https://github.com/timesler/facenet-pytorch/blob/master/LICENSE.md
+    identifier: MIT
+    license: MIT for repository code; pretrained-weight and training-data terms require separate release review
+    relevance: Records the implementation license for MTCNN and FaceNet loading code.
+    limitation: The code license does not independently establish VGGFace2-derived weight or dataset redistribution terms.
+  - id: lpips_repository
+    title: LPIPS PerceptualSimilarity repository
+    authority: LPIPS authors
+    source_type: primary_software_repository
+    url: https://github.com/richzhang/PerceptualSimilarity
+    identifier: BSD-2-Clause
+    license: BSD-2-Clause for repository code; backbone-weight terms require separate review
+    relevance: Upstream implementation, weights, citation, and code license for LPIPS.
+    limitation: It does not externally validate LPIPS as an identity or fairness measure.
+  - id: sdxl_license
+    title: Stable Diffusion XL base 1.0 license
+    authority: Stability AI
+    source_type: primary_model_license
+    url: https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/e4e60c65aa20ee60092c60ba197f541872cf9373/LICENSE.md
+    identifier: CreativeML Open RAIL++-M
+    license: CreativeML Open RAIL++-M; acceptance must be recorded for the exact revision
+    relevance: Governs use of the model that would generate the confirmatory synthetic portraits.
+    limitation: Model access does not authorize dataset, artifact, or paper release and does not validate model behavior.
+evidence_gaps:
+  - No held-out paired portrait and calibrated-instrument validation has been supplied for relative_cheek_CIELAB_Lstar_v1.
+  - The geometric cheek mask has not been externally validated across the intended portrait domain.
+  - The neutral-border correction has not been shown to remove local illumination or camera/rendering confounds.
+  - Code licenses are recorded, but redistribution terms for every downloaded evaluation weight and any future validation dataset require a release review.
