@@ -19,7 +19,7 @@ from archived run artifacts.
   `71dfb6ee8e8a8ef2381a4521b0d9110a7a5b1f97d515d76413c3e0f8b5fbe12c`
 - Measurement-validation report SHA-256:
   `c47967baf10fec5f361c4239c95999ee9a4a293cf8bfcff85141b4b0b2477541`
-- Initial preregistration archive SHA-256:
+- Initial author-controlled freeze archive SHA-256:
   `7a90e719add37ef445f643c39aa6465866359cf3fadb293e3a25acf666c2c559`
 - Frozen-input archive SHA-256:
   `fb352010ea020f43446e30cf4c251506a844bdcb87a3fdfdb21a6553ee931184`
@@ -99,7 +99,7 @@ inconclusive despite same-sign estimates and intervals above zero.
 ## Analysis-code integrity
 
 The actual replication decision must be produced by the exact
-`scripts/analyze_replication.py` included in the pre-outcome preregistration
+`scripts/analyze_replication.py` included in the author-controlled pre-outcome freeze
 archive. The working copy was compared byte-for-byte against that archive and
 restored to its archived SHA-256 before any outcome analysis. Plotting helpers
 may share equivalent functions, but they are not authoritative for the locked
@@ -107,3 +107,7 @@ decision. Before the outcome campaign completed, a second archive additionally
 froze `scripts/analyze_study.py`, `src/study/analysis.py`, the config loader,
 the immutable config, and the environment lock so every dependency used by the
 locked decision has a recorded pre-completion hash.
+
+These content hashes document internal artifact identity but are not an
+independent timestamp. The manuscript describes the replication as
+prospectively specified and frozen rather than externally preregistered.

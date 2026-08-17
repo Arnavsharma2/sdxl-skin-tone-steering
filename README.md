@@ -78,7 +78,7 @@ posterior mode for reproducibility.
 ```text
 paper/                         LaTeX confirmatory manuscript and figures
 docs/                          protocol, ethics, claims, reproducibility
-configs/                       pilot, calibration, and preregistered manifests
+configs/                       pilot, calibration, and prospectively frozen manifests
 scripts/summarize_results.py   long-form aggregation + seed bootstrap intervals
 scripts/run_study.py           resumable four-method calibration/confirmatory runner
 scripts/audit_study_run.py     exact-key, manifest, image, and tensor run-integrity audit
@@ -90,7 +90,7 @@ scripts/plot_study.py          publication dose-response/contrast/completion fig
 scripts/make_qualitative_grid.py deterministic median-case confirmatory example
 scripts/synthesize_calibration.py  adaptive calibration provenance/coverage audit
 scripts/validate_skin_tone_metric.py  held-out colour-metric validation gates
-scripts/freeze_confirmatory_config.py  immutable preregistration freeze and hash checks
+scripts/freeze_confirmatory_config.py  immutable pre-outcome freeze and hash checks
 tests/                         lightweight unit tests
 src/models/                    SDXL generation, encoding, and stepwise steering
 src/latent/                    direction estimation and latent manipulation
@@ -148,7 +148,7 @@ python3 generate_training_data.py --config configs/full_study.yaml --n 96
 # Safe after interruption: only images with matching per-image hash, seed,
 # descriptor, and generation signature are skipped. Unattested files regenerate.
 
-# Must pass before the full manifest can be marked preregistered
+# Must pass before the full manifest can be frozen for outcome collection
 make measurement-validate
 
 # Calibration output must use seeds disjoint from final 500000–500029.
@@ -157,7 +157,7 @@ python3 scripts/run_study.py configs/calibration_candidate_v2.yaml \
   --output experiments/runs/calibration_candidate_v2
 
 # Freeze target changes, method-specific grids, the paired-data manifest hash,
-# validation-report hash, and preregistered status into a new immutable config:
+# validation-report hash, and frozen status into a new immutable config:
 python3 scripts/freeze_confirmatory_config.py configs/full_study.yaml \
   --manifest data/generated/training_manifest_study_v1.json \
   --validation-report experiments/measurement_validation/validation_report.json \
@@ -193,8 +193,15 @@ demographic classifier, and must pass the held-out illumination-sensitivity
 gates before confirmatory use.
 
 The paired-data manifest records a resumable generation campaign ledger. A
-confirmatory run verifies the preregistered manifest hash, the ledger hash, and
+confirmatory run verifies the frozen manifest hash, the ledger hash, and
 every selected image hash before loading the model.
+
+The archived configs retain the machine status value `preregistered` because
+that literal is part of the executed fingerprints. The paper uses the more
+precise phrase *prospectively frozen*: the author-controlled pre-outcome
+archives are content-hashed, but were not deposited with an independent
+timestamping service. See `docs/ARTIFACT_AVAILABILITY.md` for the exact boundary
+between checkout-reproducible analysis and retained large-run artifacts.
 
 ## Reproduce the confirmatory result
 

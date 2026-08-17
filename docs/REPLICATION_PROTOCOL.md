@@ -24,7 +24,7 @@ measurement, target, matching tolerance, and analysis rule remains unchanged.
   `b36262ffa44684124152665f46840d550d559089f73897d9f241941f3c366966`
 - Frozen replication-decision script SHA-256:
   `4a6a4f89c462f6547b111cc53bab6d84867e90381f93b9ae58b0b80dc355d29b`
-- Preregistration archive SHA-256:
+- Author-controlled freeze archive SHA-256:
   `7a90e719add37ef445f643c39aa6465866359cf3fadb293e3a25acf666c2c559`
 
 The paired-data campaign uses a new frozen base seed schedule and the standard
@@ -41,7 +41,7 @@ calibration, and evaluation seeds.
    report a failed measurement replication; do not alter thresholds or select
    pairs.
 4. Freeze the paired-data manifest and validation-report hashes into a new,
-   immutable preregistered config.
+   immutable frozen config.
 5. Run all 570 conditions for seeds 600000--600029 exactly once, retaining
    failures and missingness.
 6. Apply the same matched $\pm5$ ITA target with a three-degree tolerance and
@@ -80,7 +80,7 @@ They cannot substitute for the locked LPIPS replication family.
 - Do not describe a same-sign estimate with an interval spanning zero as a
   successful strict replication.
 - Do not merge parent and replication rows and present them as one
-  preregistered 60-seed study.
+  prospectively frozen 60-seed study.
 - Preserve all manifests, ledgers, frozen configs, logs, images, analyses, and
   SHA-256 hashes, including failed conditions.
 
@@ -107,7 +107,7 @@ degrees.
 - Frozen conditions: 570
 
 The outcome campaign began only after these hashes were written into the
-preregistered config. Before the outcome campaign completed and before any
+frozen config. Before the outcome campaign completed and before any
 effect was inspected, the full analysis dependency set was archived as an
 additional integrity record. Completion and the result-ledger hash will be
 appended without changing the decision rules above.

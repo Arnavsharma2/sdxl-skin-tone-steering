@@ -1,0 +1,28 @@
+schema_version: "1.0"
+
+# Copy this file to submission/author_inputs.yaml. The populated file is
+# intentionally Git-ignored because it contains deanonymizing information.
+authors:
+  - name: null
+    openreview_id: null
+    reviewer_obligation_accepted: false
+
+corresponding_author: null
+paper_id: null
+enrollment_completed: false
+no_concurrent_review_confirmed: false
+repository_license: null
+
+independent_review:
+  completed: false
+  reviewer: null
+  date: null
+  technical_claims_checked: false
+  statistics_checked: false
+  figure_legibility_checked: false
+  anonymity_checked: false
+
+large_artifact_review:
+  # Allowed choices: anonymous_url, unavailable_during_review
+  choice: null
+  url: null

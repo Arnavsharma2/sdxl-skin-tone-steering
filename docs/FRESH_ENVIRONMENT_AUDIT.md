@@ -9,6 +9,12 @@ recorded `requirements-lock.txt` was installed, followed by the local project
 without dependency resolution or build isolation. No packages from the
 development virtual environment were visible to the audit environment.
 
+This was a fresh dependency environment, not originally a fresh Git clone. The
+run-integrity checks used the author's retained local image and direction
+archives. The frozen JSON/JSONL generation manifests are now tracked so a clean
+clone can rebuild the anonymous supplement byte-for-byte; the large image and
+tensor archives remain separate as documented in `ARTIFACT_AVAILABILITY.md`.
+
 ## Commands
 
 ```bash
@@ -50,4 +56,5 @@ locked replication decision, and central manuscript numbers under a fresh
 environment. The identity-scanned supplementary ZIP was also byte-for-byte
 identical across environments. This does not claim
 bitwise regeneration of CUDA images on Apple Silicon; the full image campaign
-is content-attested and retained separately.
+is content-attested and retained separately. The run-integrity result requires
+that separate archive and is not reproducible from the Git checkout alone.

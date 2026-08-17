@@ -3,7 +3,9 @@ import zipfile
 from pathlib import Path
 
 from scripts.build_anonymous_supplement import (
+    REQUIRED_SUBMISSION_MANIFESTS,
     ZIP_TIMESTAMP,
+    collect_files,
     identity_leaks,
     write_deterministic_member,
 )
@@ -34,3 +36,19 @@ def test_zip_members_are_byte_reproducible_and_timestamp_free():
     assert first == second
     with zipfile.ZipFile(io.BytesIO(first)) as archive:
         assert archive.getinfo("result.txt").date_time == ZIP_TIMESTAMP
+
+
+def test_clean_checkout_contains_every_frozen_submission_manifest() -> None:
+    root = Path(__file__).resolve().parents[1]
+    selected = {path.relative_to(root).as_posix() for path in collect_files(root)}
+
+    assert set(REQUIRED_SUBMISSION_MANIFESTS) <= selected
+
+
+def test_supplement_build_fails_closed_when_frozen_manifests_are_missing(tmp_path) -> None:
+    try:
+        collect_files(tmp_path)
+    except FileNotFoundError as error:
+        assert "Required frozen submission manifests are missing" in str(error)
+    else:
+        raise AssertionError("collect_files accepted a checkout without frozen manifests")

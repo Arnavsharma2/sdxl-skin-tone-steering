@@ -5,7 +5,7 @@
 \usepackage{xcolor}
 
 \title{Denoising-Time Steering Along a Paired Skin-Tone Direction in SDXL:\\
-A Preregistered Matched-Change Study}
+A Prospectively Frozen Matched-Change Study}
 \author{Anonymous submission}
 \date{}
 
@@ -19,7 +19,7 @@ We study whether a linear direction estimated from paired portrait latents can
 control visible skin tone in Stable Diffusion XL while preserving other image
 properties. The proposed method computes a paired mean difference in the VAE
 latent space, applies a spatial Gaussian mask, and distributes the resulting
-perturbation across denoising steps. We preregister a matched-change evaluation
+perturbation across denoising steps. We freeze a matched-change evaluation
 after calibration, estimate the direction from 64 of 96 noise-coupled prompt
 pairs, validate an image-colour instrument on the remaining 32, and evaluate
 570 conditions over 30 held-out seeds. The parent study found no detectable
@@ -56,7 +56,7 @@ masked injection will preserve non-target properties better than relevant
 baselines.
 
 We make three contributions. First, we specify the paired estimator and
-denoising-time intervention. Second, we provide a preregistered matched-change
+denoising-time intervention. Second, we provide a prospectively frozen matched-change
 comparison and a prospectively specified independent-seed replication that
 separate target response from preservation. Third, we release an auditable
 research artifact with immutable model and data hashes, measurement validation,
@@ -134,7 +134,7 @@ drift, face-detection failure, and monotonicity.
 
 The confirmatory design used held-out seeds and four methods: prompt-only
 generation, post-hoc latent addition, unmasked stepwise injection, and masked
-stepwise injection. The preregistered configuration contains 30 held-out
+stepwise injection. The frozen configuration contains 30 held-out
 generation seeds and method-specific grids frozen after calibration.
 Comparisons are paired within seed. We report means, standard deviations,
 medians, detector failures, and 95\% seed-level
@@ -296,7 +296,7 @@ The LPIPS advantage retained the same positive direction in every estimable
 stratum, and face-similarity estimates remained compatible with no advantage.
 However, shared matched samples collapsed to $n=1$--5 at one degree and
 $n=3$--12 at two degrees; no secondary contrast survived Holm correction.
-Thus, the preregistered three-degree results should not be interpreted as
+Thus, the prespecified three-degree results should not be interpreted as
 evidence of precisely matched effects under stricter tolerances.
 
 Second, we re-encoded all 64 training pairs and confirmed that the resulting
@@ -404,7 +404,10 @@ selection and residual mismatch. The
 pose measure is a five-landmark proxy rather than a full 3D estimator. No human
 study assesses perceived identity, realism, or social harms. Finally, the
 additive update is scheduler-dependent and has not been validated across model
-or library revisions.
+or library revisions. The study plan and decision scripts were frozen in
+author-controlled, content-hashed archives before the relevant outcome reviews,
+but were not deposited with an independent timestamping service. We therefore
+describe the design as prospectively frozen rather than externally preregistered.
 
 \section{Conclusion}
 
@@ -414,7 +417,7 @@ directions. A prospectively specified new-seed campaign produced smaller but
 same-sign LPIPS advantages with intervals above zero and high cross-campaign
 direction cosine. Its locked decision was inconclusive because only 8--10
 shared matched seeds were available, and the lighter multiplicity-adjusted
-test narrowly missed .05. The preregistered face-similarity hypothesis was not
+test narrowly missed .05. The prespecified face-similarity hypothesis was not
 supported in either campaign's broader corrected family. The result must not
 be described as strict replication, identity preservation, disentanglement,
 or bias mitigation. The principal contribution is a bounded empirical signal

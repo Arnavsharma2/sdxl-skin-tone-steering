@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import textwrap
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +19,10 @@ METHOD_LABELS = {
     "stepwise_unmasked": "Stepwise, unmasked",
     "stepwise_masked": "Stepwise, masked",
 }
+HEADER_HEIGHT = 54
+FOOTER_HEIGHT = 96
+HEADER_FONT_SIZE = 30
+FOOTER_FONT_SIZE = 28
 
 
 def parse_args() -> argparse.Namespace:
@@ -83,12 +86,12 @@ def make_grid(
     *,
     tile_size: int,
 ) -> Image.Image:
-    header_font = _font(18)
-    footer_font = _font(16)
+    header_font = _font(HEADER_FONT_SIZE)
+    footer_font = _font(FOOTER_FONT_SIZE)
     columns = ("base", *METHODS)
     directions = (-1, 1)
-    header_height = 30
-    footer_height = 50
+    header_height = HEADER_HEIGHT
+    footer_height = FOOTER_HEIGHT
     row_height = tile_size + footer_height
     canvas = Image.new(
         "RGB",
@@ -97,7 +100,7 @@ def make_grid(
     )
     draw = ImageDraw.Draw(canvas)
     for column, label in enumerate(("Base", *(METHOD_LABELS[item] for item in METHODS))):
-        draw.text((column * tile_size + 8, 5), label, fill="black", font=header_font)
+        draw.text((column * tile_size + 8, 7), label, fill="black", font=header_font)
 
     base_path = run_dir / "images" / f"seed_{selected_seed}" / "base.png"
     for row_index, direction in enumerate(directions):
@@ -106,7 +109,7 @@ def make_grid(
         canvas.paste(base, (0, y))
         draw.text(
             (8, y + tile_size + 6),
-            "Base (same seed)",
+            "Base\nsame seed",
             fill="black",
             font=footer_font,
         )
@@ -122,15 +125,15 @@ def make_grid(
             direction_label = "lighter" if direction < 0 else "darker"
             status = "matched" if bool(record["match_complete"]) else "outside tolerance"
             label = (
-                f"{direction_label}; alpha={float(record['alpha']):g}; "
-                f"change={float(record['skin_tone_change']):+.1f} ITA; {status}"
+                f"{direction_label}; alpha={float(record['alpha']):g}\n"
+                f"delta ITA={float(record['skin_tone_change']):+.1f}; {status}"
             )
             draw.multiline_text(
                 (column * tile_size + 8, y + tile_size + 6),
-                "\n".join(textwrap.wrap(label, width=38)),
+                label,
                 fill="black",
                 font=footer_font,
-                spacing=2,
+                spacing=4,
             )
     return canvas
 

@@ -42,7 +42,7 @@ the executed design is frozen in `configs/full_study_preregistered.yaml`.
    seed—not by image—to preserve within-seed dependence.
 6. Require direction-data, calibration, and confirmatory generation seeds to
    be mutually disjoint. Before loading the model, verify every selected paired
-   image against the SHA-256 digest recorded in its manifest. The preregistered
+   image against the SHA-256 digest recorded in its manifest. The frozen
    config freezes the manifest hash, and the manifest freezes the resumable
    per-image generation-ledger hash.
 

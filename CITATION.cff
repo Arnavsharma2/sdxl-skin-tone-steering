@@ -3,7 +3,7 @@ message: "If you use this software, cite the archived release and accompanying p
 title: "Denoising-Time Skin-Tone Steering in SDXL"
 type: software
 version: 0.1.0
-repository-code: "https://github.com/Arnavsharma2/Isolating-Race-Vectors-in-Latent-Space"
+repository-code: "https://github.com/Arnavsharma2/Bias-Mitigation-in-AI-Image-Generation"
 authors:
   - name: "Project contributors"
 keywords:

@@ -26,7 +26,7 @@ model revision and weight hash after accepting its license. Hardware backends ma
 identical, so do not mix CUDA, MPS, and CPU within one statistical comparison.
 
 This path was retested from a new Python 3.10 virtual environment on
-2026-08-17. All 63 tests and Ruff passed. The frozen run-integrity,
+2026-08-17. All 69 tests and Ruff passed. The frozen run-integrity,
 replication-decision, and manuscript-claim audit outputs reproduced
 byte-for-byte; see
 `docs/FRESH_ENVIRONMENT_AUDIT.md`.
@@ -47,7 +47,7 @@ settings, package versions, git commit, dirty-state flag, and hardware
 availability into `metadata.json`. The base-image cache is keyed by model,
 prompt, negative prompt, seed, step count, and guidance scale.
 
-For the preregistered study, use the config-driven workflow:
+For the prospectively frozen study, use the config-driven workflow:
 
 ```bash
 python3 generate_training_data.py --config configs/full_study.yaml --n 96
@@ -86,6 +86,13 @@ make replication-plot
 `study-audit` and `replication-audit` require the exact frozen condition-key
 set, matching manifest metadata, complete generation flags, every referenced
 image, and both direction tensors before statistical analysis.
+
+The Git checkout and anonymous supplement reproduce the aggregate statistical
+analysis, figures, decision rule, manuscript-claim audit, and deterministic
+submission ZIP. Recomputing image-derived metrics or rerunning the full
+run-integrity audit additionally requires the retained generated-image and
+direction-tensor archives listed in `docs/ARTIFACT_AVAILABILITY.md`. Do not
+describe a clean checkout alone as reproducing those large-artifact checks.
 
 The runner snapshots the manifest, records its fingerprint and provenance,
 writes one `results.jsonl` row per attempted condition, and resumes by exact

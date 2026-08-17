@@ -24,6 +24,9 @@ Official-source check: 2026-08-17. All deadlines are Anywhere on Earth.
 - [x] Integrate replication results in the main paper, not only the supplement.
 - [ ] Obtain at least one technically independent read for statistical claims,
   construct language, figure legibility, and anonymity.
+- [ ] Choose and document the large-artifact review option in
+  `docs/ARTIFACT_AVAILABILITY.md`: anonymous reviewer link, or explicit
+  unavailability during review.
 - [x] Confirm all citations against primary sources.
 - [x] Run the complete test/lint suite and rebuild both paper variants.
 - [x] Reproduce the tests and frozen decision once from a fresh environment.
@@ -63,9 +66,10 @@ Official-source check: 2026-08-17. All deadlines are Anywhere on Earth.
 
 - Source: `paper/wacv/main.tex`
 - Draft PDF: `output/pdf/wacv2027_submission_draft.pdf`
-- Draft status: official review format, Datasets track, seven pages, 1.1 MB,
-  replication integrated, visually audited; paper ID and human review pending.
+- Draft status: official review format, Datasets track, replication integrated;
+  paper ID, independent human review, and large-artifact availability decision
+  pending.
 - Draft PDF SHA-256:
-  `1de3063b98c4278ad10f677786392ddfe67f09c09f156f2bee5ebaf712213640`.
+  `d81b4da0e5b7702bf5cd1e331bacd59f96d974ac63fe2d37fc464057b54d0785`.
 - Supplement: `output/supplement/wacv2027_anonymous_supplement.zip`, 1.9 MB,
-  SHA-256 `18f2e585843803bbd8a5e24a7e2e04f0cee6ecd2c85543e4c3514c13521ae38e`.
+  SHA-256 `2480463c75a61f0dd14c33a46ee812e28dd0982f5bf7b12060ad85a0ed762457`.

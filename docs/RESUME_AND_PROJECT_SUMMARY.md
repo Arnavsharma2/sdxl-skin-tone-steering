@@ -5,7 +5,7 @@ status. Do not describe a manuscript as published or accepted before it is.
 
 ## Resume bullet before submission
 
-- Built a preregistered evaluation pipeline for controllable SDXL generation,
+- Built a prospectively frozen evaluation pipeline for controllable SDXL generation,
   executing two independently seeded 570-condition studies with immutable
   configurations, failure-retaining analysis, bootstrap uncertainty, Holm
   correction, content-attested artifacts, and a reproducible anonymous paper
@@ -13,14 +13,14 @@ status. Do not describe a manuscript as published or accepted before it is.
 
 ## Resume bullet after submission
 
-- Developed and submitted a preregistered study of denoising-time latent
+- Developed and submitted a prospectively frozen study of denoising-time latent
   control in SDXL ([venue], under review), comparing four interventions at
   matched measured image-colour change across two independent 30-seed
   campaigns; released reproducible analysis, provenance audits, and tests.
 
 ## Resume bullet after acceptance
 
-- Published a preregistered evaluation of denoising-time latent control in SDXL
+- Published a prospectively frozen evaluation of denoising-time latent control in SDXL
   at [venue], showing a bounded perceptual-preservation benefit in the parent
   campaign and an interval-positive but coverage-inconclusive independent
   replication; built a 63-test reproducibility and artifact-integrity system.
@@ -39,7 +39,7 @@ The parent campaign found no face-embedding-similarity advantage, but masking
 reduced LPIPS relative to unmasked steering in both directions. The replication
 retained both signs and had bootstrap intervals above zero, yet its locked
 decision was inconclusive because only 8 and 10 matched pairs survived versus
-the preregistered minimum of 12. This distinction is a strength of the work:
+the prespecified minimum of 12. This distinction is a strength of the work:
 the pipeline prevents a promising pattern from being overstated as successful
 replication.
 
@@ -48,7 +48,7 @@ replication.
 - Why matching matters: a method that changes the target less can look better
   on every preservation metric without actually preserving more at equal edit
   strength.
-- Why preregistration matters: calibration decisions, grids, hypotheses,
+- Why prospective freezing matters: calibration decisions, grids, hypotheses,
   missingness handling, multiplicity correction, and the replication rule were
   frozen before confirmatory outcomes were inspected.
 - What failed: the primary face-similarity hypothesis was unsupported, strict

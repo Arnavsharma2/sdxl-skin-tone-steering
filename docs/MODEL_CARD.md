@@ -51,7 +51,7 @@ and lower LPIPS than unmasked steering in both directions. The prospective
 replication retained both LPIPS effect signs and had intervals above zero, but
 its locked decision was inconclusive because only 8 and 10 shared matched
 seeds were available, below the minimum of 12; the lighter two-test Holm value
-was .0555. The preregistered face-similarity hypothesis was not supported in
+was .0555. The prespecified face-similarity hypothesis was not supported in
 either broader corrected family. Therefore the artifact must not be described
 as strictly replicated, identity-preserving, or disentangled.
 

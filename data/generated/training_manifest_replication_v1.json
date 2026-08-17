@@ -1,0 +1,1420 @@
+{
+  "schema_version": "2.0",
+  "status": "synthetic_paired_training_data",
+  "study_config_fingerprint": "5057ea79d01525ba",
+  "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
+  "model_revision": "462165984030d82259a11f4367a4eed129e94a7b",
+  "inference_steps": 25,
+  "guidance_scale": 7.5,
+  "height": 1024,
+  "width": 1024,
+  "prompt_template": "professional headshot portrait of a person with {skin_tone}, neutral expression, clean white studio background, soft diffused studio lighting, sharp focus on face, centered composition, no glasses no jewelry no hat, facing camera directly, high quality photography, 85mm lens",
+  "negative_prompt": "multiple people, accessories, sunglasses, jewelry, hat, cap, hood, blurry, low quality, cartoon, illustration, painting, watermark, text, extreme lighting, heavy shadows, overexposed, underexposed, cropped face",
+  "light_descriptors": [
+    "light skin tone",
+    "fair skin tone",
+    "light complexion",
+    "pale skin tone",
+    "fair complexion",
+    "light skin",
+    "fair skin",
+    "light-skinned"
+  ],
+  "dark_descriptors": [
+    "dark skin tone",
+    "deep skin tone",
+    "dark complexion",
+    "rich dark skin tone",
+    "deep brown skin tone",
+    "dark skin",
+    "deep complexion",
+    "dark-skinned"
+  ],
+  "seed_schedule": [
+    100042,
+    100137,
+    100256,
+    100512,
+    100777,
+    101024,
+    102048,
+    103141
+  ],
+  "generation_observed_in_this_run": true,
+  "generation_observed_in_campaign": true,
+  "generation_signature": "071637fe70afb2a940d802206c14c19d3ece08d1172bb98e79b9eec18ef4b866",
+  "generation_ledger": "data/generated/training_manifest_replication_v1.generation.jsonl",
+  "generation_ledger_sha256": "f6843545f53881fcb4a4c8b3204117d19aed8884eb577c6282e05750e089d4c1",
+  "pairing": "noise-coupled prompt pair: same seed and prompt template; skin-tone descriptor differs; apparent identity is not guaranteed",
+  "n_pairs": 96,
+  "pairs": [
+    {
+      "pair_id": 0,
+      "seed": 100042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_00.png",
+        "sha256": "9efdddda4cf256751bc4684adb3ddeac41cf84b264e32a1a16d342c5d9deceb7"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_00.png",
+        "sha256": "333c7d39816729f63d5cd586efd192fe3634649cd8f5c315f5d07a68f9de88b0"
+      }
+    },
+    {
+      "pair_id": 1,
+      "seed": 100137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_01.png",
+        "sha256": "e67ee63e55e7318b7a050dbe0736da8b42ad91fa6002879b883ed7039cf790a9"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_01.png",
+        "sha256": "7e3b3478ea6826e38e833d5fa01e22a630bc7eaea2606a2cc465c3a0914b38db"
+      }
+    },
+    {
+      "pair_id": 2,
+      "seed": 100256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_02.png",
+        "sha256": "ccc3e624088709b7962f8745c0b6c29cffa6c02c121de3116b2fbf92285f8324"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_02.png",
+        "sha256": "8402553d0322f04029b60bf7c95f2dbbdec4cf0d28eefdbe9fa2fdcc66e5e456"
+      }
+    },
+    {
+      "pair_id": 3,
+      "seed": 100512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_03.png",
+        "sha256": "591ce4e8edfcb9d3f1d9549a7c60e0247192a8cf90f2892a8b50fffbca8e314d"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_03.png",
+        "sha256": "1c04eae790e02ae6c178791e738d1acb1a174683c7a56e9eea7e4b2f9699785a"
+      }
+    },
+    {
+      "pair_id": 4,
+      "seed": 100777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_04.png",
+        "sha256": "ad583886718614c2d1bda2fe0d9c6a7ab1fa4933f724d4bb6d5558692c070d50"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_04.png",
+        "sha256": "82e2ab0e4b285539c938d73798a10203c183f88acda5ff88e1e2173e738e3348"
+      }
+    },
+    {
+      "pair_id": 5,
+      "seed": 101024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_05.png",
+        "sha256": "28c1854eb38bd67e7312d52c8e0429e3b27f14bd264506b2ae437bf744b5d4a6"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_05.png",
+        "sha256": "848cceb0379302bc67f2104753619953e0b38002b356f56058057da2cff63975"
+      }
+    },
+    {
+      "pair_id": 6,
+      "seed": 102048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_06.png",
+        "sha256": "7fe97c3d149c4357778e302aef5fb23abe5cc77f05b777208d869f6c099db66c"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_06.png",
+        "sha256": "519ec54e4f8112b62932e8b7a74b1cb181f7b6474814b90689fb1c71e527e516"
+      }
+    },
+    {
+      "pair_id": 7,
+      "seed": 103141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_07.png",
+        "sha256": "0ff015ab4cfd6e9599eb58ee1ec8a46e8d8cba343afe2514e601a0a0f7019f16"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_07.png",
+        "sha256": "7c9e30b0bf95cc60ba49439f7c05bf25da178e8fe65c38d44ba11ab5dcc2f560"
+      }
+    },
+    {
+      "pair_id": 8,
+      "seed": 110042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_08.png",
+        "sha256": "4bd3c73816070413d5261a97ac560a71c7af73f7270bb9d0c3cc0600036a12bb"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_08.png",
+        "sha256": "8011a2b469ed9b822dc8ea099ed4e719377367185f62cbf55a5bce942a3282ab"
+      }
+    },
+    {
+      "pair_id": 9,
+      "seed": 110137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_09.png",
+        "sha256": "754077675cc0f232e2600fa5f49febbfca13d47e19ace5ebcb2e63952dbe54e0"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_09.png",
+        "sha256": "59cc6abee44359fe1b0fd013db615cfa5cf9c0e8be7a7f4bda5b7cd19c39b093"
+      }
+    },
+    {
+      "pair_id": 10,
+      "seed": 110256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_10.png",
+        "sha256": "b43abb9952bf60a4fedf8f6413c4cfb5059906ede840528ebba376fb2aa13d7e"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_10.png",
+        "sha256": "ff96064ab829b227fef76aaa70973ec3d1672b566ecdfb08a937e632bbf45cdd"
+      }
+    },
+    {
+      "pair_id": 11,
+      "seed": 110512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_11.png",
+        "sha256": "714ccd7a9484f966f0e5642744671e16d3a5ab53d5f051d940611e734dfdff01"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_11.png",
+        "sha256": "a9322932fccc9d0c3a8607b21c63a746afedaec0f5afdaa1eb480e93321a407f"
+      }
+    },
+    {
+      "pair_id": 12,
+      "seed": 110777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_12.png",
+        "sha256": "f2c32cc40f9399b1f35a8dff8b466fcd1611b65588c2796b9e102e7f8372d696"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_12.png",
+        "sha256": "3cebada20343cd8a8de6e4257564b5e4555281b546ebfcf5d8c2873bc6ac01f2"
+      }
+    },
+    {
+      "pair_id": 13,
+      "seed": 111024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_13.png",
+        "sha256": "2788fe10505d1c092c8e200272605dfa60fff608e9821b154335526fc0988fcc"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_13.png",
+        "sha256": "8d2ec832a288a64c2ce3ea9250ffa9dac40fac15a10c675250b2116b401cceb8"
+      }
+    },
+    {
+      "pair_id": 14,
+      "seed": 112048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_14.png",
+        "sha256": "0dc38538420a09a03e2e8a0ddb05081c308238a144c3641d074b05afa81cb30e"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_14.png",
+        "sha256": "8a0215e19f3ed18ada81c0a46dd211c271a852b4873f58aec83d58ab8beefee8"
+      }
+    },
+    {
+      "pair_id": 15,
+      "seed": 113141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_15.png",
+        "sha256": "34753b422ce30fefc900823a6be209ee9042856901d433e21a2f191d4e70cf33"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_15.png",
+        "sha256": "2573bc68a09acec70414a5c6e98dcc0d8a8eb1510da29fe2cd097637560fb4a3"
+      }
+    },
+    {
+      "pair_id": 16,
+      "seed": 120042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_16.png",
+        "sha256": "d55bcdfc1efe9c009cae13ef516b9d130b541a7c1081ccb3a30af1413d85a477"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_16.png",
+        "sha256": "16b073eef519379d5086cf3b45fa1edbd2daa58c1c659c3451f4c0fd4a12f67d"
+      }
+    },
+    {
+      "pair_id": 17,
+      "seed": 120137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_17.png",
+        "sha256": "f94b93a12b1fc4a10f90f47fd5f3110ab21df52177aa6c7fe8a9eb23efba00c2"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_17.png",
+        "sha256": "df94c1aeeb49e344c9311f4d03e5b98a88bf2d22170f647088d7cec475b782d0"
+      }
+    },
+    {
+      "pair_id": 18,
+      "seed": 120256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_18.png",
+        "sha256": "9ddf71bbd59e175748516b9e778468cadb0a038c5ab5f818ae93d6217d7fbe03"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_18.png",
+        "sha256": "2ec2beab69b9e4433254668a8c3f6b33b5bf12d9ceea4987fa3a35b68b211da7"
+      }
+    },
+    {
+      "pair_id": 19,
+      "seed": 120512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_19.png",
+        "sha256": "2eec410eaa3711fa36c3ba5821c97ecfa850c66daaeb54042a81c9b6674ef642"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_19.png",
+        "sha256": "e99326668a994a96ac81ccd91051dfeabe38d7d710b2fc77d700844c51eab856"
+      }
+    },
+    {
+      "pair_id": 20,
+      "seed": 120777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_20.png",
+        "sha256": "28acc58cfcd7de87b788197e292923a0f0da9a9ced2d25b40bd072d047e3e634"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_20.png",
+        "sha256": "b48c21643625ecf360ac0e075c2e6695e80963b7b2889dcb6735d58189b92d92"
+      }
+    },
+    {
+      "pair_id": 21,
+      "seed": 121024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_21.png",
+        "sha256": "fe3a1b73889b1ab5724dc1bc67aa28dd361f0b46f8f80406aaea90d17b699a80"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_21.png",
+        "sha256": "58715b4c8bc81f24d65970a7f5eef786316728006ea45e64cb26172f04dcb9fa"
+      }
+    },
+    {
+      "pair_id": 22,
+      "seed": 122048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_22.png",
+        "sha256": "7425af13664df325ca16b75c0275a065941e9085a670d262d1fea1b99b8e3af2"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_22.png",
+        "sha256": "c8b870501e309f221241a2306192d0baf7ff3b1cdb3e5881af60356caaced21f"
+      }
+    },
+    {
+      "pair_id": 23,
+      "seed": 123141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_23.png",
+        "sha256": "6d9766f1e16456c07945946b54d918b1c8930a03b6b99d6e949483a1025b59de"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_23.png",
+        "sha256": "a6471735755da5906eaf0079fb648d8ec75aaf738a66c8b05e7add9664313fdb"
+      }
+    },
+    {
+      "pair_id": 24,
+      "seed": 130042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_24.png",
+        "sha256": "2756a5f2697bec9e014b393a7e246bc1311134fff7e371cf413b12d013a072c9"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_24.png",
+        "sha256": "542df0aff54ce78a272ac361ff93005b0cee8039c36266ac170470217f127744"
+      }
+    },
+    {
+      "pair_id": 25,
+      "seed": 130137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_25.png",
+        "sha256": "ad20315c7e48cabaaa43ecefbe06dfd8594195bab333dfa7667d3bf47765d015"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_25.png",
+        "sha256": "d0caa9afbb1de32c29813c3e815b42d5028a6a549e2e9d04ab05df40b298bc66"
+      }
+    },
+    {
+      "pair_id": 26,
+      "seed": 130256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_26.png",
+        "sha256": "0d2eb5be59cf741f601e8265ec653d290c00865ee628beb9ff3e9f09a7584ee3"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_26.png",
+        "sha256": "3599f9e289306a83b3e9c71874b869c5b6be41eb0c47bc904a721d842903de90"
+      }
+    },
+    {
+      "pair_id": 27,
+      "seed": 130512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_27.png",
+        "sha256": "c79a3b7f4a90c88c029eadf1fb2183c76ecf7221978ec862849b7092bd41d4f0"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_27.png",
+        "sha256": "d3b2ef7f2b871542a0b18ad6b28832326071bb2bd89227b8c98acca520cb3a7e"
+      }
+    },
+    {
+      "pair_id": 28,
+      "seed": 130777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_28.png",
+        "sha256": "a70f166cd3c4a498d0a2459d4882faaa190511683ed3976c69004484b63a7faf"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_28.png",
+        "sha256": "275e4bc3b4cd66d6ffc3b429776686be48481cd988afa3c277c96240d14d66e2"
+      }
+    },
+    {
+      "pair_id": 29,
+      "seed": 131024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_29.png",
+        "sha256": "153e5c0249da5bd6e9d40f12c658c82a4d5705830fbff7cb8cf78c2346b48121"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_29.png",
+        "sha256": "01905172a67dda63eb86f2ea5a08cb9cd4db59b71478f9458c361e5a1c387e45"
+      }
+    },
+    {
+      "pair_id": 30,
+      "seed": 132048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_30.png",
+        "sha256": "a04a915bb43646a5e98187e3f8553e4b37f25ebf317aac1878553f314b6d821e"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_30.png",
+        "sha256": "b3896b1d446990df06f988c5203e40d0d0e44d1a2cc5211d9274b012ba51fe29"
+      }
+    },
+    {
+      "pair_id": 31,
+      "seed": 133141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_31.png",
+        "sha256": "6fd06e55abc6bc10bfd84b2348fdd8f4ce2c68ff4b85f9d55b6ad6e4260e4ad5"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_31.png",
+        "sha256": "f0fb5937ea5eafbae6446c9cca41b86fddd39a732b702e75000545af27282fdf"
+      }
+    },
+    {
+      "pair_id": 32,
+      "seed": 140042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_32.png",
+        "sha256": "d7917e43ddfdce018d7a9b06784db2fd166bda543457ba4dc62217161fd284ef"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_32.png",
+        "sha256": "1a7146f10ada5c38c01451e2213cb63af83b3fdacc84d02efec22ea96307ff1e"
+      }
+    },
+    {
+      "pair_id": 33,
+      "seed": 140137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_33.png",
+        "sha256": "4dfa7491df4db848b46ed05c3a858a4e49de6dec524b1dfe1dd4ff62246badcf"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_33.png",
+        "sha256": "4ab57698717bce6706bf37887955ae9f4b3f7c609bf1ffc8367f134f3864cfc8"
+      }
+    },
+    {
+      "pair_id": 34,
+      "seed": 140256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_34.png",
+        "sha256": "5bab730547270917e236dcd81b40c2601a83104053acb5d7342cf9072a09312a"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_34.png",
+        "sha256": "90bca6a065772222b648a4a90f7df05987b9389bf33fec5206b34c0206507659"
+      }
+    },
+    {
+      "pair_id": 35,
+      "seed": 140512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_35.png",
+        "sha256": "0f3efd873f6e8b1ea2a9ddca424e1d46e5000eec85e4c447dd3e2b48e888de02"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_35.png",
+        "sha256": "28a2911d1ec0e0f4a8ed00721320c330e6ffc8e51884110d65986b32242f2c17"
+      }
+    },
+    {
+      "pair_id": 36,
+      "seed": 140777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_36.png",
+        "sha256": "c04040178d5eac90ff0bc8b96c5dc9e91b6bbd784868ce2079eb83161a8418ab"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_36.png",
+        "sha256": "7cddddd79bd1ef654a6b1aace19fdb4bee46f262ee40841832bc1ff53aa5ea47"
+      }
+    },
+    {
+      "pair_id": 37,
+      "seed": 141024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_37.png",
+        "sha256": "11be4d3b12850757d222879f911787f59338475c4756b3d51163fcf3748accea"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_37.png",
+        "sha256": "db9ea018da1b6d2a3614cbbffad9446f5465185f8789ff887163a694b804bd67"
+      }
+    },
+    {
+      "pair_id": 38,
+      "seed": 142048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_38.png",
+        "sha256": "f36e2bfb3bdd56903757c2ac354b54ebfdcff4bf3a26a17fdf1743fe06869dec"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_38.png",
+        "sha256": "761eb728cd653aa9310b2adbfcde5911e6a7607649ebb88c30df50cd3a2c68c5"
+      }
+    },
+    {
+      "pair_id": 39,
+      "seed": 143141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_39.png",
+        "sha256": "95a6cdeb9aac7c078fde297085997535c05024d7cfa3b8191525dbdb720e7249"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_39.png",
+        "sha256": "f4f3ef6de5c7189757a3547810089acdee742d82997fdd922c2cbf5f53cd1b1a"
+      }
+    },
+    {
+      "pair_id": 40,
+      "seed": 150042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_40.png",
+        "sha256": "ef2cf19d4f4d7959e2af9bc6308a243b10c90db61122286759ebfb3d2a435b2a"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_40.png",
+        "sha256": "1b4e8d9da057d6caf891c0d0cb6c8cb29d4be1c2af8ae52f9a9a9704bc7ab97a"
+      }
+    },
+    {
+      "pair_id": 41,
+      "seed": 150137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_41.png",
+        "sha256": "6e3ccdfeac404e5cc8564b1745df62faa2e29ecc7f1605fa9a5c67d606d49c2a"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_41.png",
+        "sha256": "bc5ac8b58516fe89cf1e15e2f670e8a37789634a6dea8bdedafb040fb1277f8c"
+      }
+    },
+    {
+      "pair_id": 42,
+      "seed": 150256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_42.png",
+        "sha256": "586c734257cd69212c823901b6c674e047ae9d1d4926d9813e1e73303feb5782"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_42.png",
+        "sha256": "336b8117134a0b8d81ca92903ffb7a73199b9fa98ea12dd9ee0517981b35c793"
+      }
+    },
+    {
+      "pair_id": 43,
+      "seed": 150512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_43.png",
+        "sha256": "43429d2bc28467f6a3eede750cd360f797de4069a60937e8e29c85d2266b7c9c"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_43.png",
+        "sha256": "64b6dba76625a9bd26cb08eed2ae9f2b79e96a4e2b0ecdbc0db3b74133eec483"
+      }
+    },
+    {
+      "pair_id": 44,
+      "seed": 150777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_44.png",
+        "sha256": "bb42b77ba66d67b1a07ccca8db2620e86e004dc9ae494aed91e1cc5067830ca4"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_44.png",
+        "sha256": "47c193129ea565782c226112bb5942b6b9f2b71e7704b33b34bd475bc27af480"
+      }
+    },
+    {
+      "pair_id": 45,
+      "seed": 151024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_45.png",
+        "sha256": "c6cbb7b8a49301d23fbfc33c324d7e9531e69388e7c88d419e738a28ecb83b9b"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_45.png",
+        "sha256": "6411b2a15435d6340677cfaa22103b1755b912a365a531b32d729e9acc1748c0"
+      }
+    },
+    {
+      "pair_id": 46,
+      "seed": 152048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_46.png",
+        "sha256": "6e7d7d1e45cfc678dd6fd93f560df5336b5d2aac3578499799c1ad6f558ecf79"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_46.png",
+        "sha256": "1c89b0759874779e856c60336e17c9b8d7e838b34db22d40a3769b1a9c6ac9f9"
+      }
+    },
+    {
+      "pair_id": 47,
+      "seed": 153141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_47.png",
+        "sha256": "9b262474f2da1f5e58ae8545d9a415ee8d91e0213c390b297cdc6cc5dae44144"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_47.png",
+        "sha256": "9fea1eb9f3d5385ac791d933a82aaf393e67dea9b07c3a281ce3d79e33dc98aa"
+      }
+    },
+    {
+      "pair_id": 48,
+      "seed": 160042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_48.png",
+        "sha256": "edddaf6f3e269727df4be96f50c5041c4abf5eac23771ec9189f59a3082c8a7d"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_48.png",
+        "sha256": "3614401c6b7cf8019c000233153d9825b3629b82dcfa2ad4f2f04d1f78f85662"
+      }
+    },
+    {
+      "pair_id": 49,
+      "seed": 160137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_49.png",
+        "sha256": "0fbd0633c5462afeb3149ee3bbed176e0cba40443edb1970a495d348643e65a3"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_49.png",
+        "sha256": "5ee2f65bacab66bc7e8e9c003ece8b433fc149eba36f9d1e5df0e12242d366a7"
+      }
+    },
+    {
+      "pair_id": 50,
+      "seed": 160256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_50.png",
+        "sha256": "9cb1ec61875f2e3283153e2489a4742b6fbec1513207e9062fe5069d653ce7c9"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_50.png",
+        "sha256": "5296bfbc0f812c97588b244e29c74f56d86e5e498c322f2370a03805130cdbe9"
+      }
+    },
+    {
+      "pair_id": 51,
+      "seed": 160512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_51.png",
+        "sha256": "d21b13f4b895d03177c5fa6121dd1e0744c27dcadca65b0037745e634668e0f8"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_51.png",
+        "sha256": "1755db5975459ac61c92088594a64a85782907e30dd56d2df35262e13dc7b8d1"
+      }
+    },
+    {
+      "pair_id": 52,
+      "seed": 160777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_52.png",
+        "sha256": "66ecf4c0fb3d622709556531490807d8121ff3d4d8a4469c7abbee3c06c8f1cd"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_52.png",
+        "sha256": "a7aa4a462800512c4a6e848041856cc0da447de73de3cbb078d631fc74114913"
+      }
+    },
+    {
+      "pair_id": 53,
+      "seed": 161024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_53.png",
+        "sha256": "62bfa3138988e662e614769fe030f8c5ba85085905a4f6ea54824d09cecfe7bb"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_53.png",
+        "sha256": "31bd3c9044a402ec460138969fe22e37c9d7f296fa9770bee4ff76418725c356"
+      }
+    },
+    {
+      "pair_id": 54,
+      "seed": 162048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_54.png",
+        "sha256": "a09239e4c3b7bfe5fb9ca59fc8bd5a141f934ecebec8d68008e770f02b9354d8"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_54.png",
+        "sha256": "8c43f54e3603bb4ce1b2306c53b23747315024c792f62eab4d4b5afd6e3ba1c2"
+      }
+    },
+    {
+      "pair_id": 55,
+      "seed": 163141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_55.png",
+        "sha256": "6e401524e477e4ca9838e3a64a9b4993eaac5a6904f000b15cbd912f46cfec82"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_55.png",
+        "sha256": "c044045c6066dff35854a6f20607483280ce152cec99b0c783e84541977311d3"
+      }
+    },
+    {
+      "pair_id": 56,
+      "seed": 170042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_56.png",
+        "sha256": "983a0585f6b02c6a6513b899acecb4af9430ace30eafd4baf1f2d21a3cd20cee"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_56.png",
+        "sha256": "c714dd27a8cef6f39b13f4c2421066678accac71a108639f29f16056f3419dd0"
+      }
+    },
+    {
+      "pair_id": 57,
+      "seed": 170137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_57.png",
+        "sha256": "e18638def95bb125aa8d2924e7885658ccef76c403986400e31f0f7fa338cb2e"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_57.png",
+        "sha256": "cb8bde1fe5b6ef0cbc74ccfeb06c71ad7da2f181d762fd8d8a3af282c20324fd"
+      }
+    },
+    {
+      "pair_id": 58,
+      "seed": 170256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_58.png",
+        "sha256": "3c59f2cc69813b53ce3b06d548a9d04b881b365ef456e19be7fbac917ec24614"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_58.png",
+        "sha256": "615c3c79750e6e684e5c0658ff70110434a6b913f93c3b99cbeb75559a33cf5b"
+      }
+    },
+    {
+      "pair_id": 59,
+      "seed": 170512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_59.png",
+        "sha256": "e1c76ea1d61b7ebba59f2864799c7d2e2d7dbd6358ca9e23e7888685c15a5147"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_59.png",
+        "sha256": "7dda6ecc9526851b1487a05154033c4a7ac8551b049931dd1b635fd8fbed5c5c"
+      }
+    },
+    {
+      "pair_id": 60,
+      "seed": 170777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_60.png",
+        "sha256": "4213d11026099d5d72742cc918786753ebe3d9b3bcc7fbd52e935fee706f4781"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_60.png",
+        "sha256": "c206a0318adfed0bf0a437b456a3656891167f7c5d3fcd856343edd189b502dd"
+      }
+    },
+    {
+      "pair_id": 61,
+      "seed": 171024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_61.png",
+        "sha256": "aa8caf8492ce1684aaff93f1d1582d65a23f1b0d9875e287082949dc7bb690cc"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_61.png",
+        "sha256": "28a156f4b1ac901d8973942ee9c87d7f3484964f82648b84e541f3fafe8a8feb"
+      }
+    },
+    {
+      "pair_id": 62,
+      "seed": 172048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_62.png",
+        "sha256": "f114df19327855721dfb8804e0a2d08fc8b3055197ab0ce28330f1594e33e87e"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_62.png",
+        "sha256": "fd8097dfdabc7a80a9de1c20667d5f4ef0cfca0ade53fb843aaeb44fe3fc48f4"
+      }
+    },
+    {
+      "pair_id": 63,
+      "seed": 173141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_63.png",
+        "sha256": "9a49ff51fe943ea145353e69646645a4d80916d0b3478863a9df013ff6fed2d2"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_63.png",
+        "sha256": "999eb1934bccf9cb36e413ce4c68b05a8df2fb595a9a4f64dff33f06317ccdf1"
+      }
+    },
+    {
+      "pair_id": 64,
+      "seed": 180042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_64.png",
+        "sha256": "e52673fdff3acb68af1ad2c186fdb33ec8c9353b6a1123a2525d0366cdb768e2"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_64.png",
+        "sha256": "0272c47059b03bb3a9478a2ef33ff9509ea9ddbd262a54120cb45104258a0135"
+      }
+    },
+    {
+      "pair_id": 65,
+      "seed": 180137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_65.png",
+        "sha256": "c4edfd4e7fa61acc210673eda0239de8515d35f1012dc3825d08251b63b9c30d"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_65.png",
+        "sha256": "5cbace3ff54e17555b6c516c8fa776a6074abf001c2cefcc9032e0b6409c49f8"
+      }
+    },
+    {
+      "pair_id": 66,
+      "seed": 180256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_66.png",
+        "sha256": "dc4a32a5da56149cfda1efbb7db31313c79e4c1644a19a4101027961f9f39cf9"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_66.png",
+        "sha256": "89bf4d6bdd760559a52259a4d518d55b2956e8207dc4c5289b95307810fe6a29"
+      }
+    },
+    {
+      "pair_id": 67,
+      "seed": 180512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_67.png",
+        "sha256": "3bedf3f938c35d0503e82199c3605570f9d34885810304fccce3f39c4082b005"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_67.png",
+        "sha256": "53f70099ab32df93f7cf0540a2d483df2e7f1e2482de9c329b0fe6a107c604dc"
+      }
+    },
+    {
+      "pair_id": 68,
+      "seed": 180777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_68.png",
+        "sha256": "e740dce6f693dea11fcc83009321935666ddd0cb7b067653cdfd5da1bee18870"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_68.png",
+        "sha256": "832aeee4c665294d1f156093b7348c7ab35d1c764f77259baf9bfba4d0e35c88"
+      }
+    },
+    {
+      "pair_id": 69,
+      "seed": 181024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_69.png",
+        "sha256": "1454cbc3132c24f004bdd7662086453f43336b7ff9713f256bf4905ec247103c"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_69.png",
+        "sha256": "9e5a5405a156e9736520d7d0b52f02cbf93e9a9dabe749953bb56434ce8fc968"
+      }
+    },
+    {
+      "pair_id": 70,
+      "seed": 182048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_70.png",
+        "sha256": "1ab341c87a2da0cef08505b21751428f123dc1d1518d9224127ddcd2a8131977"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_70.png",
+        "sha256": "905b27d8bcdff0c76f95c7c900981fcc2bc48ad5c63f06d1c34a6063a70a9353"
+      }
+    },
+    {
+      "pair_id": 71,
+      "seed": 183141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_71.png",
+        "sha256": "2caf93e21555571247b149546bc4700ad9f61f459245a3e039695ff36c5ac291"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_71.png",
+        "sha256": "58e5204d64bc5a35d954f1d3738203d5663769394a06e257161e73facfa0c147"
+      }
+    },
+    {
+      "pair_id": 72,
+      "seed": 190042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_72.png",
+        "sha256": "5587a4629997f2ab480431436e3f9ddbf988dccc545e6dae4d3bedbc6c0d9230"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_72.png",
+        "sha256": "e08e3b85565e7fbaabcc80653124a010a0b150865576ae718a5c0518d4fc568f"
+      }
+    },
+    {
+      "pair_id": 73,
+      "seed": 190137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_73.png",
+        "sha256": "3c8b69dd9abe6ce06cfeb48ac8f98c5d6080e05cc9061a640121fc96671797ef"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_73.png",
+        "sha256": "3f9cea3deb0831d432c5f80f36ce357f2719b0c21a84dde8e825902629524762"
+      }
+    },
+    {
+      "pair_id": 74,
+      "seed": 190256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_74.png",
+        "sha256": "959b6b5c807eebcbc74252d79f8083740f00856136c78b792981d32c19b5fff8"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_74.png",
+        "sha256": "c7be87c8c455ff3414bac326a644b7dd7bde29407a60cc17dc47e277f73dacf0"
+      }
+    },
+    {
+      "pair_id": 75,
+      "seed": 190512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_75.png",
+        "sha256": "cd1060423563f2785b9c486f0d22f8ae2902b75eab2ce6b9386b2a567d3e3b70"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_75.png",
+        "sha256": "6edcdcbfdee6629dd12c93cb3962cb6e6fe156d34e6faff9a8d35a4c3fb91ea2"
+      }
+    },
+    {
+      "pair_id": 76,
+      "seed": 190777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_76.png",
+        "sha256": "a7fba02cbcae25e6649ebd15f996d654c63a77a6e44ed891ad4f47db2bb0496b"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_76.png",
+        "sha256": "b55cee1ceebfd12213e5bc4110fa8394cfd4a1b4bc4328e25f1f3a8af0cf3786"
+      }
+    },
+    {
+      "pair_id": 77,
+      "seed": 191024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_77.png",
+        "sha256": "95ff1741884d33e67e9f2b6602cdba9f5c0bdde833d66c3b14b49e242453a7f2"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_77.png",
+        "sha256": "e26eb0b01a85aa1e18c52ba802a57c487c30f13e0269b4e2cde92f21cdfe9cb0"
+      }
+    },
+    {
+      "pair_id": 78,
+      "seed": 192048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_78.png",
+        "sha256": "f55fe238b2c8f2b648ccd75362feae36ff8c52d3525c6a036b1c7e2d8ebce517"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_78.png",
+        "sha256": "68d806f65d021a202eaeb4a200af21bd1b678e92e54e5953bd6d5a82f3012611"
+      }
+    },
+    {
+      "pair_id": 79,
+      "seed": 193141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_79.png",
+        "sha256": "68647e8fbe36c3165f72665e91aa9fbf34c633ddc920f23401f009c198ba06ce"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_79.png",
+        "sha256": "46bdf2dc276d141ece8b1423dd9e40462f60a018be0fe1f737b9bec1bef7fb8e"
+      }
+    },
+    {
+      "pair_id": 80,
+      "seed": 200042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_80.png",
+        "sha256": "d5b4111db84063f653b5d889e2e55344cc6b5dd4a5268e839cda683b375a798e"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_80.png",
+        "sha256": "b130758e0cc67b069cf04d120586c34e76e9bed5d7be0b2fd0956b89cf5ccebd"
+      }
+    },
+    {
+      "pair_id": 81,
+      "seed": 200137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_81.png",
+        "sha256": "b7326a34e0386d569b2d09bee6d0629ffc2393f2258a88cec4f34ff52e4da795"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_81.png",
+        "sha256": "d32002340b3a947dfcc89a311187a110e9703e1a027da860b4210cbba4888518"
+      }
+    },
+    {
+      "pair_id": 82,
+      "seed": 200256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_82.png",
+        "sha256": "6c46b1106f2a1ba36093f57cdd31563d4ca338a12d9123aed3808cba8fa2d632"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_82.png",
+        "sha256": "990e1a53bc3a31117f2b78d62011041a5423226d6e22a9a9cf0242a3df4f6aef"
+      }
+    },
+    {
+      "pair_id": 83,
+      "seed": 200512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_83.png",
+        "sha256": "6b5d70db05bc22c64a12016a61a7ec4d3748578241478557606465fb57a9295a"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_83.png",
+        "sha256": "8d0b84f7b5e85a532a9180cab9c4a412b311d6fa866ffec4c1b21d95f1b5c20c"
+      }
+    },
+    {
+      "pair_id": 84,
+      "seed": 200777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_84.png",
+        "sha256": "5f71ea597444015fd778803e60e98870c56d81f1ad14d2c4740ea007a8053313"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_84.png",
+        "sha256": "bd179dbcc0306b6cbfe398fdb7af381d236eac895218eac4ca1119fc088da2a3"
+      }
+    },
+    {
+      "pair_id": 85,
+      "seed": 201024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_85.png",
+        "sha256": "fa0af8edbac486318ef2b5d1adf9dc6bcca6e75909674dd38d98e3fc7ebc31ce"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_85.png",
+        "sha256": "450521c7a1451ddcc4fff548b08aa8936bf7b2a60331acf88cff6333c7856cac"
+      }
+    },
+    {
+      "pair_id": 86,
+      "seed": 202048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_86.png",
+        "sha256": "9c0cfce89592ccd516b20d181d0ecb556f88bc060709a086bff8784669202cbc"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_86.png",
+        "sha256": "d0b6552ba8ee18d77a82ea8d350976b9225f20613ee84e62d6ac3e7e795cd76b"
+      }
+    },
+    {
+      "pair_id": 87,
+      "seed": 203141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_87.png",
+        "sha256": "33829508c4f3db547a06288faea88604ce34c9dadc55e688a8d63757062b0427"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_87.png",
+        "sha256": "1d151d3178f2c0047f69babdac41f31ce9b6c63f396e9f6fa0569e16360701cf"
+      }
+    },
+    {
+      "pair_id": 88,
+      "seed": 210042,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/replication_v1/light_skin/portrait_88.png",
+        "sha256": "2b1d4c5e0ad2094992c03b3fbc5df3f2b2df520cca70e150919d3953e8957023"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_88.png",
+        "sha256": "d52f56b7e5660686db7884c13e7c6c779f8e7da1a2f16a43ac9c89b0b8a00499"
+      }
+    },
+    {
+      "pair_id": 89,
+      "seed": 210137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/replication_v1/light_skin/portrait_89.png",
+        "sha256": "ff0e71225e524c9e8e00f55cf92b59a6e0891039b39fe9a44a3b97b57498a29a"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_89.png",
+        "sha256": "8b33232d08437e2f93a468a8084451fc0306d1aa3bcaffa8c0134839b561e6e6"
+      }
+    },
+    {
+      "pair_id": 90,
+      "seed": 210256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/replication_v1/light_skin/portrait_90.png",
+        "sha256": "787c093894f514c9bb9616bba40440c5622b34185ab07d95a4c462c7bcc82412"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/replication_v1/dark_skin/portrait_90.png",
+        "sha256": "64f7e01874e332f758ab13420e211f1989291a983d3dceaee7ede2a88ed35af4"
+      }
+    },
+    {
+      "pair_id": 91,
+      "seed": 210512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/replication_v1/light_skin/portrait_91.png",
+        "sha256": "1c99a2bc766cf7da036de8766786e254d8f6b0fab003875547f7eb4d6afa9761"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_91.png",
+        "sha256": "91103866356392f38313b2b69ea1a7e5f3e15574353272228e9ead6afc0a8d28"
+      }
+    },
+    {
+      "pair_id": 92,
+      "seed": 210777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/replication_v1/light_skin/portrait_92.png",
+        "sha256": "7d1ec438a596b2333c6d9ac4e61f70fba98dd23da87eaf9a47f6ce54f25af015"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/replication_v1/dark_skin/portrait_92.png",
+        "sha256": "8488c01b6344b82063a0953cc5777cf34a5a3352011d8552d5ba46fce3a7b9ed"
+      }
+    },
+    {
+      "pair_id": 93,
+      "seed": 211024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/replication_v1/light_skin/portrait_93.png",
+        "sha256": "a9cec1abe5ed655a42f3ed1f9096ef93be252c0c262000ee68d8ae0044581985"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/replication_v1/dark_skin/portrait_93.png",
+        "sha256": "c9f1a4ebc59f8f1a812f01b3a869a7c5092a09d8d3caaff23b4a89ee9985290a"
+      }
+    },
+    {
+      "pair_id": 94,
+      "seed": 212048,
+      "light": {
+        "descriptor": "fair skin",
+        "path": "data/replication_v1/light_skin/portrait_94.png",
+        "sha256": "b9bd50bbe5feb24bab7f433cac418f58922ac614a5d5cbf91df1deb308aee453"
+      },
+      "dark": {
+        "descriptor": "deep complexion",
+        "path": "data/replication_v1/dark_skin/portrait_94.png",
+        "sha256": "f98b22712470527e712e58819fd2b1a68a052b477442e88f10f4d2ac76cb2253"
+      }
+    },
+    {
+      "pair_id": 95,
+      "seed": 213141,
+      "light": {
+        "descriptor": "light-skinned",
+        "path": "data/replication_v1/light_skin/portrait_95.png",
+        "sha256": "6586c38ebb89fcba3a6eed0043a9c000171ff53e256f61c668ecb075bfef1023"
+      },
+      "dark": {
+        "descriptor": "dark-skinned",
+        "path": "data/replication_v1/dark_skin/portrait_95.png",
+        "sha256": "be133d671f5d9eeff366f7d8bb1ae89ffc6195289205754863abaf59910a4302"
+      }
+    }
+  ],
+  "provenance": {
+    "recorded_at_utc": "2026-08-17T04:38:41.161399+00:00",
+    "python": "3.12.13",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.35",
+    "packages": {
+      "torch": "2.11.0+cu128",
+      "diffusers": "0.27.2",
+      "transformers": "4.39.3",
+      "numpy": "1.26.4",
+      "scikit-image": "0.25.2",
+      "facenet-pytorch": "2.6.0",
+      "lpips": "0.1.4"
+    },
+    "git": {
+      "commit": null,
+      "branch": null,
+      "dirty": null
+    },
+    "environment": {
+      "cuda_available": true,
+      "mps_available": false,
+      "pythonhashseed": null
+    }
+  }
+}

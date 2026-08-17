@@ -37,7 +37,7 @@ TMLR is the strongest fallback if WACV enrollment or independent review cannot
 be completed responsibly. It uses rolling, double-blind OpenReview submission,
 explicitly welcomes experimental studies that expose strengths and weaknesses,
 and emphasizes whether claims are supported by accurate evidence rather than
-subjective significance. That maps well to this paper's preregistration,
+subjective significance. That maps well to this paper's prospective design freeze,
 failure retention, robustness analysis, and formally inconclusive replication.
 It would require reformatting with the mandatory TMLR template and disclosure
 of LLM assistance under the current author policy. Do not submit to TMLR while
@@ -90,7 +90,7 @@ matched-target coverage.
 ## Release sequence
 
 1. complete calibration, paired data, measurement validation, and the frozen
-   preregistration commit;
+   pre-outcome freeze artifact;
 2. run the confirmatory matrix without changing the config;
 3. produce the full analysis, limitations, model/data cards, and paper;
 4. create an archival release and preprint only after the result hashes and

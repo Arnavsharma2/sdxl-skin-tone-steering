@@ -6,7 +6,7 @@ Evaluations & Dataset Track
 
 ## Working title
 
-**Skin-Tone Steering at Matched Change: A Preregistered Evaluation of
+**Skin-Tone Steering at Matched Change: A Prospectively Frozen Evaluation of
 Denoising-Time Latent Control in SDXL**
 
 The title foregrounds the evaluation contribution and avoids implying that a
@@ -18,7 +18,7 @@ We evaluate whether a linear direction estimated from paired portrait latents
 can control visible skin tone in Stable Diffusion XL while preserving other
 image properties. The intervention computes a paired mean difference in VAE
 latent space, applies a fixed spatial Gaussian mask, and distributes the update
-across denoising steps. Our central contribution is a preregistered
+across denoising steps. Our central contribution is a prospectively frozen
 matched-change protocol that separates target response from preservation,
 retains detector and metric failures, and compares methods only after matching
 their measured image-colour change. We estimate the direction from 64 of 96
@@ -33,7 +33,7 @@ unmatched preservation comparisons can be misleading. Post-confirmatory
 tolerance and split-half analyses expose limited strict-match coverage and
 sample sensitivity of the learned direction. A prospectively frozen
 independent-seed replication retained both LPIPS effect signs and
-interval-positive estimates, but missed its preregistered matched-pair coverage
+interval-positive estimates, but missed its prespecified matched-pair coverage
 threshold; its locked decision is therefore inconclusive. The study supports a
 bounded parent-campaign perceptual-preservation result and an auditable
 evaluation practice—not identity preservation, causal disentanglement,
@@ -50,7 +50,7 @@ demographic inference, bias mitigation, or a strict replication claim.
 ## Keywords
 
 latent diffusion; matched-change evaluation; skin tone; perceptual
-preservation; preregistration; reproducibility; missingness
+preservation; prospective design; reproducibility; missingness
 
 ## Author-dependent enrollment fields
 

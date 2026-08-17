@@ -5,7 +5,7 @@
 	replication-audit replication-analyze replication-assess replication-plot \
 	paper paper-wacv paper-audit clean-paper
 
-.PHONY: anonymous-supplement
+.PHONY: anonymous-supplement submission-audit submission-ready
 
 PLANNED_CONFIG ?= configs/full_study.yaml
 PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
@@ -13,6 +13,8 @@ STUDY_CONFIG ?= configs/full_study_preregistered.yaml
 RUN_DIR ?= experiments/runs/confirmatory_cuda
 ANALYSIS_DIR ?= experiments/analysis/confirmatory_cuda
 TECTONIC ?= tectonic
+# Fix PDF metadata timestamps so unchanged source produces byte-identical PDFs.
+SOURCE_DATE_EPOCH ?= 1787000000
 REPLICATION_PLANNED_CONFIG ?= configs/replication_study.yaml
 REPLICATION_CONFIG ?= configs/replication_study_preregistered.yaml
 REPLICATION_RUN_DIR ?= experiments/runs/replication_cuda
@@ -117,16 +119,26 @@ study-example:
 		--output paper/figures/confirmatory_qualitative.png
 
 paper:
-	cd paper && $(TECTONIC) main.tex --keep-logs --keep-intermediates
+	cd paper && SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) $(TECTONIC) main.tex --keep-logs --keep-intermediates
+	mkdir -p output/pdf
+	cp paper/main.pdf output/pdf/denoising_time_skin_tone_steering_replication.pdf
 
 paper-wacv:
-	cd paper/wacv && $(TECTONIC) main.tex --keep-logs --keep-intermediates
+	cd paper/wacv && SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) $(TECTONIC) main.tex --keep-logs --keep-intermediates
+	mkdir -p output/pdf
+	cp paper/wacv/main.pdf output/pdf/wacv2027_submission_draft.pdf
 
 paper-audit:
 	$(PYTHON) scripts/verify_manuscript_claims.py
 
 anonymous-supplement:
 	$(PYTHON) scripts/build_anonymous_supplement.py
+
+submission-audit: paper-audit anonymous-supplement
+	$(PYTHON) scripts/check_submission_readiness.py
+
+submission-ready: submission-audit
+	$(PYTHON) scripts/check_submission_readiness.py --require-human
 
 clean-paper:
 	cd paper && latexmk -C

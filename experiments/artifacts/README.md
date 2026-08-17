@@ -1,6 +1,9 @@
 # Local artifact archives
 
 Large archives are intentionally ignored by Git and identified by SHA-256.
+They are author-retained unless a stable release or anonymous review URL is
+recorded. See `docs/ARTIFACT_AVAILABILITY.md`; a hash alone does not make an
+archive independently accessible.
 
 | File | Size | SHA-256 | Contents |
 |---|---:|---|---|

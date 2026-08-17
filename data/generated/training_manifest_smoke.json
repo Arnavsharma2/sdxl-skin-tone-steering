@@ -1,0 +1,123 @@
+{
+  "schema_version": "2.0",
+  "status": "synthetic_paired_training_data",
+  "study_config_fingerprint": "49c3e2062eb4f16e",
+  "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
+  "model_revision": "462165984030d82259a11f4367a4eed129e94a7b",
+  "inference_steps": 6,
+  "guidance_scale": 5.0,
+  "height": 512,
+  "width": 512,
+  "pairing": "same seed and composition prompt; skin-tone descriptor differs",
+  "n_pairs": 6,
+  "pairs": [
+    {
+      "pair_id": 0,
+      "seed": 42,
+      "light": {
+        "descriptor": "light skin tone",
+        "path": "data/photos/light_skin/portrait_00.png",
+        "sha256": "8866893d87854c06914369796abce887424ce2c7bfac1de859a6fe87e6db8ebc"
+      },
+      "dark": {
+        "descriptor": "dark skin tone",
+        "path": "data/photos/dark_skin/portrait_00.png",
+        "sha256": "642b629d812d93ff18c5d6570621af76524d2f3cc112dc848d7fa7a50ffc83b7"
+      }
+    },
+    {
+      "pair_id": 1,
+      "seed": 137,
+      "light": {
+        "descriptor": "fair skin tone",
+        "path": "data/photos/light_skin/portrait_01.png",
+        "sha256": "fbb83b3be5917ef3274fb9a96fe449a6398ef22b78fa7a9c117c2334327e44ca"
+      },
+      "dark": {
+        "descriptor": "deep skin tone",
+        "path": "data/photos/dark_skin/portrait_01.png",
+        "sha256": "33bbbc6e600838e6ca9ab6c2d8b5b2297d4eb402cac7db5496e3a24532045c70"
+      }
+    },
+    {
+      "pair_id": 2,
+      "seed": 256,
+      "light": {
+        "descriptor": "light complexion",
+        "path": "data/photos/light_skin/portrait_02.png",
+        "sha256": "3c1442513e2260d7127c0e04ba80cb036424c076d7c2aa11ff5330c1c9fc0527"
+      },
+      "dark": {
+        "descriptor": "dark complexion",
+        "path": "data/photos/dark_skin/portrait_02.png",
+        "sha256": "6531605ec20dc00c6b43e70d14f10cbfb61f71bc96d2b08ab8e3398fd4de9ec0"
+      }
+    },
+    {
+      "pair_id": 3,
+      "seed": 512,
+      "light": {
+        "descriptor": "pale skin tone",
+        "path": "data/photos/light_skin/portrait_03.png",
+        "sha256": "97b8c5e7ad8addaa4e3d951e7900b795b26cb66fa72912d3f883fd0aa283a5eb"
+      },
+      "dark": {
+        "descriptor": "rich dark skin tone",
+        "path": "data/photos/dark_skin/portrait_03.png",
+        "sha256": "a1278df4c5f6c0f3d54ed9f6bf5e4a962e8516daccaa0ccf8994713323f10aa5"
+      }
+    },
+    {
+      "pair_id": 4,
+      "seed": 777,
+      "light": {
+        "descriptor": "fair complexion",
+        "path": "data/photos/light_skin/portrait_04.png",
+        "sha256": "89fa779a541c11e9b147981d54e65df7bb284aa82a10bb8fc9175da4021c4546"
+      },
+      "dark": {
+        "descriptor": "deep brown skin tone",
+        "path": "data/photos/dark_skin/portrait_04.png",
+        "sha256": "de0cada4b6c97db92056f6812cc29120fb9d2c8904fbe5eb67348165f76b8ca8"
+      }
+    },
+    {
+      "pair_id": 5,
+      "seed": 1024,
+      "light": {
+        "descriptor": "light skin",
+        "path": "data/photos/light_skin/portrait_05.png",
+        "sha256": "4e8361e038e27ade684a8cc87a8326b5917a5fb826c4cd00e0575216257ecb7b"
+      },
+      "dark": {
+        "descriptor": "dark skin",
+        "path": "data/photos/dark_skin/portrait_05.png",
+        "sha256": "5686085b12ec1e447ed715e246cd944d96db9e6038b5970673227b18c22111f4"
+      }
+    }
+  ],
+  "provenance": {
+    "recorded_at_utc": "2026-08-16T19:36:01.644722+00:00",
+    "python": "3.10.0",
+    "platform": "macOS-26.1-arm64-arm-64bit",
+    "packages": {
+      "torch": "2.2.2",
+      "diffusers": "0.27.2",
+      "transformers": "4.39.3",
+      "numpy": "1.26.4",
+      "scikit-image": "0.25.2",
+      "facenet-pytorch": "2.6.0",
+      "lpips": "0.1.4"
+    },
+    "git": {
+      "commit": "dc8119f4b522a7455de7530576e58e759c3dc81f",
+      "branch": "main",
+      "dirty": true
+    },
+    "environment": {
+      "cuda_available": false,
+      "mps_available": false,
+      "pythonhashseed": null
+    }
+  }
+}

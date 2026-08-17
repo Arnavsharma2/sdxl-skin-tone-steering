@@ -12,13 +12,13 @@ is not a results summary and must be updated from the archived run artifacts.
   `382a77c27aa6763e83133bb2f89fb249ad02f692e1775c7ef98c9eebf520a24d`
 - Measurement-validation report SHA-256:
   `679571f02e57a40fb208d6ffb54391d654cafa6dc996cbd1947941e3bfd2a0e0`
-- Preregistration artifact archive SHA-256:
+- Author-controlled pre-outcome freeze archive SHA-256:
   `0291ad0335e90739ecd3caeb65b13d5a252581d6de99db021aca791eaacf9267`
 - Planned conditions: 30 seeds and 570 `(seed, method, alpha)` rows.
 
 The direction-data manifest attests 96 light-descriptor and 96 dark-descriptor
 images. The held-out measurement validation completed all 32 pairs and passed
-every frozen gate before the preregistered config was created.
+every frozen gate before the immutable config was created.
 
 ## Runtime
 
@@ -82,7 +82,11 @@ condition set before producing tables.
 ## Post-confirmatory robustness analyses
 
 These analyses were performed after the frozen confirmatory analysis and are
-therefore exploratory rather than preregistered.
+therefore exploratory rather than part of the prospectively frozen analysis.
+
+The archive is identified by content hash but was not deposited with an
+independent timestamping service before collection. The manuscript therefore
+uses “prospectively frozen,” not “externally preregistered.”
 
 - Matching-tolerance sensitivity output:
   `experiments/analysis/robustness`

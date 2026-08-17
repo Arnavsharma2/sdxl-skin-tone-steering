@@ -34,6 +34,14 @@ BANNED_IDENTITY_PATTERNS = (
 )
 MAX_SUPPLEMENT_BYTES = 200 * 1024 * 1024
 ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
+REQUIRED_SUBMISSION_MANIFESTS = (
+    "data/generated/training_manifest_smoke.json",
+    "data/generated/training_manifest_calibration_quality.json",
+    "data/generated/training_manifest_study_v1.generation.jsonl",
+    "data/generated/training_manifest_study_v1.json",
+    "data/generated/training_manifest_replication_v1.generation.jsonl",
+    "data/generated/training_manifest_replication_v1.json",
+)
 
 
 def sha256_bytes(payload: bytes) -> str:
@@ -68,6 +76,15 @@ def write_deterministic_member(
 def collect_files(root: Path) -> list[Path]:
     """Collect only artifacts needed to reproduce claims, never model weights/images."""
 
+    missing_manifests = [
+        relative for relative in REQUIRED_SUBMISSION_MANIFESTS if not (root / relative).is_file()
+    ]
+    if missing_manifests:
+        raise FileNotFoundError(
+            "Required frozen submission manifests are missing: "
+            + ", ".join(missing_manifests)
+        )
+
     fixed = [
         "Makefile",
         "pyproject.toml",
@@ -78,6 +95,7 @@ def collect_files(root: Path) -> list[Path]:
         "paper/wacv/main.tex",
         "paper/wacv/wacv.sty",
         "paper/wacv/ieeenat_fullname.bst",
+        *REQUIRED_SUBMISSION_MANIFESTS,
     ]
     patterns = [
         "configs/*.yaml",
@@ -108,8 +126,6 @@ def collect_files(root: Path) -> list[Path]:
         "experiments/runs/replication_cuda/results.jsonl",
         "experiments/runs/replication_cuda/run_manifest.json",
         "experiments/runs/replication_cuda/study_config.yaml",
-        "data/generated/*.json",
-        "data/generated/*.jsonl",
     ]
     selected = {root / value for value in fixed if (root / value).is_file()}
     for pattern in patterns:

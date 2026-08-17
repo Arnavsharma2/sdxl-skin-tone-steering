@@ -38,13 +38,20 @@ experiments/analysis/*
 !experiments/analysis/manuscript_claim_audit.json
 experiments/analysis/**/*.pt
 experiments/artifacts/*.tgz
-data/generated/
+data/generated/*
+!data/generated/training_manifest_smoke.json
+!data/generated/training_manifest_calibration_quality.json
+!data/generated/training_manifest_study_v1.generation.jsonl
+!data/generated/training_manifest_study_v1.json
+!data/generated/training_manifest_replication_v1.generation.jsonl
+!data/generated/training_manifest_replication_v1.json
 data/embeddings/
 data/calibration/
 data/study_v1/
 data/replication_v1/
 tmp/
 *.egg-info/
+submission/author_inputs.yaml
 
 # Jupyter
 .ipynb_checkpoints/
