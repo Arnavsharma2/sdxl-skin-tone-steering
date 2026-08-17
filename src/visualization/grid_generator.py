@@ -173,13 +173,9 @@ class CounterfactualGridGenerator:
                     metric_lines.append(f"Face Sim: {metric_dict['face_similarity']:.2f}")
                 if "landmark_rmse" in metric_dict and metric_dict["landmark_rmse"] is not None:
                     metric_lines.append(f"RMSE: {metric_dict['landmark_rmse']:.1f}px")
-                if metric_dict.get("skin_tone_change") is not None:
-                    metric_lines.append(
-                        f"Δ relative L*: {metric_dict['skin_tone_change']:+.1f}"
-                    )
-                if "counterfactual_success" in metric_dict:
-                    status = "VALID" if metric_dict["counterfactual_success"] else "INVALID"
-                    metric_lines.append(status)
+                if "is_disentangled" in metric_dict:
+                    status = "YES" if metric_dict["is_disentangled"] else "NO"
+                    metric_lines.append(f"{status} Disentangled")
 
                 # Draw metric lines
                 for i, line in enumerate(metric_lines):

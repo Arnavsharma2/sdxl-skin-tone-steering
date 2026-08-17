@@ -7,11 +7,12 @@ This module provides helper functions for:
 - Face mask creation
 """
 
+import warnings
+from typing import List, Optional, Tuple
+
 import cv2
 import numpy as np
 from PIL import Image
-from typing import Optional, Tuple, List
-import warnings
 
 warnings.filterwarnings("ignore")
 
@@ -223,8 +224,9 @@ def get_face_landmarks(image: np.ndarray) -> Optional[np.ndarray]:
         Landmarks as (68, 2) array or None if no face detected
     """
     try:
-        import dlib
         import os
+
+        import dlib
 
         # Try multiple common locations for the landmark predictor
         # Download from: http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2

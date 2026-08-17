@@ -130,7 +130,7 @@ class ComparativeEvaluator:
                 mod_img = self.model.decode_latent(mod_latent)
 
                 # 3. Evaluate
-                eval_res = self.evaluator.evaluate_pair(base_img, mod_img, alpha=alpha)
+                eval_res = self.evaluator.evaluate_pair(base_img, mod_img)
                 row = eval_res.to_dict()
                 row.update({
                     "method": "Vector",
@@ -184,9 +184,7 @@ class ComparativeEvaluator:
                 target_img, _ = self.model.generate_from_prompt(prompt_target, seed=seed, num_inference_steps=40)
 
                 # Evaluate pair
-                eval_res = self.evaluator.evaluate_pair(
-                    base_img, target_img, alpha=equiv_alpha
-                )
+                eval_res = self.evaluator.evaluate_pair(base_img, target_img)
                 row = eval_res.to_dict()
                 row.update({
                     "method": "Prompt",

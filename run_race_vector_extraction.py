@@ -378,7 +378,7 @@ class SkinToneSteeringPipeline:
         print("-" * 70)
 
         if alphas is None:
-            alphas = [-1.5, -0.75, 0, 0.75, 1.5]
+            alphas = [-4, -2, 0, 2, 4]
 
         self.alphas = alphas
         self.counterfactual_images = []
@@ -448,9 +448,7 @@ class SkinToneSteeringPipeline:
             if abs(alpha) < 0.01:
                 continue
             print(f"\n  α = {alpha:+.1f}")
-            result = self.evaluator.evaluate_pair(
-                self.base_image, cf_img, alpha=alpha, verbose=True
-            )
+            result = self.evaluator.evaluate_pair(self.base_image, cf_img, verbose=True)
             self.results.append((alpha, result))
 
         print("\nEvaluation complete.\n")
@@ -506,9 +504,6 @@ class SkinToneSteeringPipeline:
             "thresholds": (
                 vars(self.evaluator.thresholds) if self.evaluator is not None else None
             ),
-            "metric_provenance": (
-                self.evaluator.metric_provenance() if self.evaluator is not None else None
-            ),
             "provenance": collect_provenance(Path(__file__).parent),
             "results": [
                 {"alpha": a, **r.to_dict()}
@@ -532,24 +527,16 @@ class SkinToneSteeringPipeline:
         print(f"Counterfactuals:  {len(self.counterfactual_images)}")
 
         if self.results:
-            print("\n  α     FaceSim  BgSSIM  Pose°  ΔrelL*  Score  Valid")
+            print("\n  α     FaceSim  BgSSIM  Pose°  Score  Disentangled")
             print("  " + "-" * 55)
             for alpha, r in self.results:
                 fs  = f"{r.face_similarity:.3f}" if r.face_similarity is not None else "  N/A "
                 bg  = f"{r.background_ssim:.3f}" if r.background_ssim is not None else "  N/A "
                 pd_val = r.total_pose_diff
                 pd  = f"{pd_val:.1f}°" if (pd_val is not None and not np.isinf(pd_val)) else " N/A "
-                tone = (
-                    f"{r.skin_tone_change:+.2f}"
-                    if r.skin_tone_change is not None
-                    else " N/A "
-                )
-                sc = f"{r.overall_score:.3f}" if r.overall_score is not None else " N/A "
-                valid = "YES" if r.counterfactual_success else " NO"
-                print(
-                    f"  {alpha:+5.1f}   {fs}    {bg}   {pd:>5}  "
-                    f"{tone:>6}  {sc}  {valid}"
-                )
+                sc  = f"{r.overall_score:.3f}"
+                dis = "YES" if r.is_disentangled else " NO"
+                print(f"  {alpha:+5.1f}   {fs}    {bg}   {pd:>5}  {sc}     {dis}")
 
         print(f"\nOutputs in: {self.output_dir.absolute()}")
         print("  base_image.png           — unsteered base portrait")
@@ -569,13 +556,8 @@ def parse_args():
     p = argparse.ArgumentParser(description="Race vector extraction pipeline")
     p.add_argument("--steps", type=int, default=25,
                    help="Denoising steps (default 25 with DPM++ 2M)")
-    p.add_argument(
-        "--alphas",
-        type=float,
-        nargs="+",
-        default=[-1.5, -0.75, 0, 0.75, 1.5],
-        help="Alpha values (default: -1.5 -0.75 0 0.75 1.5)",
-    )
+    p.add_argument("--alphas", type=float, nargs="+", default=[-4, -2, 0, 2, 4],
+                   help="Alpha values for counterfactuals (default: -4 -2 0 2 4)")
     p.add_argument("--seed", type=int, default=999,
                    help="Generation seed for reproducibility")
     p.add_argument("--output", type=str, default="experiments/results",

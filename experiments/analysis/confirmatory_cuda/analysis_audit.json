@@ -1,0 +1,20 @@
+{
+  "study_id": "skin_tone_steering_confirmatory_v1",
+  "config_fingerprint": "6e7e5a62a18ebfe6",
+  "input_rows": 570,
+  "unique_seeds": 30,
+  "expected_conditions": 570,
+  "matched_change_targets": [
+    5.0
+  ],
+  "matched_change_methods": [
+    "prompt_only",
+    "stepwise_unmasked",
+    "stepwise_masked"
+  ],
+  "feasibility_only_methods": [
+    "posthoc_latent"
+  ],
+  "matched_rows": 180,
+  "contrast_rows": 16
+}

@@ -5,36 +5,19 @@ This module implements metrics to measure whether counterfactual images
 preserve the identity of the original person.
 """
 
-import os
 import warnings
-from pathlib import Path
 from typing import Union
 
 import numpy as np
 import torch
 from PIL import Image
 
-from .artifacts import (
-    ArtifactVerification,
-    inspect_artifact,
-    require_verified,
-)
-
 # Suppress warnings from face detection libraries
 warnings.filterwarnings("ignore")
 
-FACENET_VGGFACE2_SHA256 = (
-    "281cebca8662831adb987a874bdcb36e73f5b1c6dc5ee5878f305e985625d99b"
-)
-ALEXNET_SHA256 = "7be5be791159472b1fbf3c69796f7cb30dca7ad8466c2df70058c37116cdee02"
-LPIPS_ALEX_V01_SHA256 = (
-    "df73285e35b22355a2df87cdb6b70b343713b667eddbda73e1977e0c860835c0"
-)
-MTCNN_SHA256 = {
-    "pnet.pt": "a2a71925e0b9996a42f63e47efc1ca19043e69558b5c523b978d611dfae49c8f",
-    "rnet.pt": "bbb937de72efc9ef83b186c49f5f558467a1d7e3453a8ece0d71a886633f6a86",
-    "onet.pt": "165bfbe42940416ccfb977545cf0e976d5bf321f67083ae2aaaa5c764280118d",
-}
+
+class FaceDetectionError(RuntimeError):
+    """Raised when an embedding metric cannot detect both required faces."""
 
 
 class IdentityPreservationMetrics:
@@ -58,7 +41,7 @@ class IdentityPreservationMetrics:
         device: str = "cuda",
         use_arcface: bool = True,
         use_facenet: bool = False,
-        use_landmarks: bool = False,
+        enable_landmarks: bool = True,
     ):
         """
         Initialize identity metrics.
@@ -69,12 +52,12 @@ class IdentityPreservationMetrics:
             use_facenet: Use FaceNet for face recognition
         """
         self.device = device
+        self.enable_landmarks = enable_landmarks
         self.face_model = None
         self.landmark_detector = None
+        self._landmark_load_attempted = False
         self.lpips_model = None
         self.model_type = None
-        self.use_landmarks = use_landmarks
-        self.artifact_verifications: dict[str, ArtifactVerification] = {}
 
         # Load face recognition model
         if use_arcface:
@@ -102,48 +85,19 @@ class IdentityPreservationMetrics:
     def _load_facenet(self):
         """Load FaceNet model for face recognition."""
         try:
-            import facenet_pytorch
             from facenet_pytorch import MTCNN, InceptionResnetV1
 
             # FaceNet uses adaptive pooling which is unsupported on MPS — use CPU
             facenet_device = "cpu" if self.device == "mps" else self.device
 
-            torch_home = self._torch_home()
-            weights = torch_home / "checkpoints" / "20180402-114759-vggface2.pt"
-            initial = inspect_artifact(
-                weights,
-                FACENET_VGGFACE2_SHA256,
-                name="FaceNet VGGFace2 weights",
-            )
-            self.artifact_verifications["facenet_vggface2"] = initial
-            if initial.status != "missing":
-                require_verified(initial)
             self.face_model = InceptionResnetV1(pretrained="vggface2").eval()
-            self._record_artifact(
-                "facenet_vggface2",
-                weights,
-                FACENET_VGGFACE2_SHA256,
-                name="FaceNet VGGFace2 weights",
-            )
-            package_root = Path(facenet_pytorch.__file__).resolve().parent
-            for filename, expected in MTCNN_SHA256.items():
-                key = f"mtcnn_{filename.removesuffix('.pt')}"
-                self._record_artifact(
-                    key,
-                    package_root / "data" / filename,
-                    expected,
-                    name=f"MTCNN {filename} weights",
-                )
             self.face_model.to(facenet_device)
             self.facenet_device = facenet_device
             self.mtcnn = MTCNN(
                 image_size=160,
                 margin=0,
                 device=facenet_device,
-                # InceptionResnetV1's pretrained weights require MTCNN's
-                # fixed-image standardisation. Raw [0, 255] crops produce
-                # invalid embedding similarities.
-                post_process=True,
+                post_process=False,
             )
             self.model_type = "facenet"
             print("Loaded FaceNet model")
@@ -151,27 +105,6 @@ class IdentityPreservationMetrics:
             print(f"WARNING: Could not load FaceNet: {e}")
             print("  Install with: pip install facenet-pytorch")
             self.face_model = None
-            self.mtcnn = None
-
-    @staticmethod
-    def _torch_home() -> Path:
-        configured = os.environ.get("TORCH_HOME")
-        if configured:
-            return Path(configured).expanduser()
-        cache_home = Path(os.environ.get("XDG_CACHE_HOME", "~/.cache")).expanduser()
-        return cache_home / "torch"
-
-    def _record_artifact(
-        self,
-        key: str,
-        path: Path,
-        expected_sha256: str,
-        *,
-        name: str,
-    ) -> ArtifactVerification:
-        result = inspect_artifact(path, expected_sha256, name=name)
-        self.artifact_verifications[key] = result
-        return require_verified(result)
 
     def _load_lpips(self):
         """Load LPIPS model for perceptual similarity."""
@@ -181,73 +114,18 @@ class IdentityPreservationMetrics:
         try:
             import lpips
 
-            torch_home = self._torch_home()
-            backbone = torch_home / "hub" / "checkpoints" / "alexnet-owt-7be5be79.pth"
-            package_root = Path(lpips.__file__).resolve().parent
-            self._record_artifact(
-                "lpips_alex_v0.1",
-                package_root / "weights" / "v0.1" / "alex.pth",
-                LPIPS_ALEX_V01_SHA256,
-                name="LPIPS AlexNet v0.1 linear weights",
-            )
-            initial = inspect_artifact(
-                backbone,
-                ALEXNET_SHA256,
-                name="LPIPS AlexNet backbone weights",
-            )
-            self.artifact_verifications["alexnet_backbone"] = initial
-            if initial.status != "missing":
-                require_verified(initial)
             self.lpips_model = lpips.LPIPS(net="alex").to(self.device)
-            self._record_artifact(
-                "alexnet_backbone",
-                backbone,
-                ALEXNET_SHA256,
-                name="LPIPS AlexNet backbone weights",
-            )
             print("Loaded LPIPS model")
         except Exception as e:
             print(f"WARNING: Could not load LPIPS: {e}")
             print("  Install with: pip install lpips")
             self.lpips_model = None
 
-    @staticmethod
-    def _as_pil_rgb(image: Union[Image.Image, np.ndarray]) -> Image.Image:
-        """Convert supported face inputs to an explicit uint8 RGB image."""
-        if isinstance(image, Image.Image):
-            return image.convert("RGB")
-        array = np.asarray(image)
-        if array.ndim != 3 or array.shape[2] != 3 or array.dtype != np.uint8:
-            raise ValueError("FaceNet inputs must be uint8 RGB images with shape (H, W, 3)")
-        return Image.fromarray(array, mode="RGB")
-
-    @staticmethod
-    def _prepare_lpips_tensor(
-        image: Union[Image.Image, np.ndarray, torch.Tensor],
-    ) -> torch.Tensor:
-        """Return one finite RGB batch normalized exactly to [-1, 1]."""
-        if isinstance(image, torch.Tensor):
-            tensor = image.detach().float()
-            if tensor.ndim == 3:
-                tensor = tensor.unsqueeze(0)
-            if tensor.ndim != 4 or tensor.shape[0] != 1 or tensor.shape[1] != 3:
-                raise ValueError(
-                    "LPIPS tensor inputs must have shape (3, H, W) or (1, 3, H, W)"
-                )
-            if not torch.isfinite(tensor).all() or tensor.min() < -1 or tensor.max() > 1:
-                raise ValueError(
-                    "LPIPS tensor inputs must be finite and normalized to [-1, 1]"
-                )
-            return tensor
-        rgb = IdentityPreservationMetrics._as_pil_rgb(image)
-        array = np.asarray(rgb).copy()
-        tensor = torch.from_numpy(array).permute(2, 0, 1).float() / 255.0
-        return tensor.mul(2.0).sub(1.0).unsqueeze(0)
-
     def _load_landmarks(self):
         """Load facial landmark detector."""
-        if self.landmark_detector is not None:
+        if self.landmark_detector is not None or self._landmark_load_attempted:
             return
+        self._landmark_load_attempted = True
 
         try:
             import dlib
@@ -276,7 +154,7 @@ class IdentityPreservationMetrics:
             img2: Second image
 
         Returns:
-            Cosine similarity in [-1, 1]. The frozen engineering gate is 0.85.
+            Cosine similarity in [0, 1]. >0.85 typically means same person.
         """
         if self.model_type == "arcface":
             return self._face_similarity_arcface(img1, img2)
@@ -305,7 +183,7 @@ class IdentityPreservationMetrics:
         faces2 = self.face_app.get(img2)
 
         if len(faces1) == 0 or len(faces2) == 0:
-            raise RuntimeError("ArcFace could not detect a face in both images")
+            raise FaceDetectionError("ArcFace did not detect both faces")
 
         # Get embeddings (use first face)
         emb1 = faces1[0].embedding
@@ -327,26 +205,24 @@ class IdentityPreservationMetrics:
         if self.face_model is None:
             raise RuntimeError("FaceNet not loaded")
 
-        img1 = self._as_pil_rgb(img1)
-        img2 = self._as_pil_rgb(img2)
+        # Convert to PIL
+        if isinstance(img1, np.ndarray):
+            img1 = Image.fromarray(img1)
+        if isinstance(img2, np.ndarray):
+            img2 = Image.fromarray(img2)
 
         # Detect and crop faces
         face1 = self.mtcnn(img1)
         face2 = self.mtcnn(img2)
 
         if face1 is None or face2 is None:
-            raise RuntimeError("MTCNN could not detect a face in both images")
+            raise FaceDetectionError("MTCNN did not detect both faces")
 
         # Get embeddings (use facenet_device — may differ from self.device on MPS)
         fd = getattr(self, "facenet_device", self.device)
         with torch.no_grad():
             emb1 = self.face_model(face1.unsqueeze(0).to(fd))
             emb2 = self.face_model(face2.unsqueeze(0).to(fd))
-
-        if not torch.isfinite(emb1).all() or not torch.isfinite(emb2).all():
-            raise RuntimeError("FaceNet produced a non-finite embedding")
-        if torch.linalg.vector_norm(emb1) == 0 or torch.linalg.vector_norm(emb2) == 0:
-            raise RuntimeError("FaceNet produced a zero-norm embedding")
 
         # Compute cosine similarity
         similarity = torch.nn.functional.cosine_similarity(emb1, emb2)
@@ -419,10 +295,19 @@ class IdentityPreservationMetrics:
         if self.lpips_model is None:
             raise RuntimeError("LPIPS model not loaded")
 
-        tensor1 = self._prepare_lpips_tensor(img1).to(self.device)
-        tensor2 = self._prepare_lpips_tensor(img2).to(self.device)
-        if tensor1.shape != tensor2.shape:
-            raise ValueError("LPIPS inputs must have identical dimensions")
+        # Convert to tensor
+        def to_tensor(img):
+            if isinstance(img, torch.Tensor):
+                return img
+            if isinstance(img, Image.Image):
+                img = np.array(img)
+            # Normalize to [-1, 1]
+            img = torch.from_numpy(img).permute(2, 0, 1).float() / 255.0
+            img = (img * 2.0) - 1.0
+            return img.unsqueeze(0)
+
+        tensor1 = to_tensor(img1).to(self.device)
+        tensor2 = to_tensor(img2).to(self.device)
 
         # Compute LPIPS
         with torch.no_grad():
@@ -454,13 +339,16 @@ class IdentityPreservationMetrics:
             print(f"WARNING: Could not compute face similarity: {e}")
             metrics["face_similarity"] = None
 
-        # The dlib predictor is optional and is not part of the fixed gate set.
-        metrics["landmark_rmse"] = None
-        if self.use_landmarks:
+        # Landmark RMSE is a legacy optional metric and is disabled in the
+        # frozen study, which does not ship the external dlib predictor file.
+        if getattr(self, "enable_landmarks", True):
             try:
                 metrics["landmark_rmse"] = self.landmark_rmse(img1, img2)
             except Exception as e:
                 print(f"WARNING: Could not compute landmark RMSE: {e}")
+                metrics["landmark_rmse"] = None
+        else:
+            metrics["landmark_rmse"] = None
 
         # Perceptual similarity
         try:

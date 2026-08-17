@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "study_id": "skin_tone_steering_independent_seed_replication_v1",
+  "config_fingerprint": "fa694f8bb214c219",
+  "completion_time_utc": "2026-08-17T05:24:01.515350+00:00",
+  "worker_exit_code": 0,
+  "observed_rows": 570,
+  "unique_condition_keys": 570,
+  "unique_seeds": 30,
+  "generation_failure_count": 0,
+  "evaluation_incomplete_count": 1,
+  "evaluation_incomplete": [
+    {
+      "seed": 600020,
+      "method": "posthoc_latent",
+      "alpha": -1.5,
+      "skin_tone_failure": "edited_face_or_skin_region_missing",
+      "missing_required_metrics": [
+        "skin_tone_change"
+      ]
+    }
+  ],
+  "missing_keys": [],
+  "extra_keys": [],
+  "duplicate_keys": [],
+  "missing_images": [],
+  "result_ledger_sha256": "26bb0806a87089ea6ba1d3c4edb0a670a1aad67a6cf5ba55011c8e0d05755a69",
+  "direction_sha256": {
+    "raw.pt": "c7f1e333a80f5e388b37c4f19ba0bed2f3dbefec083ed25b3dbf4508b66c81ae",
+    "masked.pt": "6b7c4822ba194dcf22d4137ef3d8cf909394357c13c3fa424f0d779c78d6a8c6"
+  },
+  "checks": {
+    "worker_exit_zero": true,
+    "row_count": true,
+    "exact_keys": true,
+    "unique_keys": true,
+    "seed_set": true,
+    "fingerprint": true,
+    "manifest_fingerprint": true,
+    "manifest_condition_count": true,
+    "all_generations_complete": true,
+    "all_referenced_images_present": true,
+    "direction_tensors_present": true
+  },
+  "passed": true
+}

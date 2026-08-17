@@ -79,7 +79,6 @@ def collect_provenance(project_root: str | Path = ".") -> dict[str, Any]:
                 "numpy",
                 "scikit-image",
                 "facenet-pytorch",
-                "mediapipe",
                 "lpips",
             )
         },

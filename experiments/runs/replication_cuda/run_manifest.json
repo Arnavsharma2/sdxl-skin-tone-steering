@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "study_id": "skin_tone_steering_independent_seed_replication_v1",
+  "study_status": "preregistered",
+  "execution_mode": "confirmatory",
+  "config_fingerprint": "fa694f8bb214c219",
+  "execution_seeds": [
+    600000,
+    600001,
+    600002,
+    600003,
+    600004,
+    600005,
+    600006,
+    600007,
+    600008,
+    600009,
+    600010,
+    600011,
+    600012,
+    600013,
+    600014,
+    600015,
+    600016,
+    600017,
+    600018,
+    600019,
+    600020,
+    600021,
+    600022,
+    600023,
+    600024,
+    600025,
+    600026,
+    600027,
+    600028,
+    600029
+  ],
+  "execution_partition": null,
+  "condition_count": 570,
+  "generation_device": "cuda",
+  "metric_device": "cuda",
+  "provenance": {
+    "recorded_at_utc": "2026-08-17T04:42:15.315848+00:00",
+    "python": "3.12.13",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.35",
+    "packages": {
+      "torch": "2.11.0+cu128",
+      "diffusers": "0.27.2",
+      "transformers": "4.39.3",
+      "numpy": "1.26.4",
+      "scikit-image": "0.25.2",
+      "facenet-pytorch": "2.6.0",
+      "lpips": "0.1.4"
+    },
+    "git": {
+      "commit": null,
+      "branch": null,
+      "dirty": null
+    },
+    "environment": {
+      "cuda_available": true,
+      "mps_available": false,
+      "pythonhashseed": null
+    }
+  }
+}

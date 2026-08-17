@@ -43,7 +43,8 @@ class StableDiffusionWrapper:
         device: str = "cuda",
         dtype: torch.dtype = torch.float16,
         model_id: str = "stabilityai/stable-diffusion-xl-base-1.0",
-        revision: Optional[str] = None,
+        model_revision: Optional[str] = None,
+        local_files_only: bool = False,
         enable_xformers: bool = True,
         enable_cpu_offload: bool = False,
     ):
@@ -54,14 +55,15 @@ class StableDiffusionWrapper:
             device: Where to run it ('cuda' or 'cpu')
             dtype: Precision (torch.float16 or torch.float32)
             model_id: Which HuggingFace model to use
-            revision: Exact model revision requested from Hugging Face
+            model_revision: Immutable Hugging Face revision for reproducible runs
+            local_files_only: Refuse network access and use cached weights only
             enable_xformers: Whether to use memory-efficient attention (saves VRAM)
             enable_cpu_offload: Whether to offload models to CPU when idle
         """
         self.device = device
         self.dtype = dtype
         self.model_id = model_id
-        self.requested_revision = revision
+        self.model_revision = model_revision
 
         print(f"Loading Stable Diffusion XL from {model_id}...")
 
@@ -70,7 +72,8 @@ class StableDiffusionWrapper:
             model_id,
             subfolder="vae",
             torch_dtype=dtype,
-            revision=revision,
+            revision=model_revision,
+            local_files_only=local_files_only,
         )
         self.vae.to(device)
         self.vae.eval()
@@ -81,7 +84,8 @@ class StableDiffusionWrapper:
             torch_dtype=dtype,
             use_safetensors=True,
             vae=self.vae,
-            revision=revision,
+            revision=model_revision,
+            local_files_only=local_files_only,
         )
 
         # DPM++ 2M Karras — significantly better quality per step than DDIM.
@@ -111,12 +115,6 @@ class StableDiffusionWrapper:
             print("Enabled model CPU offload")
         else:
             self.pipe.to(device)
-
-        self.resolved_revision = (
-            getattr(self.pipe.config, "_commit_hash", None)
-            or getattr(self.vae.config, "_commit_hash", None)
-            or revision
-        )
 
         print("Stable Diffusion loaded successfully.")
 
@@ -148,7 +146,7 @@ class StableDiffusionWrapper:
         # Normalize to [-1, 1]
         image = (image * 2.0) - 1.0
 
-        return image.to(self.device).to(self.dtype)
+        return image.to(self.device).to(self.vae.dtype)
 
     def postprocess_image(self, tensor: torch.Tensor) -> Image.Image:
         """
@@ -190,19 +188,31 @@ class StableDiffusionWrapper:
         Returns:
             Latent code tensor (1, 4, H//8, W//8)
         """
-        # Preprocess
-        image_tensor = self.preprocess_image(image, size)
-
-        # Encode with VAE
-        latent_dist = self.vae.encode(image_tensor).latent_dist
-        latent = (
-            latent_dist.sample(generator=generator)
-            if sample_posterior
-            else latent_dist.mode()
+        # SDXL's default VAE can overflow while encoding 1024px images in
+        # fp16, producing a NaN direction tensor whose every nonzero edit
+        # decodes to black. Mirror Diffusers' decode safeguard and restore the
+        # pipeline dtype immediately afterward.
+        original_dtype = self.vae.dtype
+        needs_upcast = original_dtype == torch.float16 and bool(
+            getattr(self.vae.config, "force_upcast", False)
         )
+        if needs_upcast:
+            self.pipe.upcast_vae()
 
-        # Scale (SDXL uses scaling factor)
-        latent = latent * self.vae.config.scaling_factor
+        try:
+            image_tensor = self.preprocess_image(image, size)
+            encode_dtype = next(self.vae.encoder.parameters()).dtype
+            image_tensor = image_tensor.to(dtype=encode_dtype)
+            latent_dist = self.vae.encode(image_tensor).latent_dist
+            latent = (
+                latent_dist.sample(generator=generator)
+                if sample_posterior
+                else latent_dist.mode()
+            )
+            latent = latent * self.vae.config.scaling_factor
+        finally:
+            if needs_upcast:
+                self.vae.to(dtype=original_dtype)
 
         return latent
 
@@ -222,11 +232,26 @@ class StableDiffusionWrapper:
         Returns:
             Decoded image
         """
-        # Unscale
-        latent = latent / self.vae.config.scaling_factor
+        # SDXL's default VAE is numerically unstable in fp16. Keep it in its
+        # pipeline-managed dtype during ordinary generation (Diffusers handles
+        # the temporary upcast there), and upcast only around direct decoding.
+        # A permanently-upcast VAE makes the pipeline feed fp16 latents to fp32
+        # convolution biases on CUDA.
+        original_dtype = self.vae.dtype
+        needs_upcast = original_dtype == torch.float16 and bool(
+            getattr(self.vae.config, "force_upcast", False)
+        )
+        if needs_upcast:
+            self.pipe.upcast_vae()
 
-        # Decode
-        image = self.vae.decode(latent).sample
+        try:
+            decode_dtype = next(self.vae.post_quant_conv.parameters()).dtype
+            latent = latent.to(device=self.device, dtype=decode_dtype)
+            latent = latent / self.vae.config.scaling_factor
+            image = self.vae.decode(latent).sample
+        finally:
+            if needs_upcast:
+                self.vae.to(dtype=original_dtype)
 
         if return_tensor:
             return image
@@ -240,10 +265,10 @@ class StableDiffusionWrapper:
         negative_prompt: str = "",
         num_inference_steps: int = 25,
         guidance_scale: float = 7.5,
+        height: int = 1024,
+        width: int = 1024,
         seed: Optional[int] = None,
         return_latent: bool = True,
-        height: Optional[int] = None,
-        width: Optional[int] = None,
         **kwargs,
     ) -> Tuple[Image.Image, Optional[torch.Tensor]]:
         """
@@ -254,8 +279,6 @@ class StableDiffusionWrapper:
             negative_prompt: Negative prompt
             num_inference_steps: Number of denoising steps
             guidance_scale: Classifier-free guidance scale
-            height: Generated image height
-            width: Generated image width
             seed: Random seed for reproducibility
             return_latent: Also return final latent code
             **kwargs: Additional arguments for pipeline
@@ -270,12 +293,6 @@ class StableDiffusionWrapper:
         else:
             generator = None
 
-        size_kwargs = {
-            key: value
-            for key, value in {"height": height, "width": width}.items()
-            if value is not None
-        }
-
         # Generate
         output = self.pipe(
             prompt=prompt,
@@ -284,7 +301,8 @@ class StableDiffusionWrapper:
             guidance_scale=guidance_scale,
             generator=generator,
             output_type="pil" if not return_latent else "latent",
-            **size_kwargs,
+            height=height,
+            width=width,
             **kwargs,
         )
 
@@ -315,8 +333,8 @@ class StableDiffusionWrapper:
         negative_prompt: str = "",
         num_inference_steps: int = 25,
         guidance_scale: float = 7.5,
-        height: Optional[int] = None,
-        width: Optional[int] = None,
+        height: int = 1024,
+        width: int = 1024,
     ) -> Tuple[Image.Image, torch.Tensor]:
         """
         Generate an image steered by a skin-tone direction during denoising.
@@ -336,8 +354,8 @@ class StableDiffusionWrapper:
             negative_prompt: Negative guidance prompt
             num_inference_steps: Denoising steps (25 with DPM++ 2M ≈ DDIM 50)
             guidance_scale: CFG scale
-            height: Generated image height
-            width: Generated image width
+            height: Output image height
+            width: Output image width
 
         Returns:
             (steered_image, final_latent)
@@ -377,11 +395,6 @@ class StableDiffusionWrapper:
             latents = latents + alpha_per_step * rv
             return {"latents": latents}
 
-        size_kwargs = {
-            key: value
-            for key, value in {"height": height, "width": width}.items()
-            if value is not None
-        }
         output = self.pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -391,7 +404,8 @@ class StableDiffusionWrapper:
             output_type="latent",
             callback_on_step_end=steering_callback,
             callback_on_step_end_tensor_inputs=["latents"],
-            **size_kwargs,
+            height=height,
+            width=width,
         )
 
         latent = output.images

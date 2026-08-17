@@ -2,7 +2,7 @@
 
 ## Environments
 
-Use Python 3.10 through 3.12. Install with:
+Use Python 3.10 or 3.11. Install with:
 
 ```bash
 python3 -m venv .venv
@@ -11,13 +11,25 @@ python3 -m pip install --upgrade pip
 python3 -m pip install -e '.[evaluation,dev]'
 ```
 
-The package ranges support development. The supported Linux evaluation path is
-pinned in `containers/evaluation/Dockerfile` and the hash-locked
-`requirements/evaluation-linux-py312.lock`; see
-[`POST_STEP6_READINESS.md`](POST_STEP6_READINESS.md). A paper release must also
-archive the built container digest. Record the SDXL model revision and weight
-hash after accepting its license. Hardware backends may not be bitwise
+For the recorded Apple Silicon/Python 3.10 study environment, prefer the exact
+lock after creating a clean virtual environment:
+
+```bash
+python3 -m pip install --upgrade pip setuptools wheel
+python3 -m pip install -r requirements-lock.txt
+python3 -m pip install -e . --no-deps --no-build-isolation
+```
+
+The package ranges support development; `requirements-lock.txt` records the
+tested Apple Silicon stack and must be archived with the paper. Record the SDXL
+model revision and weight hash after accepting its license. Hardware backends may not be bitwise
 identical, so do not mix CUDA, MPS, and CPU within one statistical comparison.
+
+This path was retested from a new Python 3.10 virtual environment on
+2026-08-17. All 63 tests and Ruff passed. The frozen run-integrity,
+replication-decision, and manuscript-claim audit outputs reproduced
+byte-for-byte; see
+`docs/FRESH_ENVIRONMENT_AUDIT.md`.
 
 ## Workflow
 
@@ -26,6 +38,7 @@ make test
 python3 generate_training_data.py --n 8
 make pilot
 make summarize
+make paper-audit
 make paper
 ```
 
@@ -34,78 +47,62 @@ settings, package versions, git commit, dirty-state flag, and hardware
 availability into `metadata.json`. The base-image cache is keyed by model,
 prompt, negative prompt, seed, step count, and guidance scale.
 
-Plan the confirmatory matrix without loading a model or generating images:
+For the preregistered study, use the config-driven workflow:
 
 ```bash
-make confirmatory-plan
+python3 generate_training_data.py --config configs/full_study.yaml --n 96
+make measurement-validate
+python3 scripts/run_study.py configs/calibration_candidate_v2.yaml \
+  --allow-calibration \
+  --output experiments/runs/calibration_candidate_v2
+# Freeze immutable model revision, paired-data manifest hash, measurement report
+# hash, method grids, matched ITA target, and status into a new file; commit it
+# before generating confirmatory images.
+python3 scripts/freeze_confirmatory_config.py configs/full_study.yaml \
+  --manifest data/generated/training_manifest_study_v1.json \
+  --validation-report experiments/measurement_validation/validation_report.json \
+  --output configs/full_study_preregistered.yaml
+make study-validate
+make study-run
+make study-audit
+make study-analyze
+make study-plot
+make study-example
 ```
 
-The resulting `study_manifest.json` records the parsed configuration and its
-SHA-256 hash, exact matrix, prompts, settings, thresholds, requested and
-resolved model revisions, direction-artifact hash, package and hardware
-environment, git commit and dirty state, per-image hashes, and machine-readable
-failures. Each `seeds/<seed>/metadata.json` is checkpointed independently.
-It also embeds `tmlr_evaluation_protocol_v1` and the actual SHA-256 of that
-protocol file. Recording the protocol in plan-only mode does not load SDXL.
-Actual generation additionally requires explicit `--execute`,
-`--model-revision`, and `--direction` arguments and must not be started before
-the protocol-validation and approval gates are satisfied. The runner now also
-requires `--readiness-report`; it rejects a blocked report, authority-hash
-drift, model/direction mismatch, or a loaded model revision that differs from
-the exact readiness-bound revision.
-
-Create the non-generative Step 6 report with:
+The prospective independent-seed campaign uses the analogous locked targets:
 
 ```bash
-make readiness
+make replication-data
+make replication-validate
+make replication-freeze
+make replication-run
+make replication-audit
+make replication-analyze
+make replication-assess
+make replication-plot
 ```
 
-The default report is expected to be blocked and is written under the ignored
-`experiments/readiness/` directory. See
-[`STEP6_READINESS.md`](STEP6_READINESS.md) for the exact external-validation,
-runtime, checksum, provenance, privacy, and approval inputs required to pass.
+`study-audit` and `replication-audit` require the exact frozen condition-key
+set, matching manifest metadata, complete generation flags, every referenced
+image, and both direction tensors before statistical analysis.
 
-After evaluation metadata have been attached to every planned result row, run
-the frozen statistical analysis with:
+The runner snapshots the manifest, records its fingerprint and provenance,
+writes one `results.jsonl` row per attempted condition, and resumes by exact
+`(seed, method, alpha)` key. A confirmatory invocation refuses a merely planned
+manifest. Calibration output must never be relabeled as confirmatory.
 
-```bash
-python3 scripts/summarize_results.py experiments/runs/confirmatory_v1 \
-  --config configs/full_study.yaml --output experiments/summary --strict
-```
-
-The command never generates images or loads SDXL. It verifies config and
-protocol hashes against the study manifest, preserves all planned cells, and
-writes long-form, descriptive, seed-contrast, confirmatory, failure-count, and
-JSON audit outputs. `--strict` writes the audit bundle first and then exits 2 if
-any prespecified confirmatory estimate is unavailable. See
-[`STATISTICAL_ANALYSIS.md`](STATISTICAL_ANALYSIS.md) for the exact estimands,
-support rules, deterministic RNG, Holm family, and failure behavior.
-
-Schema, matrix, config-hash, protocol-hash, and per-seed metadata-hash
-mismatches intentionally fail before any analysis output is written: the input
-cannot be associated safely with the frozen study. This is distinct from
-well-formed but incomplete results, for which the audit bundle is written and
-`--strict` exits 2 afterward.
-
-`make summarize` remains the exploratory pilot workflow and writes no
-confirmatory estimates. `make confirmatory-summarize` invokes the strict frozen
-analysis shown above.
-
-Audited metric execution is supported only on Linux with Python
-`>=3.10,<3.13`, MediaPipe `0.10.21`, and the CPU Face Landmarker delegate.
-Headless macOS is rejected before graph construction because the pinned wheel
-still requires an unavailable OpenGL pixel format there. Use Linux for
-evaluation; do not substitute a detector or whole-image metric.
+Paired portrait generation is also resumable. Each image is appended to a
+strict-JSON campaign ledger only after it is saved and hashed. On resume, an
+image is skipped only when its content hash, seed, descriptor, path, and
+generation signature agree. The final config freezes the resulting paired-data
+manifest hash; the manifest in turn freezes the campaign-ledger hash.
 
 ## Determinism
 
 - VAE encoding uses the posterior mode by default.
 - Python, NumPy, and PyTorch are seeded by the CLI seed.
 - Generation seed is shared within a counterfactual set.
-- Statistical resampling uses whole generation seeds with all paired methods
-  and alphas retained; it never resamples image rows.
-- Confirmatory bootstrap and sign-flip streams use recorded analysis seed
-  `20260813` and comparison-specific deterministic stream derivation.
 - Full bitwise determinism is not promised across hardware or library versions.
 
 ## Artifact policy
@@ -117,8 +114,6 @@ versioned DOI or release asset and record SHA-256 hashes:
 - long-form result table and aggregate table;
 - metadata for every attempted run, including failures;
 - vector artifact if released, with training-data manifest;
-- every metric artifact verification record, including path, expected and
-  actual SHA-256, byte size, and status;
 - paper figures and the script or command that generated each figure;
 - environment lock file or container digest.
 

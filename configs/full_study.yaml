@@ -4,23 +4,18 @@ status: planned
 attribute: visual_skin_tone
 model:
   id: stabilityai/stable-diffusion-xl-base-1.0
+  revision: 462165984030d82259a11f4367a4eed129e94a7b
+  local_files_only: true
+  dtype: float16_cuda_float32_mps_cpu
   scheduler: dpm_solver_multistep_karras
   inference_steps: 25
   guidance_scale: 7.5
-thresholds:
-  face_similarity: 0.85
-  landmark_rmse: 5.0
-  lpips: 0.3
-  background_ssim: 0.75
-  pose_angle_diff: 5.0
-  min_abs_skin_tone_change: 2.0
+  height: 1024
+  width: 1024
 direction:
   estimator: paired_mean_difference
   train_pairs: 64
   held_out_pairs: 32
-  training_seed_bases: [42, 137, 256, 512, 777, 1536, 2048, 3141]
-  held_out_seed_bases: [5001, 5002, 5003, 5004, 5005, 5006, 5007, 5008]
-  seed_extension_stride: 10000
   deterministic_vae_encoding: true
   optimization: false
   spatial_mask:
@@ -28,82 +23,81 @@ direction:
     radius: 1.0
     center_weight: 1.0
     edge_weight: 0.3
+data:
+  light_dir: data/study_v1/light_skin
+  dark_dir: data/study_v1/dark_skin
+  training_manifest: data/generated/training_manifest_study_v1.json
+  # Freeze after all 96 pairs and their generation ledger are complete.
+  training_manifest_sha256: null
+  image_size: 1024
+prompts:
+  base: >-
+    professional headshot portrait of a person, neutral expression, clean white
+    studio background, soft diffused studio lighting, sharp focus on face,
+    centered composition, no glasses no jewelry no hat, facing camera directly,
+    high quality photography, 85mm lens
+  negative: >-
+    multiple people, accessories, sunglasses, jewelry, hat, cap, hood, blurry,
+    low quality, cartoon, illustration, painting, watermark, text, extreme
+    lighting, heavy shadows, overexposed, underexposed, cropped face
+  attribute_template: >-
+    professional headshot portrait of a person with {skin_tone}, neutral
+    expression, clean white studio background, soft diffused studio lighting,
+    sharp focus on face, centered composition, no glasses no jewelry no hat,
+    facing camera directly, high quality photography, 85mm lens
+  prompt_only_levels:
+    "-2.0": very pale skin tone
+    "0.2": medium skin tone
 evaluation:
-  protocol_id: tmlr_evaluation_protocol_v1
-  seeds: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009,
-          1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019,
-          1020, 1021, 1022, 1023, 1024, 1025, 1026, 1027, 1028, 1029]
-  alphas: [-1.5, -0.75, 0.0, 0.75, 1.5]
+  # Disjoint from all direction-data and calibration seeds.
+  seeds: [500000, 500001, 500002, 500003, 500004, 500005, 500006, 500007,
+          500008, 500009, 500010, 500011, 500012, 500013, 500014, 500015,
+          500016, 500017, 500018, 500019, 500020, 500021, 500022, 500023,
+          500024, 500025, 500026, 500027, 500028, 500029]
+  # Frozen from CUDA calibration campaigns v2 and v3. Raw alpha scales are not
+  # commensurate across methods.
+  method_alphas:
+    prompt_only: [-2.0, 0.0, 0.2]
+    # Post-hoc addition failed the symmetric target-coverage gate and is kept
+    # as a prespecified feasibility/dose-response baseline.
+    posthoc_latent: [-1.5, -1.0, -0.5, -0.25, 0.0, 0.5, 1.0, 1.5]
+    stepwise_unmasked: [-0.75, 0.0, 0.5]
+    stepwise_masked: [-1.0, -0.75, 0.0, 0.375, 0.5]
   methods: [prompt_only, posthoc_latent, stepwise_unmasked, stepwise_masked]
-  required_metrics:
-    [skin_tone_change, target_direction_correct, face_similarity, lpips,
-     background_ssim, total_pose_diff]
-  skin_tone_metric:
-    id: relative_cheek_CIELAB_Lstar_v1
-    face_regions: geometric_cheek_mask
-    illumination_reference: neutral_portrait_border
-    max_reference_lstar_shift: 8.0
-    minimum_directional_change: 2.0
+  required_metrics: [skin_tone_change, face_similarity, lpips, background_ssim, pose_difference]
+  metric_implementations:
+    face_similarity: facenet_vggface2_cosine
+    lpips: alexnet_lpips
+    background_ssim: mtcnn_expanded_face_mask_ssim
+    pose_difference: mtcnn_five_point_pose_proxy_v1
   bootstrap:
     resamples: 10000
     confidence_level: 0.95
-    cluster_unit: seed
   multiplicity_correction: holm
-  matrix:
-    pairing_unit: seed
-    expected_seeds: 30
-    expected_methods: 4
-    expected_alphas: 5
-    expected_rows: 600
-    expected_nonzero_alpha_rows: 480
+measurement_validation:
+  metric: white_reference_bilateral_cheek_median_cielab_ita_v2
+  split: held_out_direction_pairs
+  report_sha256: null
+  perturbations:
+    brightness_0.90: {rgb_gain: [0.90, 0.90, 0.90]}
+    brightness_1.10: {rgb_gain: [1.10, 1.10, 1.10]}
+    warm_balance: {rgb_gain: [1.05, 1.00, 0.95]}
+    cool_balance: {rgb_gain: [0.95, 1.00, 1.05]}
+  gates:
+    min_detection_rate: 0.95
+    min_pair_order_accuracy: 0.90
+    min_median_pair_gap_ita: 8.0
+    max_median_abs_ita_shift: 2.0
+    max_p95_abs_ita_shift: 5.0
+analysis:
+  target_metric: white_reference_bilateral_cheek_median_cielab_ita_v2
+  reference_method: stepwise_masked
+  # Frozen from three-seed CUDA calibration. Units are absolute ITA degrees.
+  matched_change_targets: [5.0]
+  match_tolerance_ita: 3.0
+  matched_change_methods: [prompt_only, stepwise_unmasked, stepwise_masked]
+  feasibility_only_methods: [posthoc_latent]
 reporting:
   primary_outcome: identity_preservation_at_matched_skin_tone_change
-  uncertainty: seed_cluster_bootstrap_confidence_interval
+  uncertainty: subject_level_bootstrap_confidence_interval
   report_failures_and_missingness: true
-  composite_score_is_primary: false
-analysis:
-  version: tmlr_statistical_analysis_v1
-  status: frozen
-  rng_seed: 20260813
-  paired_test: two_sided_seed_sign_flip_randomization
-  randomization_resamples: 10000
-  matched_change:
-    target_metric: skin_tone_change
-    scale: absolute
-    interpolation: linear
-    tie_handling: mean_preservation_at_exact_target_change
-    extrapolation: prohibited
-    support: within_seed_method_pair_intersection
-    minimum_abs_target_change: 2.0
-    grid_points: 101
-    minimum_unique_points_per_curve: 2
-    require_complete_monotonic_sweep: true
-  comparisons:
-    - id: h2_identity_masked_vs_prompt
-      hypothesis: H2
-      role: primary
-      method_a: stepwise_masked
-      method_b: prompt_only
-      metric: face_similarity
-      favorable_direction: higher
-    - id: h3_background_masked_vs_unmasked
-      hypothesis: H3
-      role: secondary
-      method_a: stepwise_masked
-      method_b: stepwise_unmasked
-      metric: background_ssim
-      favorable_direction: higher
-    - id: h4_identity_masked_vs_posthoc
-      hypothesis: H4
-      role: secondary
-      method_a: stepwise_masked
-      method_b: posthoc_latent
-      metric: face_similarity
-      favorable_direction: higher
-    - id: h4_lpips_masked_vs_posthoc
-      hypothesis: H4
-      role: secondary
-      method_a: stepwise_masked
-      method_b: posthoc_latent
-      metric: lpips
-      favorable_direction: lower

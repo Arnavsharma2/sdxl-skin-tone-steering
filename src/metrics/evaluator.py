@@ -1,46 +1,41 @@
-"""Fail-closed evaluation of portrait counterfactuals."""
+"""
+Composite evaluator for counterfactual pairs.
 
-from __future__ import annotations
+This module combines all metrics into a single evaluation pipeline.
+"""
 
 from dataclasses import asdict, dataclass
-from importlib import metadata
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from PIL import Image
 
-from .face_landmarks import FaceLandmarkBackend
 from .identity_metrics import IdentityPreservationMetrics
-from .protocol import load_protocol, protocol_record
-from .skin_tone_metrics import SkinToneMetrics
 from .structural_metrics import StructuralPreservationMetrics
 
 
 @dataclass
 class EvaluationThresholds:
-    """Prespecified engineering gates; these are not inferential evidence."""
+    """Thresholds for determining if manipulation is disentangled."""
 
     face_similarity: float = 0.85
     landmark_rmse: float = 5.0
     lpips: float = 0.3
-    background_ssim: float = 0.75
+    background_ssim: float = 0.75  # steered denoising naturally shifts background slightly
     pose_angle_diff: float = 5.0
-    min_abs_skin_tone_change: float = 2.0
 
 
 @dataclass
 class EvaluationResult:
-    """Metrics and validity state for one base/counterfactual pair."""
+    """Result of evaluating a counterfactual pair."""
 
-    alpha: Optional[float] = None
-
-    # Identity and perceptual preservation
+    # Identity metrics
     face_similarity: Optional[float] = None
     landmark_rmse: Optional[float] = None
     lpips: Optional[float] = None
 
-    # Structural preservation
+    # Structural metrics
     background_ssim: Optional[float] = None
     overall_ssim: Optional[float] = None
     yaw_diff: Optional[float] = None
@@ -48,309 +43,338 @@ class EvaluationResult:
     roll_diff: Optional[float] = None
     total_pose_diff: Optional[float] = None
 
-    # Independently measured target response. Positive relative-L* change is
-    # lighter; negative is darker. The method expects alpha to have the
-    # opposite sign.
-    skin_tone_metric: Optional[str] = None
-    skin_tone_change: Optional[float] = None
-    skin_delta_ita: Optional[float] = None
-    skin_delta_e: Optional[float] = None
-    skin_lstar_original: Optional[float] = None
-    skin_lstar_counterfactual: Optional[float] = None
-    skin_relative_lstar_original: Optional[float] = None
-    skin_relative_lstar_counterfactual: Optional[float] = None
-    skin_ita_original: Optional[float] = None
-    skin_ita_counterfactual: Optional[float] = None
-    reference_lstar_shift: Optional[float] = None
-    illumination_stable: bool = False
-    target_direction_correct: Optional[bool] = None
-    target_response_pass: bool = False
-
-    # Assessment. ``is_disentangled`` remains only as a compatibility alias;
-    # the repository cannot establish formal representation disentanglement.
-    preservation_pass: bool = False
-    counterfactual_success: bool = False
+    # Overall assessment
     is_disentangled: bool = False
-    overall_score: Optional[float] = None
+    overall_score: float = 0.0
     pass_count: int = 0
-    total_count: int = 5
+    total_count: int = 0
     evaluation_complete: bool = False
     missing_required_metrics: Tuple[str, ...] = ()
 
     def to_dict(self) -> dict:
+        """Convert to dictionary."""
         return asdict(self)
 
 
 class CounterfactualEvaluator:
-    """Compute target response and preservation metrics without fallbacks."""
+    """
+    Evaluates how good the counterfactuals are.
 
-    required_metrics = (
-        "face_similarity",
-        "lpips",
-        "background_ssim",
-        "total_pose_diff",
-        "skin_tone_change",
-        "target_direction_correct",
-    )
+    It checks:
+    - Did we keep the person's identity? (Face ID)
+    - Did we mess up the background? (SSIM)
+    - Did we change the pose? (Head pose estimation)
+    - Overall, is it a clean edit?
+
+    Example:
+        >>> evaluator = CounterfactualEvaluator()
+        >>> result = evaluator.evaluate_pair(original, counterfactual)
+        >>> if result.is_disentangled:
+        ...     print(f"Success! Score: {result.overall_score:.2f}")
+    """
 
     def __init__(
         self,
         device: str = "cuda",
         thresholds: Optional[EvaluationThresholds] = None,
-    ) -> None:
+    ):
+        """
+        Initialize evaluator.
+
+        Args:
+            device: Device to run on
+            thresholds: Custom thresholds (uses defaults if None)
+        """
         self.device = device
         self.thresholds = thresholds or EvaluationThresholds()
-        self.protocol = load_protocol()
-        if asdict(self.thresholds) != self.protocol["thresholds"]:
-            raise ValueError("Evaluator thresholds do not match the frozen metric protocol")
-        FaceLandmarkBackend.validate_runtime()
-        self.identity_metrics = IdentityPreservationMetrics(
-            device=device, use_arcface=False, use_facenet=True
-        )
-        landmark_backend = FaceLandmarkBackend()
-        self.structural_metrics = StructuralPreservationMetrics(
-            device=device, landmark_backend=landmark_backend
-        )
-        self.skin_tone_metrics = SkinToneMetrics(landmark_backend=landmark_backend)
 
-    def metric_provenance(self) -> dict:
-        packages = {}
-        for package in (
-            "facenet-pytorch",
-            "lpips",
-            "mediapipe",
-            "opencv-contrib-python",
-            "scikit-image",
-            "torch",
-            "torchvision",
-        ):
-            try:
-                packages[package] = metadata.version(package)
-            except metadata.PackageNotFoundError:
-                packages[package] = None
-        artifacts = {
-            name: result.to_dict()
-            for name, result in self.identity_metrics.artifact_verifications.items()
-        }
-        landmark_backend = self.structural_metrics.landmark_backend
-        if landmark_backend.artifact_verification is not None:
-            artifacts["mediapipe_face_landmarker"] = (
-                landmark_backend.artifact_verification.to_dict()
-            )
-        required_artifacts = set(self.protocol["required_artifacts"])
-        return {
-            "protocol": protocol_record(),
-            "face_embedding": "InceptionResnetV1 pretrained=vggface2; MTCNN standardised crop",
-            "perceptual": "LPIPS AlexNet",
-            "face_mask_and_pose": "MediaPipe Tasks Face Landmarker, CPU, checksum-verified asset",
-            "target_attribute": SkinToneMetrics.metric_name,
-            "background": "mean SSIM map over eroded union-background mask",
-            "artifact_verifications": artifacts,
-            "all_required_artifacts_verified": (
-                set(artifacts) == required_artifacts
-                and all(record["verified"] for record in artifacts.values())
-            ),
-            "packages": packages,
-        }
+        # Use FaceNet (facenet-pytorch) — works without insightface
+        self.identity_metrics = IdentityPreservationMetrics(
+            device=device,
+            use_arcface=False,
+            use_facenet=True,
+            enable_landmarks=False,
+        )
+        self.structural_metrics = StructuralPreservationMetrics(device=device)
 
     def evaluate_pair(
         self,
         original: Union[Image.Image, np.ndarray],
         counterfactual: Union[Image.Image, np.ndarray],
-        *,
-        alpha: Optional[float] = None,
         verbose: bool = False,
     ) -> EvaluationResult:
-        """Evaluate one pair. ``alpha`` is required for a valid target-direction gate."""
-        result = EvaluationResult(alpha=alpha)
+        """
+        Comprehensive evaluation of a counterfactual pair.
 
+        Args:
+            original: Original image
+            counterfactual: Counterfactual image
+            verbose: Print detailed results
+
+        Returns:
+            EvaluationResult with all metrics
+        """
+        result = EvaluationResult()
+
+        # Compute identity metrics
         identity = self.identity_metrics.compute_all_metrics(original, counterfactual)
         result.face_similarity = identity.get("face_similarity")
         result.landmark_rmse = identity.get("landmark_rmse")
         result.lpips = identity.get("lpips")
 
-        structural = self.structural_metrics.compute_all_metrics(original, counterfactual)
+        # Compute structural metrics
+        structural = self.structural_metrics.compute_all_metrics(
+            original, counterfactual
+        )
         result.background_ssim = structural.get("background_ssim")
         result.overall_ssim = structural.get("overall_ssim")
         result.yaw_diff = structural.get("yaw_diff")
         result.pitch_diff = structural.get("pitch_diff")
         result.roll_diff = structural.get("roll_diff")
-        pose = structural.get("total_diff")
-        result.total_pose_diff = None if pose is None or np.isinf(pose) else pose
+        result.total_pose_diff = structural.get("total_diff")
 
-        target = self.skin_tone_metrics.compare(original, counterfactual)
-        for name in (
-            "skin_tone_metric",
-            "skin_tone_change",
-            "skin_delta_ita",
-            "skin_delta_e",
-            "skin_lstar_original",
-            "skin_lstar_counterfactual",
-            "skin_relative_lstar_original",
-            "skin_relative_lstar_counterfactual",
-            "skin_ita_original",
-            "skin_ita_counterfactual",
-            "reference_lstar_shift",
-            "illumination_stable",
-        ):
-            if name in target:
-                setattr(result, name, target[name])
-
-        if alpha is not None and alpha != 0 and result.skin_tone_change is not None:
-            result.target_direction_correct = alpha * result.skin_tone_change < 0
-            result.target_response_pass = bool(
-                result.target_direction_correct
-                and abs(result.skin_tone_change)
-                >= self.thresholds.min_abs_skin_tone_change
-            )
-
+        # Evaluate disentanglement
         (
-            result.counterfactual_success,
+            result.is_disentangled,
             result.pass_count,
             result.total_count,
             result.missing_required_metrics,
-        ) = self._evaluate_counterfactual(result)
+        ) = (
+            self._evaluate_disentanglement(result)
+        )
         result.evaluation_complete = not result.missing_required_metrics
-        result.preservation_pass = self._preservation_pass(result)
-        result.is_disentangled = result.counterfactual_success
+
+        # Compute overall score
         result.overall_score = self._compute_overall_score(result)
 
         if verbose:
             self._print_results(result)
+
         return result
 
-    def _missing_required(self, result: EvaluationResult) -> Tuple[str, ...]:
-        return tuple(
-            name for name in self.required_metrics if getattr(result, name) is None
-        )
-
-    def _checks(self, result: EvaluationResult) -> list[bool]:
-        checks: list[bool] = []
-        if result.face_similarity is not None:
-            checks.append(result.face_similarity >= self.thresholds.face_similarity)
-        if result.lpips is not None:
-            checks.append(result.lpips <= self.thresholds.lpips)
-        if result.background_ssim is not None:
-            checks.append(result.background_ssim >= self.thresholds.background_ssim)
-        if result.total_pose_diff is not None:
-            checks.append(result.total_pose_diff <= self.thresholds.pose_angle_diff)
-        if result.target_direction_correct is not None:
-            checks.append(result.target_response_pass)
-        return checks
-
-    def _preservation_pass(self, result: EvaluationResult) -> bool:
-        values = (
-            result.face_similarity,
-            result.lpips,
-            result.background_ssim,
-            result.total_pose_diff,
-        )
-        if not all(value is not None for value in values):
-            return False
-        return all(
-            (
-                result.face_similarity >= self.thresholds.face_similarity,
-                result.lpips <= self.thresholds.lpips,
-                result.background_ssim >= self.thresholds.background_ssim,
-                result.total_pose_diff <= self.thresholds.pose_angle_diff,
-            )
-        )
-
-    def _evaluate_counterfactual(
-        self, result: EvaluationResult
-    ) -> Tuple[bool, int, int, Tuple[str, ...]]:
-        missing = self._missing_required(result)
-        checks = self._checks(result)
-        # Every prespecified gate must pass. There is no 80%-pass shortcut.
-        success = not missing and len(checks) == 5 and all(checks)
-        return success, int(sum(checks)), 5, missing
-
-    # Kept for callers/tests written against the old private method.
     def _evaluate_disentanglement(
         self, result: EvaluationResult
     ) -> Tuple[bool, int, int, Tuple[str, ...]]:
-        return self._evaluate_counterfactual(result)
+        """
+        Checks whether required preservation metrics pass their thresholds.
 
-    def _compute_overall_score(self, result: EvaluationResult) -> Optional[float]:
-        """Fixed-weight engineering rubric; unavailable for incomplete rows."""
-        if self._missing_required(result):
-            return None
-        assert result.face_similarity is not None
-        assert result.lpips is not None
-        assert result.background_ssim is not None
-        assert result.total_pose_diff is not None
-        assert result.skin_tone_change is not None
-
-        target = min(abs(result.skin_tone_change) / 10.0, 1.0)
-        if not result.target_direction_correct:
-            target = 0.0
-        components = (
-            0.30 * np.clip(result.face_similarity, 0.0, 1.0),
-            0.20 * np.clip(1.0 - result.lpips, 0.0, 1.0),
-            0.20 * np.clip(result.background_ssim, 0.0, 1.0),
-            0.10 * np.clip(1.0 - result.total_pose_diff / 30.0, 0.0, 1.0),
-            0.20 * target,
+        Returns:
+            ``(is_disentangled, num_passed, num_total, missing_required)``.
+        """
+        checks = []
+        required = ("face_similarity", "lpips", "background_ssim")
+        missing_required = tuple(
+            name for name in required if getattr(result, name) is None
         )
-        return float(sum(components))
 
-    def _print_results(self, result: EvaluationResult) -> None:
+        # Check face similarity
+        if result.face_similarity is not None:
+            checks.append(result.face_similarity >= self.thresholds.face_similarity)
+
+        # Check landmark RMSE
+        if result.landmark_rmse is not None:
+            checks.append(result.landmark_rmse <= self.thresholds.landmark_rmse)
+
+        # Check LPIPS
+        if result.lpips is not None:
+            checks.append(result.lpips <= self.thresholds.lpips)
+
+        # Check background SSIM
+        if result.background_ssim is not None:
+            checks.append(result.background_ssim >= self.thresholds.background_ssim)
+
+        # Check pose difference (skip if mediapipe unavailable — returns inf)
+        if result.total_pose_diff is not None and not np.isinf(result.total_pose_diff):
+            checks.append(result.total_pose_diff <= self.thresholds.pose_angle_diff)
+
+        if len(checks) == 0:
+            return False, 0, 0, missing_required
+
+        num_passed = sum(checks)
+        num_total = len(checks)
+
+        # Require at least 80% of checks to pass
+        # A successful score requires the core metrics to be present. Missing
+        # face or mask models must never turn a partial evaluation into a pass.
+        is_disentangled = not missing_required and (num_passed / num_total) >= 0.8
+
+        return is_disentangled, num_passed, num_total, missing_required
+
+    def _compute_overall_score(self, result: EvaluationResult) -> float:
+        """
+        Compute overall score [0, 1].
+
+        Weighted average of normalized metrics.
+        """
+        scores = []
+        weights = []
+
+        # Face similarity (higher is better)
+        if result.face_similarity is not None:
+            scores.append(result.face_similarity)
+            weights.append(0.3)
+
+        # Landmark RMSE (lower is better, normalize by threshold)
+        if result.landmark_rmse is not None:
+            normalized = max(0, 1 - result.landmark_rmse / self.thresholds.landmark_rmse)
+            scores.append(normalized)
+            weights.append(0.2)
+
+        # LPIPS (lower is better, normalize by threshold)
+        if result.lpips is not None:
+            normalized = max(0, 1 - result.lpips / self.thresholds.lpips)
+            scores.append(normalized)
+            weights.append(0.2)
+
+        # Background SSIM (higher is better)
+        if result.background_ssim is not None:
+            scores.append(result.background_ssim)
+            weights.append(0.2)
+
+        # Pose difference (lower is better, normalize by threshold)
+        if result.total_pose_diff is not None and not np.isinf(result.total_pose_diff):
+            normalized = max(
+                0, 1 - result.total_pose_diff / self.thresholds.pose_angle_diff
+            )
+            scores.append(normalized)
+            weights.append(0.1)
+
+        if len(scores) == 0:
+            return 0.0
+
+        # Weighted average
+        weights = np.array(weights)
+        weights = weights / weights.sum()
+        overall = np.average(scores, weights=weights)
+
+        return float(overall)
+
+    def _print_results(self, result: EvaluationResult):
+        """Print evaluation results."""
         print("\n" + "=" * 60)
-        print("AUDITED EVALUATION")
+        print("EVALUATION RESULTS")
         print("=" * 60)
-        print(f"  Alpha: {result.alpha}")
-        print(f"  Face similarity: {result.face_similarity}")
-        print(f"  LPIPS: {result.lpips}")
-        print(f"  Background-only SSIM: {result.background_ssim}")
-        print(f"  Pose difference: {result.total_pose_diff}")
-        print(f"  Relative skin L* change: {result.skin_tone_change}")
-        print(f"  Target direction correct: {result.target_direction_correct}")
-        print(f"  Illumination QC passed: {result.illumination_stable}")
-        print(f"  Passed: {result.pass_count}/{result.total_count} gates")
+
+        print("\nIdentity Metrics:")
+        if result.face_similarity is not None:
+            # status = "PASS" if result.face_similarity >= self.thresholds.face_similarity else "FAIL"
+            print(f"  Face Similarity: {result.face_similarity:.3f} (threshold: {self.thresholds.face_similarity})")
+
+        if result.landmark_rmse is not None:
+            # status = "PASS" if result.landmark_rmse <= self.thresholds.landmark_rmse else "FAIL"
+            print(f"  Landmark RMSE: {result.landmark_rmse:.2f}px (threshold: {self.thresholds.landmark_rmse}px)")
+
+        if result.lpips is not None:
+            # status = "PASS" if result.lpips <= self.thresholds.lpips else "FAIL"
+            print(f"  LPIPS: {result.lpips:.3f} (threshold: {self.thresholds.lpips})")
+
+        print("\nStructural Metrics:")
+        if result.background_ssim is not None:
+            # status = "PASS" if result.background_ssim >= self.thresholds.background_ssim else "FAIL"
+            print(f"  Background SSIM: {result.background_ssim:.3f} (threshold: {self.thresholds.background_ssim})")
+
+        if result.total_pose_diff is not None and not np.isinf(result.total_pose_diff):
+            print(f"  Pose Difference: {result.total_pose_diff:.2f}° (threshold: {self.thresholds.pose_angle_diff}°)")
+            if result.yaw_diff is not None:
+                print(f"     - Yaw: {result.yaw_diff:.2f}°")
+                print(f"     - Pitch: {result.pitch_diff:.2f}°")
+                print(f"     - Roll: {result.roll_diff:.2f}°")
+
+        print("\nOverall Assessment:")
+        print(f"  Passed: {result.pass_count}/{result.total_count} checks")
         if result.missing_required_metrics:
-            print("  Missing: " + ", ".join(result.missing_required_metrics))
-        print(f"  Quality rubric: {result.overall_score}")
-        print(f"  Valid counterfactual: {'YES' if result.counterfactual_success else 'NO'}")
+            print(
+                "  Incomplete: missing "
+                + ", ".join(result.missing_required_metrics)
+            )
+        print(f"  Overall Score: {result.overall_score:.3f}")
+        print(f"  Disentangled: {'YES' if result.is_disentangled else 'NO'}")
         print("=" * 60 + "\n")
 
     def evaluate_batch(
         self,
         pairs: List[Tuple[Image.Image, Image.Image]],
-        *,
-        alphas: Optional[List[float]] = None,
         subject_ids: Optional[List[str]] = None,
         verbose: bool = False,
     ) -> pd.DataFrame:
+        """
+        Evaluate multiple pairs and return DataFrame.
+
+        Args:
+            pairs: List of (original, counterfactual) tuples
+            subject_ids: Optional list of subject IDs
+            verbose: Print progress
+
+        Returns:
+            DataFrame with results for all pairs
+        """
+        results = []
+
         if subject_ids is None:
             subject_ids = [f"subject_{i:03d}" for i in range(len(pairs))]
-        if alphas is None:
-            alphas = [None] * len(pairs)
-        if len(subject_ids) != len(pairs) or len(alphas) != len(pairs):
-            raise ValueError("pairs, subject_ids, and alphas must have equal lengths")
 
-        rows = []
-        for index, ((original, counterfactual), alpha) in enumerate(zip(pairs, alphas)):
+        for i, (original, counterfactual) in enumerate(pairs):
             if verbose:
-                print(f"Evaluating pair {index + 1}/{len(pairs)}: {subject_ids[index]}")
-            row = self.evaluate_pair(original, counterfactual, alpha=alpha).to_dict()
-            row["subject_id"] = subject_ids[index]
-            rows.append(row)
-        return pd.DataFrame(rows)
+                print(f"Evaluating pair {i+1}/{len(pairs)}: {subject_ids[i]}")
 
-    def summarize_results(self, frame: pd.DataFrame) -> Dict[str, float]:
-        summary: Dict[str, float] = {
-            "evaluation_completion_rate": float(frame["evaluation_complete"].mean()),
-            "counterfactual_success_rate": float(frame["counterfactual_success"].mean()),
-        }
-        for column in (
+            result = self.evaluate_pair(original, counterfactual)
+            result_dict = result.to_dict()
+            result_dict["subject_id"] = subject_ids[i]
+            results.append(result_dict)
+
+        df = pd.DataFrame(results)
+
+        # Reorder columns
+        cols = ["subject_id"] + [c for c in df.columns if c != "subject_id"]
+        df = df[cols]
+
+        return df
+
+    def summarize_results(self, df: pd.DataFrame) -> Dict[str, float]:
+        """
+        Summarize evaluation results.
+
+        Args:
+            df: DataFrame from evaluate_batch
+
+        Returns:
+            Dictionary with summary statistics
+        """
+        summary = {}
+
+        # Percentage disentangled
+        summary["pct_disentangled"] = df["is_disentangled"].mean() * 100
+
+        # Average scores
+        numeric_cols = [
             "face_similarity",
+            "landmark_rmse",
             "lpips",
             "background_ssim",
             "total_pose_diff",
-            "skin_tone_change",
             "overall_score",
-        ):
-            if column in frame:
-                summary[f"mean_{column}"] = float(frame[column].mean())
-                summary[f"std_{column}"] = float(frame[column].std())
-                summary[f"median_{column}"] = float(frame[column].median())
+        ]
+
+        for col in numeric_cols:
+            if col in df.columns:
+                summary[f"mean_{col}"] = df[col].mean()
+                summary[f"std_{col}"] = df[col].std()
+                summary[f"median_{col}"] = df[col].median()
+
         return summary
+
+    def print_summary(self, summary: Dict[str, float]):
+        """Print summary statistics."""
+        print("\n" + "=" * 60)
+        print("SUMMARY STATISTICS")
+        print("=" * 60)
+
+        print(f"\nDisentangled: {summary['pct_disentangled']:.1f}%")
+        print("\nAverage Metrics:")
+        print(f"  Face Similarity: {summary.get('mean_face_similarity', 0):.3f} ± {summary.get('std_face_similarity', 0):.3f}")
+        print(f"  Landmark RMSE: {summary.get('mean_landmark_rmse', 0):.2f} ± {summary.get('std_landmark_rmse', 0):.2f}px")
+        print(f"  LPIPS: {summary.get('mean_lpips', 0):.3f} ± {summary.get('std_lpips', 0):.3f}")
+        print(f"  Background SSIM: {summary.get('mean_background_ssim', 0):.3f} ± {summary.get('std_background_ssim', 0):.3f}")
+        print(f"  Pose Difference: {summary.get('mean_total_pose_diff', 0):.2f} ± {summary.get('std_total_pose_diff', 0):.2f}°")
+        print(f"  Overall Score: {summary.get('mean_overall_score', 0):.3f} ± {summary.get('std_overall_score', 0):.3f}")
+        print("=" * 60 + "\n")

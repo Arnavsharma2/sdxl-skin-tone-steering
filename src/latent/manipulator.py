@@ -5,10 +5,11 @@ This contains tools for applying transformations in latent space
 while preserving desired properties.
 """
 
-import torch
-import numpy as np
-from typing import List, Dict, Optional, Callable
 from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional
+
+import numpy as np
+import torch
 
 
 @dataclass

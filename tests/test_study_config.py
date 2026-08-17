@@ -1,253 +1,119 @@
-from copy import deepcopy
-from dataclasses import asdict
 from pathlib import Path
 
 import pytest
 import yaml
 
-from src.metrics.evaluator import EvaluationThresholds
-from src.metrics.protocol import PROTOCOL_ID, load_protocol, protocol_record
-from src.metrics.skin_tone_metrics import SkinToneMetrics
-from src.metrics.structural_metrics import StructuralPreservationMetrics
-from src.utils.config import ExperimentConfig
+from src.study.config import StudyConfigError, load_study_config
 
-REPOSITORY_ROOT = Path(__file__).parents[1]
+ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.parametrize(
-    ("filename", "expected_rows", "expected_nonzero_rows"),
-    [
-        ("pilot.yaml", 5, 4),
-        ("full_study.yaml", 600, 480),
-    ],
-)
-def test_study_configs_load_and_declare_complete_matrix(
-    filename, expected_rows, expected_nonzero_rows
-):
-    config = ExperimentConfig.from_yaml(REPOSITORY_ROOT / "configs" / filename)
-
-    assert config.model.name == "stabilityai/stable-diffusion-xl-base-1.0"
-    assert config.evaluation.matrix.expected_rows == expected_rows
-    assert config.evaluation.matrix.expected_nonzero_alpha_rows == expected_nonzero_rows
-    assert "total_pose_diff" in config.evaluation.required_metrics
-    assert "pose_difference" not in config.evaluation.required_metrics
-    assert config.evaluation.protocol_id == PROTOCOL_ID
-
-
-def test_confirmatory_training_and_evaluation_seeds_are_disjoint():
-    config = ExperimentConfig.from_yaml(REPOSITORY_ROOT / "configs" / "full_study.yaml")
-
-    assert len(config.direction.training_seeds()) == 64
-    assert len(config.direction.held_out_seeds()) == 32
-    assert len(set(config.direction.training_seeds())) == 64
-    assert len(set(config.direction.held_out_seeds())) == 32
-    assert set(config.direction.training_seeds()).isdisjoint(
-        config.direction.held_out_seeds()
+def test_full_study_config_is_valid_and_still_planned():
+    config = load_study_config(ROOT / "configs/full_study.yaml")
+    assert len(config.seeds) == 30
+    assert set(config.methods) == {
+        "prompt_only",
+        "posthoc_latent",
+        "stepwise_unmasked",
+        "stepwise_masked",
+    }
+    assert config.prompt_for("prompt_only", -2.0) != config.prompt_for(
+        "stepwise_masked", -2.0
     )
-    assert set(config.direction.training_seeds()).isdisjoint(config.evaluation.seeds)
-    assert set(config.direction.held_out_seeds()).isdisjoint(config.evaluation.seeds)
+    with pytest.raises(StudyConfigError, match="preregistered"):
+        config.assert_confirmatory_ready()
 
 
-def test_confirmatory_analysis_settings_are_frozen_before_collection():
-    config = ExperimentConfig.from_yaml(REPOSITORY_ROOT / "configs" / "full_study.yaml")
+def test_config_fingerprint_is_stable():
+    first = load_study_config(ROOT / "configs/full_study.yaml")
+    second = load_study_config(ROOT / "configs/full_study.yaml")
+    assert first.fingerprint == second.fingerprint
+    assert len(first.fingerprint) == 16
 
-    assert config.analysis.version == "tmlr_statistical_analysis_v1"
-    assert config.analysis.status == "frozen"
-    assert config.analysis.rng_seed == 20260813
-    assert config.evaluation.bootstrap.resamples == 10_000
-    assert config.evaluation.bootstrap.cluster_unit == "seed"
-    assert config.analysis.randomization_resamples == 10_000
-    assert config.analysis.matched_change.grid_points == 101
-    assert config.analysis.matched_change.extrapolation == "prohibited"
-    assert [comparison.id for comparison in config.analysis.comparisons] == [
-        "h2_identity_masked_vs_prompt",
-        "h3_background_masked_vs_unmasked",
-        "h4_identity_masked_vs_posthoc",
-        "h4_lpips_masked_vs_posthoc",
+
+def test_replication_config_freezes_disjoint_data_and_evaluation_seeds():
+    config = load_study_config(ROOT / "configs/replication_study.yaml")
+    assert config.status == "planned"
+    assert config.fingerprint == "5057ea79d01525ba"
+    assert set(config.data["seed_schedule"]).isdisjoint(config.seeds)
+
+
+def test_config_rejects_expanded_direction_seed_overlap(tmp_path):
+    raw = yaml.safe_load((ROOT / "configs/replication_study.yaml").read_text())
+    raw["data"]["seed_schedule"] = [600000]
+    path = tmp_path / "overlap.yaml"
+    path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    with pytest.raises(StudyConfigError, match="must be disjoint"):
+        load_study_config(path)
+
+
+def test_method_specific_alpha_grids_are_supported(tmp_path):
+    raw = yaml.safe_load((ROOT / "configs/full_study.yaml").read_text())
+    raw["evaluation"].pop("alphas", None)
+    raw["evaluation"]["method_alphas"] = {
+        "prompt_only": [-1.5, 0.0, 0.25],
+        "posthoc_latent": [-1.25, 0.0, 0.5],
+        "stepwise_unmasked": [-0.5, 0.0, 0.25],
+        "stepwise_masked": [-0.5, 0.0, 0.25],
+    }
+    raw["prompts"]["prompt_only_levels"] = {
+        "-1.5": "very light skin tone",
+        "0.25": "medium-dark skin tone",
+    }
+    path = tmp_path / "study.yaml"
+    path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    config = load_study_config(path)
+    assert config.alphas_for("prompt_only") == (-1.5, 0.0, 0.25)
+    assert config.alphas_for("stepwise_masked") == (-0.5, 0.0, 0.25)
+    assert set(config.alphas) == {-1.5, -1.25, -0.5, 0.0, 0.25, 0.5}
+
+
+def test_analysis_can_prespecify_a_feasibility_only_method(tmp_path):
+    raw = yaml.safe_load((ROOT / "configs/full_study.yaml").read_text())
+    raw["analysis"]["matched_change_methods"] = [
+        "prompt_only",
+        "stepwise_unmasked",
+        "stepwise_masked",
     ]
-    assert [comparison.role for comparison in config.analysis.comparisons].count(
-        "primary"
-    ) == 1
+    raw["analysis"]["feasibility_only_methods"] = ["posthoc_latent"]
+    path = tmp_path / "study.yaml"
+    path.write_text(yaml.safe_dump(raw), encoding="utf-8")
 
+    config = load_study_config(path)
 
-def test_confirmatory_thresholds_match_evaluator_defaults():
-    config = ExperimentConfig.from_yaml(REPOSITORY_ROOT / "configs" / "full_study.yaml")
-
-    assert asdict(config.thresholds) == asdict(EvaluationThresholds())
-
-
-def test_frozen_protocol_matches_configuration_and_records_actual_checksum():
-    config = ExperimentConfig.from_yaml(REPOSITORY_ROOT / "configs" / "full_study.yaml")
-    protocol = load_protocol()
-    record = protocol_record()
-
-    assert protocol["status"] == "frozen"
-    assert protocol["protocol_id"] == config.evaluation.protocol_id
-    assert protocol["thresholds"] == asdict(config.thresholds)
-    assert set(protocol["required_pair_metrics"]) == set(
-        config.evaluation.required_metrics
+    assert config.matched_change_methods == (
+        "prompt_only",
+        "stepwise_unmasked",
+        "stepwise_masked",
     )
-    assert protocol["metrics"]["monotonicity"]["expected_alphas"] == (
-        config.evaluation.alphas
-    )
-    assert len(record["sha256"]) == 64
-    assert record["size_bytes"] > 0
 
 
-def test_frozen_mask_parameters_match_metric_code():
-    protocol = load_protocol()["metrics"]
-    skin = SkinToneMetrics(landmark_backend=object())
+def test_analysis_method_roles_must_cover_evaluated_methods(tmp_path):
+    raw = yaml.safe_load((ROOT / "configs/full_study.yaml").read_text())
+    raw["analysis"]["matched_change_methods"] = ["stepwise_masked"]
+    path = tmp_path / "study.yaml"
+    path.write_text(yaml.safe_dump(raw), encoding="utf-8")
 
-    assert skin.min_skin_pixels == protocol["target_response"][
-        "skin_minimum_pixels_before_and_after_trim"
-    ]
-    assert skin.min_reference_pixels == protocol["target_response"][
-        "reference_minimum_pixels"
-    ]
-    assert list(skin.trim_quantiles) == protocol["target_response"][
-        "lstar_trim_quantiles"
-    ]
-    assert StructuralPreservationMetrics.background_erosion_kernel == 7
-    assert StructuralPreservationMetrics.minimum_background_pixels == protocol[
-        "background_ssim"
-    ]["minimum_background_pixels"]
+    with pytest.raises(StudyConfigError, match="cover every evaluated method"):
+        load_study_config(path)
 
 
-def test_confirmatory_config_round_trip(tmp_path):
-    config = ExperimentConfig.from_yaml(REPOSITORY_ROOT / "configs" / "full_study.yaml")
-    round_trip_path = tmp_path / "round_trip.yaml"
+def test_calibration_can_probe_one_direction_only(tmp_path):
+    raw = yaml.safe_load((ROOT / "configs/full_study.yaml").read_text())
+    raw["status"] = "calibration"
+    raw["evaluation"].pop("alphas", None)
+    raw["evaluation"]["method_alphas"] = {
+        "prompt_only": [0.0],
+        "posthoc_latent": [0.0],
+        "stepwise_unmasked": [-1.0, -0.75, 0.0],
+        "stepwise_masked": [-1.0, -0.75, 0.0],
+    }
+    raw["prompts"]["prompt_only_levels"] = {}
+    path = tmp_path / "calibration.yaml"
+    path.write_text(yaml.safe_dump(raw), encoding="utf-8")
 
-    config.to_yaml(round_trip_path)
-    reloaded = ExperimentConfig.from_yaml(round_trip_path)
-
-    assert reloaded.study_id == config.study_id
-    assert reloaded.evaluation.matrix.expected_rows == 600
-
-
-def test_loading_rejects_incorrect_matrix_count(tmp_path):
-    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
-    document = yaml.safe_load(source.read_text())
-    document["evaluation"]["matrix"]["expected_rows"] = 599
-    invalid_path = tmp_path / "invalid.yaml"
-    invalid_path.write_text(yaml.safe_dump(document))
-
-    with pytest.raises(ValueError, match="expected_rows is 599; expected 600"):
-        ExperimentConfig.from_yaml(invalid_path)
-
-
-def test_loading_rejects_training_evaluation_seed_overlap(tmp_path):
-    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
-    document = deepcopy(yaml.safe_load(source.read_text()))
-    document["evaluation"]["seeds"][0] = 42
-    invalid_path = tmp_path / "invalid.yaml"
-    invalid_path.write_text(yaml.safe_dump(document))
-
-    with pytest.raises(ValueError, match="training and evaluation seeds overlap: 42"):
-        ExperimentConfig.from_yaml(invalid_path)
-
-
-def test_matching_protocol_id_cannot_hide_threshold_drift(tmp_path):
-    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
-    document = yaml.safe_load(source.read_text())
-    document["thresholds"]["face_similarity"] = 0.80
-    invalid_path = tmp_path / "invalid.yaml"
-    invalid_path.write_text(yaml.safe_dump(document))
-
-    with pytest.raises(ValueError, match="thresholds do not match"):
-        ExperimentConfig.from_yaml(invalid_path)
-
-
-def test_matching_protocol_id_cannot_hide_alpha_grid_drift(tmp_path):
-    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
-    document = yaml.safe_load(source.read_text())
-    document["evaluation"]["alphas"][-1] = 1.25
-    invalid_path = tmp_path / "invalid.yaml"
-    invalid_path.write_text(yaml.safe_dump(document))
-
-    with pytest.raises(ValueError, match="evaluation.alphas do not match"):
-        ExperimentConfig.from_yaml(invalid_path)
-
-
-def test_analysis_definition_rejects_bootstrap_and_support_drift(tmp_path):
-    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
-    document = yaml.safe_load(source.read_text())
-    document["analysis"]["randomization_resamples"] = 9_999
-    invalid_path = tmp_path / "invalid_resamples.yaml"
-    invalid_path.write_text(yaml.safe_dump(document))
-
-    with pytest.raises(ValueError, match="randomization_resamples"):
-        ExperimentConfig.from_yaml(invalid_path)
-
-    document = yaml.safe_load(source.read_text())
-    document["analysis"]["matched_change"]["extrapolation"] = "linear"
-    invalid_path = tmp_path / "invalid_extrapolation.yaml"
-    invalid_path.write_text(yaml.safe_dump(document))
-
-    with pytest.raises(ValueError, match="matched_change"):
-        ExperimentConfig.from_yaml(invalid_path)
-
-    document = yaml.safe_load(source.read_text())
-    document["analysis"]["rng_seed"] = 7
-    invalid_path = tmp_path / "invalid_rng.yaml"
-    invalid_path.write_text(yaml.safe_dump(document))
-
-    with pytest.raises(ValueError, match="frozen seed"):
-        ExperimentConfig.from_yaml(invalid_path)
-
-
-@pytest.mark.parametrize(
-    ("mutation", "message"),
-    [
-        ("empty_id", "ids"),
-        ("duplicate_id", "ids"),
-        ("no_primary", "one primary"),
-        ("unknown_method", "unknown method_a"),
-        ("identical_methods", "different methods"),
-        ("unsupported_metric", "unsupported metric"),
-        ("invalid_direction", "invalid favorable_direction"),
-    ],
-)
-def test_analysis_definition_rejects_comparison_family_drift(tmp_path, mutation, message):
-    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
-    document = yaml.safe_load(source.read_text())
-    comparisons = document["analysis"]["comparisons"]
-    if mutation == "empty_id":
-        comparisons[0]["id"] = ""
-    elif mutation == "duplicate_id":
-        comparisons[1]["id"] = comparisons[0]["id"]
-    elif mutation == "no_primary":
-        comparisons[0]["role"] = "secondary"
-    elif mutation == "unknown_method":
-        comparisons[0]["method_a"] = "unknown"
-    elif mutation == "identical_methods":
-        comparisons[0]["method_b"] = comparisons[0]["method_a"]
-    elif mutation == "unsupported_metric":
-        comparisons[0]["metric"] = "overall_score"
-    elif mutation == "invalid_direction":
-        comparisons[0]["favorable_direction"] = "sideways"
-    invalid_path = tmp_path / f"{mutation}.yaml"
-    invalid_path.write_text(yaml.safe_dump(document))
-
-    with pytest.raises(ValueError, match=message):
-        ExperimentConfig.from_yaml(invalid_path)
-
-
-def test_nonpilot_cannot_omit_confirmatory_comparisons(tmp_path):
-    source = REPOSITORY_ROOT / "configs" / "full_study.yaml"
-    document = yaml.safe_load(source.read_text())
-    document["analysis"]["comparisons"] = []
-    invalid_path = tmp_path / "missing_comparisons.yaml"
-    invalid_path.write_text(yaml.safe_dump(document))
-
-    with pytest.raises(ValueError, match="comparisons must not be empty"):
-        ExperimentConfig.from_yaml(invalid_path)
-
-
-def test_protocol_loader_rejects_matching_id_with_field_drift(tmp_path):
-    document = load_protocol()
-    document["runtime"]["face_landmarker_delegate"] = "GPU"
-    invalid_path = tmp_path / "evaluation_protocol.yaml"
-    invalid_path.write_text(yaml.safe_dump(document))
-
-    with pytest.raises(ValueError, match="does not match metric code"):
-        load_protocol(invalid_path)
+    config = load_study_config(path)
+    assert config.alphas_for("prompt_only") == (0.0,)
+    assert config.alphas_for("stepwise_masked") == (-1.0, -0.75, 0.0)

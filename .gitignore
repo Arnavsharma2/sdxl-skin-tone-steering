@@ -5,8 +5,6 @@ data/photos/light_skin/*
 
 # Python cache
 __pycache__/
-.cache/
-*.egg-info/
 *.pyc
 *.pyo
 *.pyd
@@ -19,17 +17,34 @@ env/
 
 # Experiments / generated outputs
 experiments/results/
-experiments/runs/
+experiments/runs/*
+!experiments/runs/confirmatory_cuda/
+experiments/runs/confirmatory_cuda/*
+!experiments/runs/confirmatory_cuda/results.jsonl
+!experiments/runs/confirmatory_cuda/run_manifest.json
+!experiments/runs/confirmatory_cuda/study_config.yaml
+!experiments/runs/replication_cuda/
+experiments/runs/replication_cuda/*
+!experiments/runs/replication_cuda/results.jsonl
+!experiments/runs/replication_cuda/run_manifest.json
+!experiments/runs/replication_cuda/study_config.yaml
 experiments/summary/
-experiments/readiness/
-experiments/legacy_reanalysis/base_image.png
-experiments/legacy_reanalysis/counterfactuals/
+experiments/analysis/*
+!experiments/analysis/confirmatory_cuda/
+!experiments/analysis/replication_cuda/
+!experiments/analysis/replication_assessment/
+!experiments/analysis/robustness/
+!experiments/analysis/direction_stability_cuda/
+!experiments/analysis/manuscript_claim_audit.json
+experiments/analysis/**/*.pt
+experiments/artifacts/*.tgz
 data/generated/
 data/embeddings/
-models/*.task
-.artifacts/
-external_validation/private/
-external_validation/output/
+data/calibration/
+data/study_v1/
+data/replication_v1/
+tmp/
+*.egg-info/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -50,3 +65,10 @@ paper/*.fls
 paper/*.log
 paper/*.out
 paper/*.pdf
+paper/wacv/*.aux
+paper/wacv/*.bbl
+paper/wacv/*.blg
+paper/wacv/*.brf
+paper/wacv/*.log
+paper/wacv/*.out
+paper/wacv/*.pdf
