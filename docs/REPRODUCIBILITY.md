@@ -26,10 +26,15 @@ model revision and weight hash after accepting its license. Hardware backends ma
 identical, so do not mix CUDA, MPS, and CPU within one statistical comparison.
 
 This path was retested from a new Python 3.10 virtual environment on
-2026-08-17. All 69 tests and Ruff passed. The frozen run-integrity,
+2026-08-17. All 70 repository tests and Ruff passed. The frozen run-integrity,
 replication-decision, and manuscript-claim audit outputs reproduced
 byte-for-byte; see
 `docs/FRESH_ENVIRONMENT_AUDIT.md`.
+
+The anonymous ZIP was also extracted into an empty directory, installed as an
+editable package from its own `pyproject.toml`, and tested independently. All
+61 tests intentionally retained in the anonymous package, Ruff, and the
+16-group manuscript-claim audit passed.
 
 ## Workflow
 

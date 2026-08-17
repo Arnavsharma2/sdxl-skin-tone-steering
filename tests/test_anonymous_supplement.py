@@ -1,4 +1,6 @@
 import io
+import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
@@ -52,3 +54,27 @@ def test_supplement_build_fails_closed_when_frozen_manifests_are_missing(tmp_pat
         assert "Required frozen submission manifests are missing" in str(error)
     else:
         raise AssertionError("collect_files accepted a checkout without frozen manifests")
+
+
+def test_built_supplement_is_installable_package_shaped(tmp_path: Path) -> None:
+    root = Path(__file__).resolve().parents[1]
+    output = tmp_path / "supplement.zip"
+    subprocess.run(
+        [sys.executable, "scripts/build_anonymous_supplement.py", "--output", str(output)],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    with zipfile.ZipFile(output) as archive:
+        names = set(archive.namelist())
+        assert {
+            "README.md",
+            "README_SUPPLEMENT.md",
+            "paper/main.tex",
+            "paper/wacv/main.tex",
+            "pyproject.toml",
+        } <= names
+        assert "scripts/check_submission_readiness.py" not in names
+        assert "tests/test_submission_readiness.py" not in names

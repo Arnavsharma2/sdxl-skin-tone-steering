@@ -72,4 +72,4 @@ Official-source check: 2026-08-17. All deadlines are Anywhere on Earth.
 - Draft PDF SHA-256:
   `d81b4da0e5b7702bf5cd1e331bacd59f96d974ac63fe2d37fc464057b54d0785`.
 - Supplement: `output/supplement/wacv2027_anonymous_supplement.zip`, 1.9 MB,
-  SHA-256 `2480463c75a61f0dd14c33a46ee812e28dd0982f5bf7b12060ad85a0ed762457`.
+  SHA-256 `9491fba1d19bd14eab441f533a939fb30bcebd7b2b3b705391d4dbd93c629b2a`.

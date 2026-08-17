@@ -58,3 +58,13 @@ identical across environments. This does not claim
 bitwise regeneration of CUDA images on Apple Silicon; the full image campaign
 is content-attested and retained separately. The run-integrity result requires
 that separate archive and is not reproducible from the Git checkout alone.
+
+## Submission-package follow-up
+
+After the submission package was made self-contained, a detached clean
+worktree reproduced 70 repository tests, Ruff, both deterministic PDFs, the
+16-group claim audit, and the anonymous ZIP. The ZIP was then extracted into an
+empty directory and installed from its own `pyproject.toml` without dependency
+resolution or build isolation. Its 61 intentionally retained tests, Ruff, and
+the claim audit all passed. Repository-only submission and supplement-builder
+tests are deliberately excluded from the anonymous archive.

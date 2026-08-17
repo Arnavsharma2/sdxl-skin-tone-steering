@@ -91,6 +91,7 @@ def collect_files(root: Path) -> list[Path]:
         "requirements-lock.txt",
         "generate_training_data.py",
         "run_race_vector_extraction.py",
+        "paper/main.tex",
         "paper/references.bib",
         "paper/wacv/main.tex",
         "paper/wacv/wacv.sty",
@@ -134,7 +135,9 @@ def collect_files(root: Path) -> list[Path]:
     selected.discard(root / "docs/VENUE_PLAN.md")
     selected.discard(root / "docs/RESUME_AND_PROJECT_SUMMARY.md")
     selected.discard(root / "scripts/build_anonymous_supplement.py")
+    selected.discard(root / "scripts/check_submission_readiness.py")
     selected.discard(root / "tests/test_anonymous_supplement.py")
+    selected.discard(root / "tests/test_submission_readiness.py")
     return sorted(selected)
 
 
@@ -180,7 +183,10 @@ def main() -> None:
         "This package contains source, locked configurations, aggregate result "
         "tables, manifests, tests, and paper figures. It deliberately excludes "
         "all third-party model weights, direction tensors, face embeddings, and "
-        "full generated-image campaigns. See docs/REPRODUCIBILITY.md for commands.\n"
+        "full generated-image campaigns.\n\n"
+        "Install the exact dependencies from `requirements-lock.txt`, then run "
+        "`python -m pip install -e . --no-deps` and `make check`. See "
+        "`docs/REPRODUCIBILITY.md` for the analysis and claim-audit commands.\n"
     ).encode()
     manifest = {
         "schema_version": "1.0",
@@ -189,6 +195,11 @@ def main() -> None:
         "direction_tensors_included": False,
         "face_embeddings_included": False,
         "full_generated_image_runs_included": False,
+        "generated_members": [
+            "README.md",
+            "README_SUPPLEMENT.md",
+            "ARTIFACT_MANIFEST.json",
+        ],
         "files": records,
     }
     manifest_payload = (json.dumps(manifest, indent=2) + "\n").encode()
@@ -202,6 +213,7 @@ def main() -> None:
         with zipfile.ZipFile(
             temporary_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
         ) as archive:
+            write_deterministic_member(archive, "README.md", readme)
             write_deterministic_member(archive, "README_SUPPLEMENT.md", readme)
             write_deterministic_member(
                 archive, "ARTIFACT_MANIFEST.json", manifest_payload
@@ -221,7 +233,8 @@ def main() -> None:
         json.dumps(
             {
                 "output": str(args.output),
-                "files": len(records) + 2,
+                "source_files": len(records),
+                "archive_members": len(records) + 3,
                 "bytes": args.output.stat().st_size,
                 "sha256": sha256_bytes(args.output.read_bytes()),
                 "identity_scan": "passed",
