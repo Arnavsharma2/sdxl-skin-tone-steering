@@ -1,15 +1,16 @@
 # Release and third-party license audit
 
-Status: reviewed 2026-08-17. This is an engineering release audit, not legal
-advice. The project copyright holder must approve the repository license.
+Status: reviewed and author-approved 2026-08-17. This is an engineering release
+audit, not legal advice. The project copyright holder approved Apache-2.0 for
+the project-owned source code.
 
 ## Release decision
 
-The source repository may be released under a permissive project-code license
-once the copyright holder chooses it. Apache-2.0 is the recommended default
-because it supplies explicit patent terms and is compatible with the permissive
-software dependencies used here. Do not add it without the copyright holder's
-approval.
+The source repository is released under Apache-2.0 for project-owned source
+code. Apache-2.0 supplies explicit patent terms and is compatible with the
+permissive software dependencies used here. Third-party dependencies, weights,
+and generated artifacts remain governed by their own terms and the boundaries
+below.
 
 The release must not bundle SDXL, FaceNet/MTCNN, LPIPS, AlexNet, or other
 third-party weights. Installation and execution should fetch those components

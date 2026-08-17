@@ -4,8 +4,8 @@ Official-source check: 2026-08-17. All deadlines are Anywhere on Earth.
 
 ## Immediate user actions — due 2026-08-21
 
-- [ ] Confirm the complete author list and order.
-- [ ] Ensure every author has a valid OpenReview profile with institutional and
+- [x] Confirm the complete author list and order.
+- [x] Ensure every author has a valid OpenReview profile with institutional and
   personal conflicts completed. Non-institutional-email profile approval can
   take up to two weeks.
 - [ ] Create the new Round 2 paper enrollment in OpenReview before the hard
@@ -25,7 +25,7 @@ Official-source check: 2026-08-17. All deadlines are Anywhere on Earth.
 - [ ] Obtain at least one technically independent read for statistical claims,
   construct language, figure legibility, and anonymity using
   `docs/INDEPENDENT_REVIEW_CHECKLIST.md`.
-- [ ] Choose and document the large-artifact review option in
+- [x] Choose and document the large-artifact review option in
   `docs/ARTIFACT_AVAILABILITY.md`: anonymous reviewer link, or explicit
   unavailability during review.
 - [x] Confirm all citations against primary sources.
@@ -47,9 +47,9 @@ Official-source check: 2026-08-17. All deadlines are Anywhere on Earth.
   email address, local path, Git remote, or Colab account.
 - [x] Include the synthetic-data provenance, face-model provenance, potential
   misuse, and gated-artifact-release discussion.
-- [ ] Confirm that no substantially similar work is simultaneously under
+- [x] Confirm that no substantially similar work is simultaneously under
   review elsewhere.
-- [ ] Every author must accept the WACV reviewer obligation.
+- [x] Every author must accept the WACV reviewer obligation.
 
 ## Supplementary material — due 2026-08-30
 

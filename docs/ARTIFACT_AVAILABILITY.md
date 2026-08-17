@@ -38,6 +38,11 @@ decision.
 
 ## Submission disclosure
 
+Author decision (2026-08-17): use option 2 below. The retained large archives
+will be unavailable during anonymous review, and the submission will preserve
+the explicit limitation on image-level metric recomputation and full
+run-integrity verification.
+
 Until an anonymous, stable reviewer-accessible URL is added, the paper and
 supplement must describe the large archives as retained but unavailable through
 the review package. A checksum is an integrity identifier, not proof of public
