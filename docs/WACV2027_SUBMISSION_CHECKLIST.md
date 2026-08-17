@@ -23,7 +23,8 @@ Official-source check: 2026-08-17. All deadlines are Anywhere on Earth.
   locked decision rule.
 - [x] Integrate replication results in the main paper, not only the supplement.
 - [ ] Obtain at least one technically independent read for statistical claims,
-  construct language, figure legibility, and anonymity.
+  construct language, figure legibility, and anonymity using
+  `docs/INDEPENDENT_REVIEW_CHECKLIST.md`.
 - [ ] Choose and document the large-artifact review option in
   `docs/ARTIFACT_AVAILABILITY.md`: anonymous reviewer link, or explicit
   unavailability during review.
@@ -72,4 +73,4 @@ Official-source check: 2026-08-17. All deadlines are Anywhere on Earth.
 - Draft PDF SHA-256:
   `d81b4da0e5b7702bf5cd1e331bacd59f96d974ac63fe2d37fc464057b54d0785`.
 - Supplement: `output/supplement/wacv2027_anonymous_supplement.zip`, 1.9 MB,
-  SHA-256 `9491fba1d19bd14eab441f533a939fb30bcebd7b2b3b705391d4dbd93c629b2a`.
+  SHA-256 `ca51adca21bd74f228b3f371ddaec51f36a2f0a48a45956d0eb63d556dbfe0f2`.
