@@ -1,0 +1,375 @@
+{
+  "schema_version": "1.0",
+  "papers": {
+    "paper/main.tex": "0a183d052aedfae2cdbe19fad1a8fe6a57e9d421ef67ad2ee926eca9644b69cd",
+    "paper/wacv/main.tex": "18e2efd41d72c45c517d2a00ba72c9330e596a6053f3fce786af4152b008da02"
+  },
+  "evidence_files": {
+    "experiments/measurement_validation_cuda/validation_report.json": "679571f02e57a40fb208d6ffb54391d654cafa6dc996cbd1947941e3bfd2a0e0",
+    "experiments/measurement_validation_replication_cuda/validation_report.json": "c47967baf10fec5f361c4239c95999ee9a4a293cf8bfcff85141b4b0b2477541",
+    "experiments/analysis/confirmatory_cuda/analysis_audit.json": "5a796f7dd8b401d6a8f89aa3e92799a3dace8eb8d95c2c8577df5e251889e4cb",
+    "experiments/analysis/confirmatory_cuda/monotonicity.csv": "52ba6e533ffa4362edb2da93a1ff4769ea0dcaebf6893f9a35224e5387d4b6d3",
+    "experiments/analysis/confirmatory_cuda/matched_summary.csv": "53f9a7c329702a01e379f166c32e130251afeec486eb39a5530c1b9af60deba6",
+    "experiments/analysis/confirmatory_cuda/paired_contrasts.csv": "74f85d99a8be3bcdf60e7d182305cf511f85bf2c425066154e5336e8a0de9467",
+    "experiments/analysis/replication_cuda/analysis_audit.json": "924239916ff1af7e73dd9619e1ea37835169001af5283ef612ed406606a617fd",
+    "experiments/analysis/replication_cuda/matched_summary.csv": "caa84685bf84ce2f1915b88459fdfebbbae7570282a67433ca4c0d35f57e7c5d",
+    "experiments/analysis/replication_assessment/replication_audit.json": "2085c0a391d9407a4d242cc7f1c6963dce01743e98b0cbd1fc6bff6ed95e81bd",
+    "experiments/analysis/replication_assessment/replication_family.csv": "8b9979a244ea5929892286543ff8b66bbc2c01f9ea3ed7e9912b7cb4cec28756",
+    "experiments/analysis/robustness/tolerance_contrasts.csv": "008bd3d60505cc9f064c7ec373d1851a2b3658d7f9d4e07a778c21f554c4d186",
+    "experiments/analysis/direction_stability_cuda/direction_stability_summary.csv": "90d3398074e796883e7940b144bcf3900eb58ae6bf0e0a15a4f012dfb50f8a95"
+  },
+  "claim_count": 16,
+  "claims": [
+    {
+      "label": "parent measurement validation",
+      "evidence": {
+        "pair_count": 32,
+        "complete_pair_count": 32,
+        "detection_rate": 1.0,
+        "pair_order_accuracy": 0.96875,
+        "median_pair_gap_ita": 16.66920866111137,
+        "median_abs_ita_shift": 0.40444499607582785,
+        "p95_abs_ita_shift": 3.0604757059183623,
+        "gates": {
+          "min_detection_rate": 0.95,
+          "min_pair_order_accuracy": 0.9,
+          "min_median_pair_gap_ita": 8.0,
+          "max_median_abs_ita_shift": 2.0,
+          "max_p95_abs_ita_shift": 5.0
+        },
+        "checks": {
+          "detection_rate": true,
+          "pair_order_accuracy": true,
+          "median_pair_gap_ita": true,
+          "median_abs_ita_shift": true,
+          "p95_abs_ita_shift": true
+        },
+        "passed": true,
+        "schema_version": "1.0",
+        "study_id": "skin_tone_steering_confirmatory_v1",
+        "config_fingerprint": "fcad3e96fe37584f",
+        "metric": "white_reference_bilateral_cheek_median_cielab_ita_v2",
+        "split": "held_out_direction_pairs"
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "parent perturbation validation",
+      "evidence": {
+        "pair_count": 32,
+        "complete_pair_count": 32,
+        "detection_rate": 1.0,
+        "pair_order_accuracy": 0.96875,
+        "median_pair_gap_ita": 16.66920866111137,
+        "median_abs_ita_shift": 0.40444499607582785,
+        "p95_abs_ita_shift": 3.0604757059183623,
+        "gates": {
+          "min_detection_rate": 0.95,
+          "min_pair_order_accuracy": 0.9,
+          "min_median_pair_gap_ita": 8.0,
+          "max_median_abs_ita_shift": 2.0,
+          "max_p95_abs_ita_shift": 5.0
+        },
+        "checks": {
+          "detection_rate": true,
+          "pair_order_accuracy": true,
+          "median_pair_gap_ita": true,
+          "median_abs_ita_shift": true,
+          "p95_abs_ita_shift": true
+        },
+        "passed": true,
+        "schema_version": "1.0",
+        "study_id": "skin_tone_steering_confirmatory_v1",
+        "config_fingerprint": "fcad3e96fe37584f",
+        "metric": "white_reference_bilateral_cheek_median_cielab_ita_v2",
+        "split": "held_out_direction_pairs"
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "parent completion",
+      "evidence": {
+        "study_id": "skin_tone_steering_confirmatory_v1",
+        "config_fingerprint": "6e7e5a62a18ebfe6",
+        "input_rows": 570,
+        "unique_seeds": 30,
+        "expected_conditions": 570,
+        "matched_change_targets": [
+          5.0
+        ],
+        "matched_change_methods": [
+          "prompt_only",
+          "stepwise_unmasked",
+          "stepwise_masked"
+        ],
+        "feasibility_only_methods": [
+          "posthoc_latent"
+        ],
+        "matched_rows": 180,
+        "contrast_rows": 16
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "parent monotonicity",
+      "evidence": {
+        "posthoc_latent": 0.6714285714285714,
+        "prompt_only": 0.95,
+        "stepwise_masked": 0.9233333333333332,
+        "stepwise_unmasked": 0.9333333333333332
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "parent post-hoc seed dependence",
+      "evidence": {
+        "median": 0.988095238095238,
+        "ci_low": 0.4341269841269841,
+        "ci_high": 0.8777777777777779
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "parent matched coverage table",
+      "evidence": {
+        "prompt_only:-1": 7,
+        "prompt_only:1": 18,
+        "stepwise_unmasked:-1": 13,
+        "stepwise_unmasked:1": 15,
+        "stepwise_masked:-1": 19,
+        "stepwise_masked:1": 26
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "parent achieved target change",
+      "evidence": {
+        "lighter": 5.056124815767051,
+        "darker": 5.225483110477442
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "parent masked-versus-unmasked LPIPS",
+      "evidence": {
+        "lighter": {
+          "reference_method": "stepwise_masked",
+          "comparator": "stepwise_unmasked",
+          "direction": -1,
+          "target_change": 5.0,
+          "outcome": "lpips",
+          "n_pairs": 13,
+          "mean_reference_advantage": 0.0234708387691242,
+          "median_reference_advantage": 0.020131498575211,
+          "ci_low": 0.0128021415967781,
+          "ci_high": 0.035987800338234,
+          "p_value": 0.0010399896001039,
+          "p_holm": 0.0124798752012479
+        },
+        "darker": {
+          "reference_method": "stepwise_masked",
+          "comparator": "stepwise_unmasked",
+          "direction": 1,
+          "target_change": 5.0,
+          "outcome": "lpips",
+          "n_pairs": 14,
+          "mean_reference_advantage": 0.0824607211564267,
+          "median_reference_advantage": 0.0477899070829155,
+          "ci_low": 0.0475524942257573,
+          "ci_high": 0.1302411589106277,
+          "p_value": 0.0001299987000129,
+          "p_holm": 0.0019499805001949
+        }
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "robustness shared sample ranges",
+      "evidence": {
+        "1": [
+          1,
+          5
+        ],
+        "2": [
+          3,
+          12
+        ]
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "direction stability table",
+      "evidence": {
+        "8:raw_cosine": {
+          "median": 0.4198264628648758,
+          "q025": 0.2767306812107563,
+          "q975": 0.5255664393305779
+        },
+        "8:masked_cosine": {
+          "median": 0.5287340581417084,
+          "q025": 0.3750268593430519,
+          "q975": 0.62983058989048
+        },
+        "16:raw_cosine": {
+          "median": 0.5871532261371613,
+          "q025": 0.4958501860499382,
+          "q975": 0.6610127225518226
+        },
+        "16:masked_cosine": {
+          "median": 0.690536767244339,
+          "q025": 0.5965903043746948,
+          "q975": 0.7461214035749436
+        },
+        "32:raw_cosine": {
+          "median": 0.7461926937103271,
+          "q025": 0.6886687085032464,
+          "q975": 0.7783647283911705
+        },
+        "32:masked_cosine": {
+          "median": 0.8189014792442322,
+          "q025": 0.7728403151035309,
+          "q975": 0.8405792191624641
+        }
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "replication measurement validation",
+      "evidence": {
+        "pair_count": 32,
+        "complete_pair_count": 32,
+        "detection_rate": 1.0,
+        "pair_order_accuracy": 0.96875,
+        "median_pair_gap_ita": 16.079445843205836,
+        "median_abs_ita_shift": 0.35329405088175747,
+        "p95_abs_ita_shift": 3.8322392948932533,
+        "gates": {
+          "min_detection_rate": 0.95,
+          "min_pair_order_accuracy": 0.9,
+          "min_median_pair_gap_ita": 8.0,
+          "max_median_abs_ita_shift": 2.0,
+          "max_p95_abs_ita_shift": 5.0
+        },
+        "checks": {
+          "detection_rate": true,
+          "pair_order_accuracy": true,
+          "median_pair_gap_ita": true,
+          "median_abs_ita_shift": true,
+          "p95_abs_ita_shift": true
+        },
+        "passed": true,
+        "schema_version": "1.0",
+        "study_id": "skin_tone_steering_independent_seed_replication_v1",
+        "config_fingerprint": "5057ea79d01525ba",
+        "metric": "white_reference_bilateral_cheek_median_cielab_ita_v2",
+        "split": "held_out_direction_pairs"
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "replication completion",
+      "evidence": {
+        "study_id": "skin_tone_steering_independent_seed_replication_v1",
+        "config_fingerprint": "fa694f8bb214c219",
+        "input_rows": 570,
+        "unique_seeds": 30,
+        "expected_conditions": 570,
+        "matched_change_targets": [
+          5.0
+        ],
+        "matched_change_methods": [
+          "prompt_only",
+          "stepwise_unmasked",
+          "stepwise_masked"
+        ],
+        "feasibility_only_methods": [
+          "posthoc_latent"
+        ],
+        "matched_rows": 180,
+        "contrast_rows": 16
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "replication matched coverage",
+      "evidence": {
+        "prompt_only:-1": 7,
+        "prompt_only:1": 22,
+        "stepwise_unmasked:-1": 10,
+        "stepwise_unmasked:1": 10,
+        "stepwise_masked:-1": 18,
+        "stepwise_masked:1": 27
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "locked replication table",
+      "evidence": {
+        "lighter": {
+          "reference_method": "stepwise_masked",
+          "comparator": "stepwise_unmasked",
+          "direction": -1,
+          "target_change": 5.0,
+          "outcome": "lpips",
+          "n_pairs": 8,
+          "mean_reference_advantage": 0.0238445075228811,
+          "median_reference_advantage": 0.022126667201519,
+          "ci_low": 0.0049441782757639,
+          "ci_high": 0.0414636745350436,
+          "p_value": 0.0555494445055549,
+          "p_holm": 0.6110438895611043,
+          "direction_label": "lighter",
+          "p_holm_replication_family": 0.0555494445055549,
+          "parent_n_pairs": 13,
+          "parent_mean_reference_advantage": 0.0234708387691242,
+          "parent_ci_low": 0.0128021415967781,
+          "parent_ci_high": 0.035987800338234,
+          "same_sign_as_parent": true
+        },
+        "darker": {
+          "reference_method": "stepwise_masked",
+          "comparator": "stepwise_unmasked",
+          "direction": 1,
+          "target_change": 5.0,
+          "outcome": "lpips",
+          "n_pairs": 10,
+          "mean_reference_advantage": 0.0409046314656734,
+          "median_reference_advantage": 0.034433353692293,
+          "ci_low": 0.0176323029957711,
+          "ci_high": 0.065490671712905,
+          "p_value": 0.0095899041009589,
+          "p_holm": 0.1246687533124668,
+          "direction_label": "darker",
+          "p_holm_replication_family": 0.0191798082019178,
+          "parent_n_pairs": 14,
+          "parent_mean_reference_advantage": 0.0824607211564267,
+          "parent_ci_low": 0.0475524942257573,
+          "parent_ci_high": 0.1302411589106277,
+          "same_sign_as_parent": true
+        }
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "locked replication decision",
+      "evidence": {
+        "decision": "inconclusive_coverage",
+        "minimum_pairs": 12
+      },
+      "present_in_all_papers": true
+    },
+    {
+      "label": "cross-campaign direction agreement",
+      "evidence": {
+        "raw_cosine": 0.8844576478004456,
+        "masked_cosine": 0.918837308883667,
+        "parent_norm": 41.2666015625,
+        "replication_norm": 43.08328628540039,
+        "norm_ratio_replication_to_parent": 1.0440231241273634
+      },
+      "present_in_all_papers": true
+    }
+  ],
+  "failures": [],
+  "passed": true
+}

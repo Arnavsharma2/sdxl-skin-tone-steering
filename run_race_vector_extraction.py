@@ -14,28 +14,28 @@ Requirements:
     - At least 3 photos in each directory
 """
 
-import sys
-import json
 import argparse
+import json
+import sys
 from pathlib import Path
-import torch
-import numpy as np
-from PIL import Image
+
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from PIL import Image
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.models.stable_diffusion import StableDiffusionWrapper
 from src.latent.vector_discovery import SkinToneDirectionExtractor, VectorAnalyzer
 from src.metrics.evaluator import CounterfactualEvaluator
-from src.visualization.grid_generator import CounterfactualGridGenerator
+from src.models.stable_diffusion import StableDiffusionWrapper
 from src.utils.reproducibility import (
     collect_provenance,
     seed_everything,
     stable_fingerprint,
 )
-
+from src.visualization.grid_generator import CounterfactualGridGenerator
 
 # ---------------------------------------------------------------------------
 # Prompts — crafted for consistent, evaluable portraits
@@ -243,8 +243,8 @@ class SkinToneSteeringPipeline:
         print("\nSTEP 4b: Running experimental vector optimisation...")
         print("-" * 70)
         try:
-            from facenet_pytorch import InceptionResnetV1
             import torch.nn.functional as F
+            from facenet_pytorch import InceptionResnetV1
 
             facenet = InceptionResnetV1(pretrained="vggface2").eval().to(self.device)
             for p in facenet.parameters():

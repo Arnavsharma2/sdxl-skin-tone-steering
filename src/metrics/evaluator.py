@@ -4,11 +4,12 @@ Composite evaluator for counterfactual pairs.
 This module combines all metrics into a single evaluation pipeline.
 """
 
+from dataclasses import asdict, dataclass
+from typing import Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
 from PIL import Image
-from typing import Union, List, Tuple, Dict, Optional
-from dataclasses import dataclass, asdict
 
 from .identity_metrics import IdentityPreservationMetrics
 from .structural_metrics import StructuralPreservationMetrics
@@ -89,7 +90,10 @@ class CounterfactualEvaluator:
 
         # Use FaceNet (facenet-pytorch) — works without insightface
         self.identity_metrics = IdentityPreservationMetrics(
-            device=device, use_arcface=False, use_facenet=True
+            device=device,
+            use_arcface=False,
+            use_facenet=True,
+            enable_landmarks=False,
         )
         self.structural_metrics = StructuralPreservationMetrics(device=device)
 
@@ -152,7 +156,7 @@ class CounterfactualEvaluator:
         self, result: EvaluationResult
     ) -> Tuple[bool, int, int, Tuple[str, ...]]:
         """
-        Checks if we successfully changed the race without messing up other stuff.
+        Checks whether required preservation metrics pass their thresholds.
 
         Returns:
             ``(is_disentangled, num_passed, num_total, missing_required)``.
@@ -366,7 +370,7 @@ class CounterfactualEvaluator:
         print("=" * 60)
 
         print(f"\nDisentangled: {summary['pct_disentangled']:.1f}%")
-        print(f"\nAverage Metrics:")
+        print("\nAverage Metrics:")
         print(f"  Face Similarity: {summary.get('mean_face_similarity', 0):.3f} ± {summary.get('std_face_similarity', 0):.3f}")
         print(f"  Landmark RMSE: {summary.get('mean_landmark_rmse', 0):.2f} ± {summary.get('std_landmark_rmse', 0):.2f}px")
         print(f"  LPIPS: {summary.get('mean_lpips', 0):.3f} ± {summary.get('std_lpips', 0):.3f}")

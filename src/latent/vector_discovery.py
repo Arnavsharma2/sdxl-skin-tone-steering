@@ -130,6 +130,10 @@ class SkinToneDirectionExtractor:
 
         # Average all differences
         race_vector = torch.stack(differences).mean(dim=0)
+        if not bool(torch.isfinite(race_vector).all()):
+            raise ValueError(
+                "Paired direction contains non-finite values; check VAE encoding precision"
+            )
 
         # Apply spatial mask if provided (to focus on face regions)
         if spatial_mask is not None:

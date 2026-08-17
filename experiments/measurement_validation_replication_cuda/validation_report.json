@@ -1,0 +1,29 @@
+{
+  "pair_count": 32,
+  "complete_pair_count": 32,
+  "detection_rate": 1.0,
+  "pair_order_accuracy": 0.96875,
+  "median_pair_gap_ita": 16.079445843205836,
+  "median_abs_ita_shift": 0.35329405088175747,
+  "p95_abs_ita_shift": 3.8322392948932533,
+  "gates": {
+    "min_detection_rate": 0.95,
+    "min_pair_order_accuracy": 0.9,
+    "min_median_pair_gap_ita": 8.0,
+    "max_median_abs_ita_shift": 2.0,
+    "max_p95_abs_ita_shift": 5.0
+  },
+  "checks": {
+    "detection_rate": true,
+    "pair_order_accuracy": true,
+    "median_pair_gap_ita": true,
+    "median_abs_ita_shift": true,
+    "p95_abs_ita_shift": true
+  },
+  "passed": true,
+  "schema_version": "1.0",
+  "study_id": "skin_tone_steering_independent_seed_replication_v1",
+  "config_fingerprint": "5057ea79d01525ba",
+  "metric": "white_reference_bilateral_cheek_median_cielab_ita_v2",
+  "split": "held_out_direction_pairs"
+}

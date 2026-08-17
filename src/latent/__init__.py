@@ -1,11 +1,11 @@
 """Latent space manipulation tools."""
 
+from .manipulator import LatentManipulator
 from .vector_discovery import (
     RaceVectorExtractor,
     SkinToneDirectionExtractor,
     VectorAnalyzer,
 )
-from .manipulator import LatentManipulator
 
 __all__ = [
     "SkinToneDirectionExtractor",

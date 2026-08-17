@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "analysis_role": "post_confirmatory_exploratory_robustness",
+  "config_fingerprint": "6e7e5a62a18ebfe6",
+  "input_rows": 570,
+  "tolerances_ita": [
+    1.0,
+    2.0,
+    3.0
+  ],
+  "coverage_rows": 18,
+  "contrast_rows": 48,
+  "note": "This analysis does not replace the preregistered 3-ITA tolerance."
+}

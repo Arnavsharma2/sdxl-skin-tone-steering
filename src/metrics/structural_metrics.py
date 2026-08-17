@@ -3,15 +3,16 @@ Structural preservation metrics.
 
 This module implements metrics for measuring preservation of:
 - Background (SSIM on non-face regions)
-- Pose (3D head pose angles)
+- Pose (MTCNN five-point landmark geometry)
 - Overall structure
 """
 
+from typing import Dict, Optional, Tuple, Union
+
+import cv2
 import numpy as np
 from PIL import Image
-from typing import Union, Dict, Tuple, Optional
 from skimage.metrics import structural_similarity as ssim
-import cv2
 
 
 class StructuralPreservationMetrics:
@@ -20,7 +21,7 @@ class StructuralPreservationMetrics:
 
     Metrics:
     - Background SSIM (on masked background)
-    - 3D head pose angles (yaw, pitch, roll)
+    - Landmark-based pose proxies (yaw, pitch, roll)
     - Overall structural similarity
 
     Example:
@@ -38,8 +39,6 @@ class StructuralPreservationMetrics:
         """
         self.device = device
         self.face_detector = None
-        self.pose_estimator = None
-        self.face_mesh = None
 
     def _load_face_detector(self):
         """Load face detection model."""
@@ -47,24 +46,18 @@ class StructuralPreservationMetrics:
             return
 
         try:
-            import mediapipe as mp
+            from facenet_pytorch import MTCNN
 
-            self.mp_face_detection = mp.solutions.face_detection
-            self.mp_face_mesh = mp.solutions.face_mesh
-
-            self.face_detector = self.mp_face_detection.FaceDetection(
-                min_detection_confidence=0.5
+            detector_device = "cpu" if self.device == "mps" else self.device
+            self.face_detector = MTCNN(
+                keep_all=True,
+                device=detector_device,
+                post_process=False,
             )
-            self.face_mesh = self.mp_face_mesh.FaceMesh(
-                static_image_mode=True,
-                max_num_faces=1,
-                refine_landmarks=True,
-                min_detection_confidence=0.5,
-            )
-            print("Loaded MediaPipe face detector")
+            print("Loaded MTCNN face detector")
         except Exception as e:
-            print(f"WARNING: Could not load MediaPipe: {e}")
-            print("  Install with: pip install mediapipe")
+            print(f"WARNING: Could not load MTCNN: {e}")
+            print("  Install with: pip install facenet-pytorch")
             self.face_detector = None
 
     def detect_face_bbox(
@@ -85,29 +78,27 @@ class StructuralPreservationMetrics:
         if self.face_detector is None:
             return None
 
-        # Convert to numpy RGB (PIL images are already RGB; MediaPipe expects RGB)
-        if isinstance(img, Image.Image):
-            img = np.array(img)
-        elif img.ndim == 3 and img.shape[2] == 3:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        # Detect face
-        results = self.face_detector.process(img)
-
-        if not results.detections:
+        if isinstance(img, np.ndarray):
+            img = Image.fromarray(np.asarray(img, dtype=np.uint8)).convert("RGB")
+        else:
+            img = img.convert("RGB")
+        boxes, probabilities = self.face_detector.detect(img, landmarks=False)
+        if boxes is None or probabilities is None:
             return None
-
-        # Get first face
-        detection = results.detections[0]
-        bbox = detection.location_data.relative_bounding_box
-
-        h, w = img.shape[:2]
-        x = int(bbox.xmin * w)
-        y = int(bbox.ymin * h)
-        width = int(bbox.width * w)
-        height = int(bbox.height * h)
-
-        return (x, y, width, height)
+        candidates = [
+            (box, float(probability))
+            for box, probability in zip(boxes, probabilities)
+            if probability is not None and float(probability) >= 0.90
+        ]
+        if not candidates:
+            return None
+        box, _ = max(
+            candidates,
+            key=lambda item: max(0.0, item[0][2] - item[0][0])
+            * max(0.0, item[0][3] - item[0][1]),
+        )
+        x0, y0, x1, y1 = (int(round(value)) for value in box)
+        return x0, y0, max(0, x1 - x0), max(0, y1 - y0)
 
     def create_face_mask(
         self,
@@ -250,111 +241,64 @@ class StructuralPreservationMetrics:
         img: Union[Image.Image, np.ndarray],
     ) -> Optional[Dict[str, float]]:
         """
-        Estimate 3D head pose (yaw, pitch, roll).
+        Estimate documented 2D landmark pose proxies (yaw, pitch, roll).
 
         Args:
             img: Input image
 
         Returns:
-            Dict with 'yaw', 'pitch', 'roll' in degrees, or None if failed
+            Dict with proxy 'yaw', 'pitch', 'roll' in degrees, or None if failed.
+            These are preservation outcomes, not calibrated camera pose angles.
         """
         self._load_face_detector()
 
-        if self.face_mesh is None:
+        if self.face_detector is None:
             return None
-
-        # Convert to numpy RGB (PIL images are already RGB; MediaPipe expects RGB)
-        if isinstance(img, Image.Image):
-            img = np.array(img)
-        elif img.ndim == 3 and img.shape[2] == 3:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        # Detect face mesh
-        results = self.face_mesh.process(img)
-
-        if not results.multi_face_landmarks:
-            return None
-
-        # Get landmarks
-        landmarks = results.multi_face_landmarks[0]
-
-        # Estimate pose using key landmarks
-        # This is a simplified approach
-        h, w = img.shape[:2]
-
-        # Get key points (nose tip, chin, left eye, right eye, left mouth, right mouth)
-        nose = landmarks.landmark[1]
-        chin = landmarks.landmark[152]
-        left_eye = landmarks.landmark[33]
-        right_eye = landmarks.landmark[263]
-        left_mouth = landmarks.landmark[61]
-        right_mouth = landmarks.landmark[291]
-
-        # Convert to pixel coordinates
-        points_2d = np.array(
-            [
-                [nose.x * w, nose.y * h],
-                [chin.x * w, chin.y * h],
-                [left_eye.x * w, left_eye.y * h],
-                [right_eye.x * w, right_eye.y * h],
-                [left_mouth.x * w, left_mouth.y * h],
-                [right_mouth.x * w, right_mouth.y * h],
-            ],
-            dtype=np.float64,
-        )
-
-        # 3D model points
-        points_3d = np.array(
-            [
-                [0.0, 0.0, 0.0],  # Nose tip
-                [0.0, -330.0, -65.0],  # Chin
-                [-225.0, 170.0, -135.0],  # Left eye
-                [225.0, 170.0, -135.0],  # Right eye
-                [-150.0, -150.0, -125.0],  # Left mouth
-                [150.0, -150.0, -125.0],  # Right mouth
-            ],
-            dtype=np.float64,
-        )
-
-        # Camera matrix
-        focal_length = w
-        center = (w / 2, h / 2)
-        camera_matrix = np.array(
-            [[focal_length, 0, center[0]], [0, focal_length, center[1]], [0, 0, 1]],
-            dtype=np.float64,
-        )
-
-        # Distortion coefficients
-        dist_coeffs = np.zeros((4, 1))
-
-        # Solve PnP
-        success, rotation_vec, translation_vec = cv2.solvePnP(
-            points_3d, points_2d, camera_matrix, dist_coeffs
-        )
-
-        if not success:
-            return None
-
-        # Convert rotation vector to rotation matrix
-        rotation_mat, _ = cv2.Rodrigues(rotation_vec)
-
-        # Calculate Euler angles
-        sy = np.sqrt(rotation_mat[0, 0] ** 2 + rotation_mat[1, 0] ** 2)
-
-        if sy > 1e-6:
-            pitch = np.arctan2(rotation_mat[2, 1], rotation_mat[2, 2])
-            yaw = np.arctan2(-rotation_mat[2, 0], sy)
-            roll = np.arctan2(rotation_mat[1, 0], rotation_mat[0, 0])
+        if isinstance(img, np.ndarray):
+            img = Image.fromarray(np.asarray(img, dtype=np.uint8)).convert("RGB")
         else:
-            pitch = np.arctan2(-rotation_mat[1, 2], rotation_mat[1, 1])
-            yaw = np.arctan2(-rotation_mat[2, 0], sy)
-            roll = 0
+            img = img.convert("RGB")
+        boxes, probabilities, landmarks = self.face_detector.detect(img, landmarks=True)
+        if boxes is None or probabilities is None or landmarks is None:
+            return None
+        candidates = [
+            (index, box, float(probability))
+            for index, (box, probability) in enumerate(zip(boxes, probabilities))
+            if probability is not None and float(probability) >= 0.90
+        ]
+        if not candidates:
+            return None
+        index, _, _ = max(
+            candidates,
+            key=lambda item: max(0.0, item[1][2] - item[1][0])
+            * max(0.0, item[1][3] - item[1][1]),
+        )
+        return self._pose_from_landmarks(np.asarray(landmarks[index], dtype=float))
 
-        # Convert to degrees
+    @staticmethod
+    def _pose_from_landmarks(points: np.ndarray) -> Optional[Dict[str, float]]:
+        """Convert MTCNN's five landmarks to reproducible pose proxies."""
+
+        if points.shape != (5, 2) or not np.isfinite(points).all():
+            return None
+        left_eye, right_eye, nose, left_mouth, right_mouth = points
+        eye_vector = right_eye - left_eye
+        eye_distance = float(np.linalg.norm(eye_vector))
+        if eye_distance < 1e-6:
+            return None
+        eye_mid = (left_eye + right_eye) / 2.0
+        mouth_mid = (left_mouth + right_mouth) / 2.0
+        eye_mouth_distance = float(mouth_mid[1] - eye_mid[1])
+        if abs(eye_mouth_distance) < 1e-6:
+            return None
+        roll = np.degrees(np.arctan2(eye_vector[1], eye_vector[0]))
+        yaw = np.degrees(np.arctan2(nose[0] - eye_mid[0], eye_distance))
+        vertical_ratio = (nose[1] - eye_mid[1]) / eye_mouth_distance
+        pitch = np.degrees(np.arctan(vertical_ratio - 0.5))
         return {
-            "yaw": np.degrees(yaw),
-            "pitch": np.degrees(pitch),
-            "roll": np.degrees(roll),
+            "yaw": float(yaw),
+            "pitch": float(pitch),
+            "roll": float(roll),
         }
 
     def pose_difference(
@@ -363,7 +307,7 @@ class StructuralPreservationMetrics:
         img2: Union[Image.Image, np.ndarray],
     ) -> Dict[str, float]:
         """
-        Compute difference in 3D head pose.
+        Compute difference in MTCNN landmark pose proxies.
 
         Args:
             img1: First image

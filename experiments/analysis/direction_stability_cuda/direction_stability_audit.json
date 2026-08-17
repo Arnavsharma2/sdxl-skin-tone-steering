@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "analysis_role": "post_confirmatory_exploratory_robustness",
+  "config_fingerprint": "6e7e5a62a18ebfe6",
+  "train_pairs": 64,
+  "pair_counts": [
+    8,
+    16,
+    32
+  ],
+  "resamples": 200,
+  "sampling": "disjoint_random_halves_without_replacement",
+  "full_direction_norm": 41.2666015625,
+  "masked_full_direction_norm": 27.02467155456543,
+  "reference_direction_check": {
+    "path": "experiments/runs/confirmatory_cuda/direction/raw.pt",
+    "cosine_to_recorded": 0.9999998807907104,
+    "max_abs_difference": 0.0
+  },
+  "note": "Representation stability does not establish causal disentanglement."
+}

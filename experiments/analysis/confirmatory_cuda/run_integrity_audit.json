@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "study_id": "skin_tone_steering_confirmatory_v1",
+  "config_fingerprint": "6e7e5a62a18ebfe6",
+  "run_dir": "experiments/runs/confirmatory_cuda",
+  "result_ledger_sha256": "c15eecc46241ae945d8da5f1e7265bc225878926f279283208aa15e54cf17a4c",
+  "archived_config_sha256": "5e30411d89b19718d56d18591ff21dcb2e9d52280989a9714c197b16baf659bc",
+  "expected_conditions": 570,
+  "observed_rows": 570,
+  "unique_condition_keys": 570,
+  "unique_seeds": 30,
+  "generation_failure_count": 0,
+  "evaluation_incomplete_count": 1,
+  "evaluation_incomplete": [
+    {
+      "key": [
+        500019,
+        "posthoc_latent",
+        -1.5
+      ],
+      "skin_tone_failure": "edited_face_or_skin_region_missing",
+      "missing_required_metrics": [
+        "skin_tone_change"
+      ]
+    }
+  ],
+  "missing_keys": [],
+  "extra_keys": [],
+  "duplicate_keys": [],
+  "missing_images": [],
+  "direction_sha256": {
+    "direction/raw.pt": "d57c44bd049003cdee4881bcdf0f3a7a54e098cb09436085337206440e70add1",
+    "direction/masked.pt": "3ede24ebe4b32a1158240ad910ab068064d1897181e7a00bee2b1696011e95e4"
+  },
+  "checks": {
+    "exact_condition_keys": true,
+    "row_count": true,
+    "result_fingerprint": true,
+    "result_study_id": true,
+    "manifest_fingerprint": true,
+    "manifest_study_id": true,
+    "manifest_study_status": true,
+    "manifest_execution_mode": true,
+    "manifest_condition_count": true,
+    "manifest_seed_set": true,
+    "all_generations_complete": true,
+    "all_referenced_images_present": true,
+    "direction_tensors_present": true,
+    "archived_config_fingerprint": true
+  },
+  "passed": true
+}

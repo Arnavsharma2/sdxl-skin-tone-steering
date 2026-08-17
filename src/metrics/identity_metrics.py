@@ -5,14 +5,19 @@ This module implements metrics to measure whether counterfactual images
 preserve the identity of the original person.
 """
 
-import torch
-import numpy as np
-from PIL import Image
-from typing import Union
 import warnings
+from typing import Union
+
+import numpy as np
+import torch
+from PIL import Image
 
 # Suppress warnings from face detection libraries
 warnings.filterwarnings("ignore")
+
+
+class FaceDetectionError(RuntimeError):
+    """Raised when an embedding metric cannot detect both required faces."""
 
 
 class IdentityPreservationMetrics:
@@ -36,6 +41,7 @@ class IdentityPreservationMetrics:
         device: str = "cuda",
         use_arcface: bool = True,
         use_facenet: bool = False,
+        enable_landmarks: bool = True,
     ):
         """
         Initialize identity metrics.
@@ -46,8 +52,10 @@ class IdentityPreservationMetrics:
             use_facenet: Use FaceNet for face recognition
         """
         self.device = device
+        self.enable_landmarks = enable_landmarks
         self.face_model = None
         self.landmark_detector = None
+        self._landmark_load_attempted = False
         self.lpips_model = None
         self.model_type = None
 
@@ -77,7 +85,7 @@ class IdentityPreservationMetrics:
     def _load_facenet(self):
         """Load FaceNet model for face recognition."""
         try:
-            from facenet_pytorch import InceptionResnetV1, MTCNN
+            from facenet_pytorch import MTCNN, InceptionResnetV1
 
             # FaceNet uses adaptive pooling which is unsupported on MPS — use CPU
             facenet_device = "cpu" if self.device == "mps" else self.device
@@ -115,8 +123,9 @@ class IdentityPreservationMetrics:
 
     def _load_landmarks(self):
         """Load facial landmark detector."""
-        if self.landmark_detector is not None:
+        if self.landmark_detector is not None or self._landmark_load_attempted:
             return
+        self._landmark_load_attempted = True
 
         try:
             import dlib
@@ -174,7 +183,7 @@ class IdentityPreservationMetrics:
         faces2 = self.face_app.get(img2)
 
         if len(faces1) == 0 or len(faces2) == 0:
-            return 0.0  # No face detected
+            raise FaceDetectionError("ArcFace did not detect both faces")
 
         # Get embeddings (use first face)
         emb1 = faces1[0].embedding
@@ -207,7 +216,7 @@ class IdentityPreservationMetrics:
         face2 = self.mtcnn(img2)
 
         if face1 is None or face2 is None:
-            return 0.0  # No face detected
+            raise FaceDetectionError("MTCNN did not detect both faces")
 
         # Get embeddings (use facenet_device — may differ from self.device on MPS)
         fd = getattr(self, "facenet_device", self.device)
@@ -330,11 +339,15 @@ class IdentityPreservationMetrics:
             print(f"WARNING: Could not compute face similarity: {e}")
             metrics["face_similarity"] = None
 
-        # Landmark RMSE
-        try:
-            metrics["landmark_rmse"] = self.landmark_rmse(img1, img2)
-        except Exception as e:
-            print(f"WARNING: Could not compute landmark RMSE: {e}")
+        # Landmark RMSE is a legacy optional metric and is disabled in the
+        # frozen study, which does not ship the external dlib predictor file.
+        if getattr(self, "enable_landmarks", True):
+            try:
+                metrics["landmark_rmse"] = self.landmark_rmse(img1, img2)
+            except Exception as e:
+                print(f"WARNING: Could not compute landmark RMSE: {e}")
+                metrics["landmark_rmse"] = None
+        else:
             metrics["landmark_rmse"] = None
 
         # Perceptual similarity

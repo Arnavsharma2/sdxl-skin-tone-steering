@@ -1,14 +1,14 @@
 """Utility functions."""
 
-from .face_utils import detect_faces, align_face, extract_face_mask, get_face_landmarks
 from .config import (
-    ExperimentConfig,
-    ModelConfig,
-    VectorConfig,
-    ThresholdConfig,
     DataConfig,
+    ExperimentConfig,
     LoggingConfig,
+    ModelConfig,
+    ThresholdConfig,
+    VectorConfig,
 )
+from .face_utils import align_face, detect_faces, extract_face_mask, get_face_landmarks
 
 __all__ = [
     "detect_faces",

@@ -4,9 +4,9 @@ Configuration management for experiments.
 This module provides configuration dataclasses and utilities.
 """
 
-from dataclasses import dataclass, field, asdict
-from typing import Tuple, Optional, Dict, Any
-from pathlib import Path
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, Optional, Tuple
+
 import yaml
 
 
@@ -114,7 +114,7 @@ class ExperimentConfig:
             vector_dict = config_dict["vector"].copy()
             if "alpha_range" in vector_dict:
                 vector_dict["alpha_range"] = tuple(vector_dict["alpha_range"])
-            
+
             # Flatten optimization settings if present
             if "optimization" in vector_dict:
                 opt_dict = vector_dict.pop("optimization")
@@ -174,19 +174,19 @@ class ExperimentConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         model_dict = asdict(self.model)
-        
+
         vector_dict = asdict(self.vector)
         # Convert tuple to list for YAML serialization
         if isinstance(vector_dict.get("alpha_range"), tuple):
             vector_dict["alpha_range"] = list(vector_dict["alpha_range"])
-            
+
         thresholds_dict = asdict(self.thresholds)
-        
+
         data_dict = asdict(self.data)
         # Convert tuple to list for YAML serialization
         if isinstance(data_dict.get("image_size"), tuple):
             data_dict["image_size"] = list(data_dict["image_size"])
-            
+
         logging_dict = asdict(self.logging)
 
         return {

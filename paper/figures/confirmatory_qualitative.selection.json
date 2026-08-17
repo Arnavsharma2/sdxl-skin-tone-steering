@@ -1,0 +1,82 @@
+{
+  "selection_rule": "Maximize the number of complete prespecified matched-change rows; among ties choose the seed closest to the median base ITA; then choose the lower seed.",
+  "target_change": 5.0,
+  "maximum_complete_rows": 6,
+  "candidate_seeds": [
+    500011,
+    500013
+  ],
+  "median_candidate_base_ita": 64.92752934976448,
+  "selected_seed": 500011,
+  "config_fingerprints": [
+    "6e7e5a62a18ebfe6"
+  ],
+  "selected_rows": [
+    {
+      "seed": 500011,
+      "method": "prompt_only",
+      "direction": -1,
+      "target_change": 5.0,
+      "alpha": -2.0,
+      "skin_tone_change": -6.930745546368158,
+      "match_distance": 1.9307455463681575,
+      "match_complete": true,
+      "image_path": "images/seed_500011/prompt_only/alpha_m2p000.png"
+    },
+    {
+      "seed": 500011,
+      "method": "prompt_only",
+      "direction": 1,
+      "target_change": 5.0,
+      "alpha": 0.2,
+      "skin_tone_change": 5.670186541140218,
+      "match_distance": 0.6701865411402181,
+      "match_complete": true,
+      "image_path": "images/seed_500011/prompt_only/alpha_p0p200.png"
+    },
+    {
+      "seed": 500011,
+      "method": "stepwise_masked",
+      "direction": -1,
+      "target_change": 5.0,
+      "alpha": -1.0,
+      "skin_tone_change": -5.361082821194273,
+      "match_distance": 0.3610828211942731,
+      "match_complete": true,
+      "image_path": "images/seed_500011/stepwise_masked/alpha_m1p000.png"
+    },
+    {
+      "seed": 500011,
+      "method": "stepwise_masked",
+      "direction": 1,
+      "target_change": 5.0,
+      "alpha": 0.375,
+      "skin_tone_change": 6.819809718283771,
+      "match_distance": 1.8198097182837711,
+      "match_complete": true,
+      "image_path": "images/seed_500011/stepwise_masked/alpha_p0p375.png"
+    },
+    {
+      "seed": 500011,
+      "method": "stepwise_unmasked",
+      "direction": -1,
+      "target_change": 5.0,
+      "alpha": -0.75,
+      "skin_tone_change": -5.872811401726892,
+      "match_distance": 0.8728114017268922,
+      "match_complete": true,
+      "image_path": "images/seed_500011/stepwise_unmasked/alpha_m0p750.png"
+    },
+    {
+      "seed": 500011,
+      "method": "stepwise_unmasked",
+      "direction": 1,
+      "target_change": 5.0,
+      "alpha": 0.5,
+      "skin_tone_change": 7.766984516484442,
+      "match_distance": 2.7669845164844418,
+      "match_complete": true,
+      "image_path": "images/seed_500011/stepwise_unmasked/alpha_p0p500.png"
+    }
+  ]
+}

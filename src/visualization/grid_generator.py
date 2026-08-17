@@ -4,10 +4,10 @@ Counterfactual grid generation and visualization.
 This module creates visual grids for presenting counterfactual results.
 """
 
-import numpy as np
-from PIL import Image, ImageDraw, ImageFont
-from typing import List, Optional, Dict, Union
 from pathlib import Path
+from typing import Dict, List, Optional, Union
+
+from PIL import Image, ImageDraw, ImageFont
 
 
 class CounterfactualGridGenerator:
@@ -51,7 +51,7 @@ class CounterfactualGridGenerator:
         # Try to load a nice font
         try:
             self.font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
-        except:
+        except OSError:
             self.font = ImageFont.load_default()
 
     def generate_grid(

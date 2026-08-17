@@ -36,6 +36,15 @@ def test_paired_difference_rejects_invalid_samples():
         )
 
 
+def test_paired_difference_rejects_nonfinite_direction():
+    extractor = SkinToneDirectionExtractor(device="cpu")
+    light = [torch.zeros(1, 2, 2)]
+    dark = [torch.full((1, 2, 2), float("nan"))]
+
+    with pytest.raises(ValueError, match="non-finite"):
+        extractor.extract_from_pairs(light, dark)
+
+
 def test_center_mask_is_bounded_and_center_weighted():
     mask = SkinToneDirectionExtractor(device="cpu").create_center_mask(
         9,

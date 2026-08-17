@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "analysis_role": "prospective_independent_seed_replication",
+  "study_id": "skin_tone_steering_independent_seed_replication_v1",
+  "config_fingerprint": "fa694f8bb214c219",
+  "decision_family": "stepwise_masked_vs_stepwise_unmasked_lpips_by_direction",
+  "minimum_shared_matched_pairs_per_direction": 12,
+  "decision": "inconclusive_coverage",
+  "strict_rule": "both estimates positive, both 95% bootstrap CIs exclude zero, both two-test Holm p-values below 0.05",
+  "replication_paired_contrasts_sha256": "3676ea55caee18f586b2ed9b27cf4a5c3ae2585364f764ffaa03f76d8585202b",
+  "parent_paired_contrasts_sha256": "74f85d99a8be3bcdf60e7d182305cf511f85bf2c425066154e5336e8a0de9467",
+  "direction_agreement": {
+    "raw_cosine": 0.8844576478004456,
+    "masked_cosine": 0.918837308883667,
+    "parent_norm": 41.2666015625,
+    "replication_norm": 43.08328628540039,
+    "norm_ratio_replication_to_parent": 1.0440231241273634
+  },
+  "note": "Independent replication rows are reported separately; no pooled 60-seed preregistration claim is made."
+}
