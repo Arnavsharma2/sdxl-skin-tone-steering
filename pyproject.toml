@@ -8,6 +8,27 @@ version = "0.1.0"
 description = "Research code for skin-tone direction estimation and denoising-time steering in SDXL"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Arnav Sharma" },
+]
+keywords = [
+  "computer vision",
+  "diffusion models",
+  "responsible AI",
+  "reproducibility",
+  "skin tone",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
   "accelerate>=0.27,<0.30",
   "diffusers>=0.27,<0.28",
@@ -26,6 +47,11 @@ dependencies = [
   "torchvision>=0.17,<0.18",
   "transformers>=4.38,<4.40",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Arnavsharma2/sdxl-skin-tone-steering"
+Repository = "https://github.com/Arnavsharma2/sdxl-skin-tone-steering"
+Issues = "https://github.com/Arnavsharma2/sdxl-skin-tone-steering/issues"
 
 [project.optional-dependencies]
 evaluation = [

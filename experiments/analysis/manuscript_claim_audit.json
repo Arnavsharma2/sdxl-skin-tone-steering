@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "papers": {
     "paper/main.tex": "c4b7863a326b03a94dc5143fed45f4bbd885fcf714b972c57aab285c2f7e6d40",
-    "paper/wacv/main.tex": "e00e941f646189653b8fbe2f7a8cf05d35b0bf1c0da4bb8d3279975f062270ad"
+    "paper/arxiv.tex": "18bde1eeee4309665308818567eb924f365125116877e2bef4ec06290a63ee3c"
   },
   "evidence_files": {
     "experiments/measurement_validation_cuda/validation_report.json": "679571f02e57a40fb208d6ffb54391d654cafa6dc996cbd1947941e3bfd2a0e0",

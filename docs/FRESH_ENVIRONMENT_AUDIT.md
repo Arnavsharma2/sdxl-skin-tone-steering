@@ -12,8 +12,8 @@ development virtual environment were visible to the audit environment.
 This was a fresh dependency environment, not originally a fresh Git clone. The
 run-integrity checks used the author's retained local image and direction
 archives. The frozen JSON/JSONL generation manifests are now tracked so a clean
-clone can rebuild the anonymous supplement byte-for-byte; the large image and
-tensor archives remain separate as documented in `ARTIFACT_AVAILABILITY.md`.
+clone can reproduce the retained aggregate analyses; the large image and tensor
+archives remain separate as documented in `ARTIFACT_AVAILABILITY.md`.
 
 ## Commands
 
@@ -26,8 +26,6 @@ python3.10 -m venv <fresh-environment>
 <fresh-environment>/bin/python -m ruff check \
   generate_training_data.py run_race_vector_extraction.py scripts tests src
 <fresh-environment>/bin/python scripts/verify_manuscript_claims.py
-<fresh-environment>/bin/python scripts/build_anonymous_supplement.py \
-  --output <fresh-output>/wacv2027_anonymous_supplement.zip
 ```
 
 The exact frozen replication auditor and decision script were then executed
@@ -53,23 +51,15 @@ output directory.
 All four recreated files were byte-for-byte identical to their retained study
 counterparts. This verifies the non-generation tests, run-integrity checks,
 locked replication decision, and central manuscript numbers under a fresh
-environment. The identity-scanned supplementary ZIP was also byte-for-byte
-identical across environments. This does not claim
+environment. This does not claim
 bitwise regeneration of CUDA images on Apple Silicon; the full image campaign
 is content-attested and retained separately. The run-integrity result requires
 that separate archive and is not reproducible from the Git checkout alone.
 
-## Submission-package follow-up
+## Clean-checkout follow-up
 
-After the submission package was made self-contained, a detached clean
-worktree reproduced 70 repository tests, Ruff, both deterministic PDFs, the
-16-group claim audit, and the anonymous ZIP. The ZIP was then extracted into an
-empty directory and installed from its own `pyproject.toml` without dependency
-resolution or build isolation. Its 61 intentionally retained tests, Ruff, and
-the claim audit all passed. Repository-only submission and supplement-builder
-tests are deliberately excluded from the anonymous archive.
-
-After the 2026-08-18 citation and provenance clarification, the isolated
-Python 3.10 environment reran all 70 repository tests, Ruff, and the 16-group
-claim audit successfully. The current claim-audit SHA-256 is
-`74fc3e0259f558a2dc3edf9bca5417046b6f530a5d3264eb3d9000e76dbdff2c`.
+After the manuscript package was made self-contained, a detached clean
+worktree reproduced the tests, Ruff, both deterministic PDFs, and the 16-group
+claim audit. Venue-specific packaging checks were later separated from the
+public research repository. On 2026-08-18, the public checkout passed 61 tests,
+Ruff, and all 16 manuscript-claim groups.

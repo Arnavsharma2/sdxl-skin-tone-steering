@@ -3,9 +3,7 @@
 	study-audit study-robustness direction-stability measurement-validate \
 	replication-data replication-validate replication-freeze replication-run \
 	replication-audit replication-analyze replication-assess replication-plot \
-	paper paper-arxiv paper-wacv paper-audit clean-paper
-
-.PHONY: anonymous-supplement submission-audit submission-ready
+	paper paper-arxiv paper-audit clean-paper
 
 PLANNED_CONFIG ?= configs/full_study.yaml
 PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
@@ -128,22 +126,8 @@ paper-arxiv:
 	mkdir -p output/pdf
 	cp paper/arxiv.pdf output/pdf/arxiv_preprint.pdf
 
-paper-wacv:
-	cd paper/wacv && SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) $(TECTONIC) main.tex --keep-logs --keep-intermediates
-	mkdir -p output/pdf
-	cp paper/wacv/main.pdf output/pdf/wacv2027_submission_draft.pdf
-
 paper-audit:
 	$(PYTHON) scripts/verify_manuscript_claims.py
-
-anonymous-supplement:
-	$(PYTHON) scripts/build_anonymous_supplement.py
-
-submission-audit: paper-audit anonymous-supplement
-	$(PYTHON) scripts/check_submission_readiness.py
-
-submission-ready: submission-audit
-	$(PYTHON) scripts/check_submission_readiness.py --require-human
 
 clean-paper:
 	cd paper && latexmk -C

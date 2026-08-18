@@ -13,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-PAPERS = (ROOT / "paper/main.tex", ROOT / "paper/wacv/main.tex")
+PAPERS = (ROOT / "paper/main.tex", ROOT / "paper/arxiv.tex")
 
 
 def normalize(value: str) -> str:
@@ -385,7 +385,7 @@ def build_claims(root: Path = ROOT) -> tuple[list[Claim], list[Path]]:
 
 def verify(root: Path = ROOT) -> dict[str, object]:
     claims, source_paths = build_claims(root)
-    paper_paths = (root / "paper/main.tex", root / "paper/wacv/main.tex")
+    paper_paths = (root / "paper/main.tex", root / "paper/arxiv.tex")
     papers = {path: normalize(path.read_text()) for path in paper_paths}
     failures = []
     records = []

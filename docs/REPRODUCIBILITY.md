@@ -26,15 +26,10 @@ model revision and weight hash after accepting its license. Hardware backends ma
 identical, so do not mix CUDA, MPS, and CPU within one statistical comparison.
 
 This path was retested from a new Python 3.10 virtual environment on
-2026-08-17. All 70 repository tests and Ruff passed. The frozen run-integrity,
+2026-08-17. The public suite and Ruff passed. The frozen run-integrity,
 replication-decision, and manuscript-claim audit outputs reproduced
 byte-for-byte; see
 `docs/FRESH_ENVIRONMENT_AUDIT.md`.
-
-The anonymous ZIP was also extracted into an empty directory, installed as an
-editable package from its own `pyproject.toml`, and tested independently. All
-61 tests intentionally retained in the anonymous package, Ruff, and the
-16-group manuscript-claim audit passed.
 
 ## Workflow
 
@@ -92,9 +87,8 @@ make replication-plot
 set, matching manifest metadata, complete generation flags, every referenced
 image, and both direction tensors before statistical analysis.
 
-The Git checkout and anonymous supplement reproduce the aggregate statistical
-analysis, figures, decision rule, manuscript-claim audit, and deterministic
-submission ZIP. Recomputing image-derived metrics or rerunning the full
+The Git checkout reproduces the aggregate statistical analysis, figures,
+decision rule, and manuscript-claim audit. Recomputing image-derived metrics or rerunning the full
 run-integrity audit additionally requires the retained generated-image and
 direction-tensor archives listed in `docs/ARTIFACT_AVAILABILITY.md`. Do not
 describe a clean checkout alone as reproducing those large-artifact checks.
@@ -133,5 +127,4 @@ Project-owned source code is licensed under Apache-2.0 following the documented
 third-party license audit. Model weights, metric weights, and generated
 artifacts remain governed by their upstream terms and are not redistributed.
 
-`CITATION.cff` records the confirmed software author and is intentionally
-excluded from the anonymous review supplement.
+`CITATION.cff` records the confirmed software author and release metadata.

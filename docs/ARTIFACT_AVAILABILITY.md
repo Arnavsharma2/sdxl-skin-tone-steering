@@ -1,17 +1,16 @@
 # Artifact availability and reproducibility boundary
 
-Status: prepared for anonymous review on 2026-08-17.
+Status: public reproducibility record prepared on 2026-08-17.
 
-## Available in the Git checkout and anonymous supplement
+## Available in the Git checkout
 
-The repository and supplementary ZIP contain the exact source, environment
-lock, frozen configs, paired-data generation ledgers and manifests, complete
+The repository contains the exact source, environment lock, frozen configs,
+paired-data generation ledgers and manifests, complete
 570-row result ledgers for both campaigns, aggregate analysis tables, figures,
 tests, and the 16-group manuscript-claim audit. From these files a reviewer can:
 
 - reproduce the aggregate analyses and locked replication decision;
 - verify every central numerical manuscript claim against retained evidence;
-- rebuild the deterministic anonymous supplementary ZIP; and
 - inspect the generation and evaluation implementation.
 
 The tracked paired-data manifests attest filenames, generation signatures, and
@@ -19,8 +18,7 @@ content hashes. They do not contain the paired PNGs themselves.
 
 ## Retained separately
 
-The following large or sensitive artifacts are not in Git and are not included
-in the under-200-MiB WACV supplement:
+The following large or sensitive artifacts are not in Git:
 
 | Artifact | Size | SHA-256 | Needed for |
 |---|---:|---|---|
@@ -36,26 +34,13 @@ embeddings. The full image archives contain synthetic portraits that can
 resemble real people and therefore require a separate release and misuse
 decision.
 
-## Submission disclosure
+## Availability boundary
 
-Author decision (2026-08-17): use option 2 below. The retained large archives
-will be unavailable during anonymous review, and the submission will preserve
-the explicit limitation on image-level metric recomputation and full
-run-integrity verification.
+The retained large archives are currently author-held and are not publicly
+downloadable. Therefore, image-level metric recomputation and the full
+run-integrity audit cannot be reproduced from the Git checkout alone. Their
+checksums identify retained content but do not prove public availability or
+independent pre-outcome timing.
 
-Until an anonymous, stable reviewer-accessible URL is added, the paper and
-supplement must describe the large archives as retained but unavailable through
-the review package. A checksum is an integrity identifier, not proof of public
-availability or of pre-outcome timing.
-
-Before submission, the corresponding author must choose one of two honest
-options:
-
-1. provide a stable anonymous link to the retained archives, preserving the
-   hashes above and WACV anonymity; or
-2. leave the archives unavailable during review and retain the explicit
-   limitation that image-level metric recomputation and full run-integrity
-   verification require author-held artifacts.
-
-After acceptance, publish the releasable subset under a versioned DOI or release
-asset, with the repository license, output-use notice, and archive manifest.
+A future archival release may publish the releasable subset under a versioned
+DOI after a separate privacy, misuse, and third-party-license review.

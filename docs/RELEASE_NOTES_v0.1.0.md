@@ -8,10 +8,9 @@ paired SDXL VAE skin-tone direction injected during denoising.
 - author-identified preprint PDF and arXiv source package;
 - prospectively frozen parent and independent-seed replication protocols;
 - retained seed-level results, manifests, analysis outputs, and figures;
-- deterministic anonymous supplementary archive;
 - automated audit linking 16 central manuscript claim groups to retained
   evidence; and
-- 70-test research and reproducibility suite.
+- 61-test public research and reproducibility suite.
 
 ## Evidence statement
 

@@ -1,0 +1,29 @@
+name: Bug or reproducibility problem
+description: Report a software defect or a failure to reproduce a retained result.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not attach credentials, face embeddings, private review files, or real-person images.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Include the smallest non-sensitive command or example that reproduces the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, Python version, package versions, device, and repository commit.
+    validations:
+      required: true

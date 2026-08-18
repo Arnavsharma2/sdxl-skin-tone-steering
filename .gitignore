@@ -51,7 +51,11 @@ data/study_v1/
 data/replication_v1/
 tmp/
 *.egg-info/
-submission/author_inputs.yaml
+# Private venue-review materials. Keep these locally, never in the public repo.
+submission/
+output/supplement/
+output/arxiv/
+output/pdf/denoising_time_skin_tone_steering_replication.pdf
 
 # Jupyter
 .ipynb_checkpoints/
@@ -72,10 +76,3 @@ paper/*.fls
 paper/*.log
 paper/*.out
 paper/*.pdf
-paper/wacv/*.aux
-paper/wacv/*.bbl
-paper/wacv/*.blg
-paper/wacv/*.brf
-paper/wacv/*.log
-paper/wacv/*.out
-paper/wacv/*.pdf
