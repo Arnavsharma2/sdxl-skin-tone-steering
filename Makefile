@@ -3,7 +3,7 @@
 	study-audit study-robustness direction-stability measurement-validate \
 	replication-data replication-validate replication-freeze replication-run \
 	replication-audit replication-analyze replication-assess replication-plot \
-	paper paper-wacv paper-audit clean-paper
+	paper paper-arxiv paper-wacv paper-audit clean-paper
 
 .PHONY: anonymous-supplement submission-audit submission-ready
 
@@ -122,6 +122,11 @@ paper:
 	cd paper && SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) $(TECTONIC) main.tex --keep-logs --keep-intermediates
 	mkdir -p output/pdf
 	cp paper/main.pdf output/pdf/denoising_time_skin_tone_steering_replication.pdf
+
+paper-arxiv:
+	cd paper && SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) $(TECTONIC) arxiv.tex --keep-logs --keep-intermediates
+	mkdir -p output/pdf
+	cp paper/arxiv.pdf output/pdf/arxiv_preprint.pdf
 
 paper-wacv:
 	cd paper/wacv && SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) $(TECTONIC) main.tex --keep-logs --keep-intermediates

@@ -224,6 +224,9 @@ Build it with `make paper` after installing Tectonic. Run `make paper-audit` to
 verify 16 central numerical claim groups against the retained validation,
 analysis, robustness, and replication artifacts.
 
+The author-identified preprint source is [paper/arxiv.tex](paper/arxiv.tex).
+Build the upload-ready PDF with `make paper-arxiv`.
+
 An anonymized WACV 2027 Evaluations & Dataset-track draft using the official
 author kit is in [paper/wacv/main.tex](paper/wacv/main.tex). Build it with
 `make paper-wacv`; build the identity-scanned supplementary ZIP with
@@ -239,6 +242,6 @@ sensitive biometric data and should not be committed.
 
 Release documentation includes the [model card](docs/MODEL_CARD.md),
 [data card](docs/DATA_CARD.md), and
-[third-party license audit](docs/RELEASE_LICENSE_AUDIT.md). The repository
-license and final citation authors remain intentionally unset until approved by
-the copyright holder.
+[third-party license audit](docs/RELEASE_LICENSE_AUDIT.md). The repository is
+released under Apache-2.0, and the approved author metadata is recorded in
+[CITATION.cff](CITATION.cff).

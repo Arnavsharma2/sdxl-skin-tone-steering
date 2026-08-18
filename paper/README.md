@@ -1,14 +1,14 @@
-# Paper build
+# Paper builds
 
-The paper is a submission-shaped pilot draft, not a claim-complete manuscript.
-Replace the anonymous author line and venue formatting before submission.
-
-Build with a TeX distribution containing `latexmk`:
+The generic manuscript, author-identified arXiv preprint, and anonymous WACV
+submission are maintained separately. Build them with Tectonic:
 
 ```bash
 make paper
+make paper-arxiv
+make paper-wacv
 ```
 
-Before promoting the pilot language, run the confirmatory protocol in
-`docs/RESEARCH_PROTOCOL.md`, replace Table 1 with aggregated held-out results,
-add the target-attribute validation, and update `docs/CLAIMS_AND_EVIDENCE.md`.
+Run `make paper-audit` before release to verify the manuscript's central
+numerical claims against retained evidence. Do not use the author-identified
+arXiv source for double-blind conference submission.
