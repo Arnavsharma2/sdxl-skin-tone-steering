@@ -1,11 +1,13 @@
 cff-version: 1.2.0
 message: "If you use this software, cite the archived release and accompanying paper."
-title: "Denoising-Time Skin-Tone Steering in SDXL"
+title: "Evaluating Skin-Tone Control and Image Preservation in SDXL"
 type: software
 version: 0.1.0
 repository-code: "https://github.com/Arnavsharma2/Bias-Mitigation-in-AI-Image-Generation"
 authors:
-  - name: "Project contributors"
+  - given-names: "Arnav"
+    family-names: "Sharma"
+    affiliation: "Pennsylvania State University"
 keywords:
   - latent diffusion
   - counterfactual generation

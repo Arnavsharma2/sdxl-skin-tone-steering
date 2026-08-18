@@ -46,9 +46,9 @@ preservation, race editing, demographic inference, or bias mitigation.
 latent diffusion; matched-change evaluation; skin tone; perceptual
 preservation; prospective design; reproducibility; missingness
 
-## Author-dependent enrollment fields
+## Author-dependent enrollment status
 
-- Complete author names and order: **required before 2026-08-21 AoE**
-- OpenReview IDs and conflict-complete profiles: **required**
-- Corresponding author: **required**
+- Complete author list and order: **completed; retained only in the private author-input file**
+- OpenReview profile and conflicts: **completed**
+- Corresponding author: **completed; retained only in the private author-input file**
 - Paper ID: **235**, inserted into `paper/wacv/main.tex`

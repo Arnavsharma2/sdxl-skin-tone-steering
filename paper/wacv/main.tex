@@ -80,12 +80,12 @@ whether diffusion representations admit semantic control in general.
 
 \section{Construct and scope}
 
-Race and ethnicity are social identities, not one-dimensional visual
-attributes. The intervention in this study is therefore called a
+Race and ethnicity are socially constructed and multidimensional, not fixed
+one-dimensional visual attributes \cite{hanna2020critical}. The intervention in this study is therefore called a
 \emph{skin-tone direction}. It must not be interpreted as changing, estimating,
-or classifying race. Even datasets designed to balance face categories expose
-the difficulty and consequences of reducing social categories to visual labels
-\cite{karkkainen2021fairface}. The present method is intended for controlled
+or classifying race. Even datasets designed to balance face categories must
+operationalize a limited set of visual labels, and report performance
+consequences from category imbalance \cite{karkkainen2021fairface}. The present method is intended for controlled
 generative-model research and auditing, not profiling or decisions about
 people.
 
@@ -114,8 +114,9 @@ pipeline updates the scheduler latent after each step by
 \begin{equation}
   z_t \leftarrow z_t + \frac{\alpha}{T}\tilde v.
 \end{equation}
-The implementation uses 25 DPM-Solver++ multistep updates, motivated by fast
-diffusion ODE solvers \cite{lu2022dpmsolver}, with classifier-free guidance 7.5.
+All runs use SDXL base 1.0 revision 462165984030 at
+$1024\!\times\!1024$ resolution. The implementation uses 25 DPM-Solver++
+multistep updates \cite{lu2022dpmsolverpp} with classifier-free guidance 7.5.
 
 \section{Evaluation design}
 
@@ -328,6 +329,17 @@ Pairs/half & Raw direction & Masked direction \\
 
 \section{Prospective independent-seed replication}
 
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\textwidth]{../figures/replication_comparison.pdf}
+  \caption{Parent and prospective replication reported separately. (a) Locked
+  masked-versus-unmasked LPIPS advantages with ordinary 95\% bootstrap
+  intervals. (b) Matched-target coverage; hatching marks replication bars.
+  The formal replication decision is inconclusive because shared matched
+  coverage fell below 12 in both directions.}
+  \label{fig:replication}
+\end{figure*}
+
 A fresh 96-pair campaign passed the unchanged held-out measurement gates before
 outcome generation: detection was 1.000, pair ordering 0.969, the median pair
 gap 16.08 ITA degrees, and median/95th-percentile perturbation shifts 0.35/3.83
@@ -368,17 +380,6 @@ frozen spatial mask raised cross-campaign cosine to 0.919. Their norm ratio was
 1.04. Figure~\ref{fig:replication} compares effects and target coverage without
 pooling the two campaigns.
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{../figures/replication_comparison.pdf}
-  \caption{Parent and prospective replication reported separately. (a) Locked
-  masked-versus-unmasked LPIPS advantages with ordinary 95\% bootstrap
-  intervals. (b) Matched-target coverage; hatching marks replication bars.
-  The formal replication decision is inconclusive because shared matched
-  coverage fell below 12 in both directions.}
-  \label{fig:replication}
-\end{figure*}
-
 \section{Limitations}
 
 The study evaluates one generator, scheduler, resolution, and model revision;
@@ -389,8 +390,10 @@ Gaussian is not a semantic skin mask. The same generator creates direction and
 evaluation images, so model-specific artifacts may dominate. ITA is an
 image-colour proxy, not a complete representation of skin appearance, and its
 validation uses synthetic prompt pairs rather than calibrated physical colour
-measurements. Face embeddings and face/skin detectors can exhibit demographic
-error. Matched-change coverage is incomplete and particularly low for
+measurements. Face-recognition systems can exhibit demographic performance
+differentials \cite{grother2019frvt}; the embedding model, face detector, and
+cheek heuristic used here were not validated on real demographic groups.
+Matched-change coverage is incomplete and particularly low for
 prompt-only lighter edits, reducing paired sample sizes and precision. The
 post-confirmatory tolerance analysis confirms that stricter matching is too
 sparse for stable inference, while the split-half analysis shows that the

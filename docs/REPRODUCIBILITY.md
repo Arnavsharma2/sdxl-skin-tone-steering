@@ -129,8 +129,9 @@ versioned DOI or release asset and record SHA-256 hashes:
 - paper figures and the script or command that generated each figure;
 - environment lock file or container digest.
 
-The repository currently has no license. Select and add one only after checking
-the licenses of the model, metrics, data, and generated artifacts.
+Project-owned source code is licensed under Apache-2.0 following the documented
+third-party license audit. Model weights, metric weights, and generated
+artifacts remain governed by their upstream terms and are not redistributed.
 
-`CITATION.cff` intentionally uses “Project contributors” until the author list
-and order are confirmed. Replace that placeholder before creating a release.
+`CITATION.cff` records the confirmed software author and is intentionally
+excluded from the anonymous review supplement.

@@ -1,6 +1,6 @@
 # WACV 2027 Round 2 submission checklist
 
-Official-source check: 2026-08-17. All deadlines are Anywhere on Earth.
+Official-source check: 2026-08-18. All deadlines are Anywhere on Earth.
 
 ## Immediate user actions — due 2026-08-21
 
@@ -70,6 +70,6 @@ Official-source check: 2026-08-17. All deadlines are Anywhere on Earth.
 - Draft status: official review format, Datasets track, replication integrated;
   paper ID 235 assigned; independent human review pending.
 - Draft PDF SHA-256:
-  `a8d0775a7c9971f2d783ddb475325fbe7e23eabf1733d7fd5d1add65ff95b295`.
+  `7bb954019c53038460d1bcccee679a2892266650d18a52bc6a9a1d3a1004279a`.
 - Supplement: `output/supplement/wacv2027_anonymous_supplement.zip`, 1.9 MB,
-  SHA-256 `caa3c4883e431e1850eb424eb4d67b905bad41e133d445262df298cfb214f8ed`.
+  SHA-256 `638038da0bb7927855cc1ce782a567e09a318cb8cb0ef3bf5d4c1fe47db7df65`.

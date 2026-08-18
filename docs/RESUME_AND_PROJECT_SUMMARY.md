@@ -23,7 +23,7 @@ status. Do not describe a manuscript as published or accepted before it is.
 - Published a prospectively frozen evaluation of denoising-time latent control in SDXL
   at [venue], showing a bounded perceptual-preservation benefit in the parent
   campaign and an interval-positive but coverage-inconclusive independent
-  replication; built a 63-test reproducibility and artifact-integrity system.
+  replication; built a 70-test reproducibility and artifact-integrity system.
 
 ## Short project description
 

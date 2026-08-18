@@ -1,6 +1,6 @@
 # Venue plan
 
-Checked 2026-08-17. Recheck every deadline and policy on the official venue
+Checked 2026-08-18. Recheck every deadline and policy on the official venue
 site before submission; dates and tracks can change.
 
 ## Current decision
@@ -11,9 +11,8 @@ core confirmatory study and robustness analyses are complete, and a prospective
 independent-seed replication is complete. The replication retained both parent
 LPIPS effect signs and interval-positive estimates, but its locked decision is
 inconclusive because matched-pair coverage fell below the prespecified minimum.
-This route is viable only if the user
-creates the OpenReview enrollment with the complete author list by 2026-08-21
-and every author has a valid, conflict-complete profile. The paper deadline is
+The OpenReview enrollment is complete with the full author list, a valid
+profile, and paper ID 235. The paper deadline is
 2026-08-28 and Round 2 has no rebuttal. Do not submit merely to meet the date if
 the replication, independent review, or ethics/release checks expose a material
 problem.
@@ -22,7 +21,7 @@ WACV's eight-page limit, double-blind rules, 50 MB PDF limit, and required
 Datasets-track style are hard gates. The current anonymized WACV draft is seven
 pages including references, uses the official 2027 author kit, has passed
 visual and numerical-claim audits, and has a 1.9 MB identity-scanned supplement.
-Its paper ID remains a placeholder until enrollment.
+Paper ID 235 is inserted in the anonymous review PDF.
 
 - [WACV 2027 call for papers](https://wacv.thecvf.com/Conferences/2027/CallForPapers)
 - [WACV 2027 author guide](https://wacv.thecvf.com/Conferences/2027/AuthorGuides)

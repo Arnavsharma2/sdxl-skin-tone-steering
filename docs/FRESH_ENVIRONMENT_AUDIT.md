@@ -68,3 +68,8 @@ empty directory and installed from its own `pyproject.toml` without dependency
 resolution or build isolation. Its 61 intentionally retained tests, Ruff, and
 the claim audit all passed. Repository-only submission and supplement-builder
 tests are deliberately excluded from the anonymous archive.
+
+After the 2026-08-18 citation and provenance clarification, the isolated
+Python 3.10 environment reran all 70 repository tests, Ruff, and the 16-group
+claim audit successfully. The current claim-audit SHA-256 is
+`74fc3e0259f558a2dc3edf9bca5417046b6f530a5d3264eb3d9000e76dbdff2c`.

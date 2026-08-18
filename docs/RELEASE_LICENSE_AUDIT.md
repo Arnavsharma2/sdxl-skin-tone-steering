@@ -46,17 +46,17 @@ or release assets rather than Git objects.
   artifact and its training-manifest hash.
 - Face embeddings: never release. Only scalar cosine similarities are retained.
 
-## Required files before public release
+## Release-file status
 
-1. A copyright-holder-approved root `LICENSE`.
-2. Final authors and affiliations in `CITATION.cff`; remove the placeholder
-   release date until a release exists, then set it to the real date.
-3. `MODEL_CARD.md`, `DATA_CARD.md`, ethics statement, and claims/evidence
-   register included in the release.
-4. An archive manifest containing filenames, byte sizes, SHA-256 hashes,
+1. The copyright-holder-approved root `LICENSE` is present.
+2. The confirmed author and affiliation are recorded in `CITATION.cff`; no
+   release date is declared before an actual release.
+3. `MODEL_CARD.md`, `DATA_CARD.md`, the ethics statement, and claims/evidence
+   register are present.
+4. A public artifact release still needs an archive manifest containing filenames, byte sizes, SHA-256 hashes,
    upstream model revision, config fingerprints, and whether each artifact is
    public or restricted.
-5. A release note stating that third-party weights are not distributed and
+5. A public artifact release still needs a release note stating that third-party weights are not distributed and
    that generated outputs cannot be used for profiling, identity decisions,
    discrimination, deceptive editing, or editing real people without consent.
 
@@ -64,7 +64,7 @@ or release assets rather than Git objects.
 
 | Material | Git repository | External archive | Public by default |
 |---|---:|---:|---:|
-| Source, tests, configs, paper source | Yes | Optional | Yes after license selection |
+| Source, tests, configs, paper source | Yes | Optional | Yes |
 | Aggregate CSV/JSON analyses | Yes or DOI | Yes | Yes |
 | Selected paper figures | Yes | Yes | Yes with output notice |
 | Full generated image runs | No | Yes | No; explicit release decision required |

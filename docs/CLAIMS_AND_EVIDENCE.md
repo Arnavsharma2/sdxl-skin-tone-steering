@@ -19,4 +19,4 @@ disagree. Update it in the same commit as new experiment results.
 `scripts/verify_manuscript_claims.py` additionally checks 16 central numerical
 claim groups in both paper variants against content-hashed retained evidence.
 The current audit is `experiments/analysis/manuscript_claim_audit.json`, SHA-256
-`34b28746ba0d8acca134cc99dc42a16a11df84fd4067aec01f3cbbe8d2c37887`.
+`74fc3e0259f558a2dc3edf9bca5417046b6f530a5d3264eb3d9000e76dbdff2c`.

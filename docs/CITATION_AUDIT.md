@@ -1,6 +1,6 @@
 # Primary-source citation audit
 
-Audit date: 2026-08-17
+Audit date: 2026-08-18
 
 Every citation used by both paper variants was checked against the paper's
 primary venue, publisher, DOI landing page, or author-submitted manuscript.
@@ -14,7 +14,9 @@ scope: each citation supports the method or measurement fact attributed to it.
 | `podell2023sdxl` | [arXiv 2307.01952](https://arxiv.org/abs/2307.01952) | SDXL architecture and conditioning changes. | Verified |
 | `shen2020interfacegan` | [CVPR 2020 proceedings](https://openaccess.thecvf.com/content_CVPR_2020/html/Shen_Interpreting_the_Latent_Space_of_GANs_for_Semantic_Face_Editing_CVPR_2020_paper.html) | Linear semantic directions in GAN latent spaces. | Verified |
 | `karkkainen2021fairface` | [WACV 2021 proceedings](https://openaccess.thecvf.com/content/WACV2021/html/Karkkainen_FairFace_Face_Attribute_Dataset_for_Balanced_Race_Gender_and_Age_WACV_2021_paper.html) | Limitations and consequences of visual social-category labels. | Verified |
-| `lu2022dpmsolver` | [NeurIPS 2022 proceedings](https://proceedings.neurips.cc/paper_files/paper/2022/hash/260a14acce2a89dad36adc8eefe7c59e-Abstract-Conference.html) | Fast diffusion ODE solvers motivating multistep sampling. | Verified |
+| `lu2022dpmsolverpp` | [arXiv 2211.01095](https://arxiv.org/abs/2211.01095) | The exact DPM-Solver++ multistep sampler family used in the study. | Verified |
+| `hanna2020critical` | [FAccT 2020 / DOI 10.1145/3351095.3372826](https://doi.org/10.1145/3351095.3372826) | Race is socially constructed and multidimensional rather than a fixed visual attribute. | Verified |
+| `grother2019frvt` | [NISTIR 8280](https://doi.org/10.6028/NIST.IR.8280) | Demographic performance differentials in face-recognition systems. | Verified |
 | `schroff2015facenet` | [CVPR 2015 paper](https://openaccess.thecvf.com/content_cvpr_2015/papers/Schroff_FaceNet_A_Unified_2015_CVPR_paper.pdf) | General face-embedding similarity approach. | Verified |
 | `zhang2018lpips` | [CVPR 2018 proceedings](https://openaccess.thecvf.com/content_cvpr_2018/html/Zhang_The_Unreasonable_Effectiveness_CVPR_2018_paper.html) | Learned perceptual image distance. | Verified |
 | `wang2004ssim` | [DOI 10.1109/TIP.2003.819861](https://doi.org/10.1109/TIP.2003.819861) | Structural similarity measurement. | Verified |
