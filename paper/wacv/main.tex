@@ -4,12 +4,11 @@
 \definecolor{wacvblue}{rgb}{0.21,0.49,0.74}
 \usepackage[pagebackref,breaklinks,colorlinks,allcolors=wacvblue]{hyperref}
 
-\def\wacvPaperID{*****}
+\def\wacvPaperID{235}
 \def\confName{WACV}
 \def\confYear{2027}
 
-\title{Skin-Tone Steering at Matched Change:\\
-A Prospectively Frozen Evaluation of Denoising-Time Latent Control in SDXL}
+\title{Evaluating Skin-Tone Control and Image Preservation in SDXL}
 \author{Anonymous submission}
 \date{}
 
@@ -19,26 +18,25 @@ A Prospectively Frozen Evaluation of Denoising-Time Latent Control in SDXL}
 \maketitle
 
 \begin{abstract}
-We study whether a linear direction estimated from paired portrait latents can
-control visible skin tone in Stable Diffusion XL while preserving other image
-properties. The proposed method computes a paired mean difference in the VAE
-latent space, applies a spatial Gaussian mask, and distributes the resulting
-perturbation across denoising steps. We freeze a matched-change evaluation
-after calibration, estimate the direction from 64 of 96 noise-coupled prompt
-pairs, validate an image-colour instrument on the remaining 32, and evaluate
-570 conditions over 30 held-out seeds. The parent study found no detectable
-face-embedding advantage, but masking reduced LPIPS relative to unmasked
-steering by 0.023 lighter and 0.082 darker (Holm-adjusted $p=.012,.002$).
-We then prospectively fixed an independent-seed replication with new direction
-data and 30 new seeds. Its LPIPS advantages were again positive: 0.024
-($[0.005,0.041]$) lighter and 0.041 ($[0.018,0.065]$) darker. The locked
-decision was nevertheless inconclusive: only 8 and 10 shared matched seeds
-were available, below the minimum of 12, and the lighter two-test Holm value
-was .056 (darker .019). The cross-campaign masked-direction cosine was 0.919.
-The evidence supports a localized perceptual-preservation signal under this
-SDXL protocol, not strict replication, identity preservation, disentanglement,
-or bias mitigation. Skin tone is treated only as an apparent visual attribute,
-never as a proxy for race or ethnicity.
+Controlling apparent skin tone in generated portraits can unintentionally
+alter apparent identity, pose, or background, yet preservation comparisons are
+unreliable when methods produce different amounts of target change. We
+evaluate whether a linear direction derived from paired portrait latents can
+control apparent skin tone in Stable Diffusion XL while preserving other image
+properties. The intervention computes a paired mean difference in VAE latent
+space, applies a predefined spatial Gaussian mask, and distributes the
+alteration across multiple denoising steps. Our main contribution is an
+experimental plan defined before examining the outcomes, with methods compared
+only when they achieve similar measured image-colour changes and with detector
+and metric failures retained. Using 64 direction-estimation pairs, 32 held-out
+validation pairs, and 570 conditions across 30 seeds, masking improved LPIPS
+preservation over unmasked steering by 0.023 for lighter edits and 0.082 for
+darker edits, but produced no detectable face-embedding advantage. An
+independent 30-seed replication retained both effect directions and high
+direction agreement, but only 8 and 10 matched seeds remained, below the
+prespecified minimum of 12. The evidence therefore supports a limited
+perceptual-preservation advantage under the tested SDXL setup, not identity
+preservation, race editing, demographic inference, or bias mitigation.
 \end{abstract}
 
 \section{Introduction}

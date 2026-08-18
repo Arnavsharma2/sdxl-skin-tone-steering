@@ -6,38 +6,32 @@ Evaluations & Dataset Track
 
 ## Working title
 
-**Skin-Tone Steering at Matched Change: A Prospectively Frozen Evaluation of
-Denoising-Time Latent Control in SDXL**
+**Evaluating Skin-Tone Control and Image Preservation in SDXL**
 
 The title foregrounds the evaluation contribution and avoids implying that a
 new semantic-direction concept or a race-editing system is being claimed.
 
 ## Enrollment abstract
 
-We evaluate whether a linear direction estimated from paired portrait latents
-can control visible skin tone in Stable Diffusion XL while preserving other
-image properties. The intervention computes a paired mean difference in VAE
-latent space, applies a fixed spatial Gaussian mask, and distributes the update
-across denoising steps. Our central contribution is a prospectively frozen
-matched-change protocol that separates target response from preservation,
-retains detector and metric failures, and compares methods only after matching
-their measured image-colour change. We estimate the direction from 64 of 96
-noise-coupled synthetic prompt pairs, validate a continuous image-colour
-instrument on 32 held-out pairs, and evaluate 570 conditions over 30 held-out
-seeds. At a matched five-degree Individual Typology Angle change, masked
-steering provides no detectable face-embedding-similarity advantage. It does,
-however, improve LPIPS relative to unmasked steering in both directions and
-improves several darker-direction background and pose contrasts. Target
-coverage varies materially across methods and directions, demonstrating why
-unmatched preservation comparisons can be misleading. Post-confirmatory
-tolerance and split-half analyses expose limited strict-match coverage and
-sample sensitivity of the learned direction. A prospectively frozen
-independent-seed replication retained both LPIPS effect signs and
-interval-positive estimates, but missed its prespecified matched-pair coverage
-threshold; its locked decision is therefore inconclusive. The study supports a
-bounded parent-campaign perceptual-preservation result and an auditable
-evaluation practice—not identity preservation, causal disentanglement,
-demographic inference, bias mitigation, or a strict replication claim.
+Controlling apparent skin tone in generated portraits can unintentionally alter
+apparent identity, pose, or background, yet preservation comparisons are
+unreliable when methods produce different amounts of target change. We evaluate
+whether a linear direction derived from paired portrait latents can control
+apparent skin tone in Stable Diffusion XL while preserving other image
+properties. The intervention computes a paired mean difference in VAE latent
+space, applies a predefined spatial Gaussian mask, and distributes the
+alteration across multiple denoising steps. Our main contribution is an
+experimental plan defined before examining the outcomes, with methods compared
+only when they achieve similar measured image-color changes and with detector
+and metric failures retained. Using 64 direction-estimation pairs, 32 held-out
+validation pairs, and 570 conditions across 30 seeds, masking improved LPIPS
+preservation over unmasked steering by 0.023 for lighter edits and 0.082 for
+darker edits, but produced no detectable face-embedding advantage. An
+independent 30-seed replication retained both effect directions and high
+direction agreement, but only 8 and 10 matched seeds remained, below the
+prespecified minimum of 12. The evidence therefore supports a limited
+perceptual-preservation advantage under the tested SDXL setup, not identity
+preservation, race editing, demographic inference, or bias mitigation.
 
 ## Suggested subject areas
 
@@ -57,5 +51,4 @@ preservation; prospective design; reproducibility; missingness
 - Complete author names and order: **required before 2026-08-21 AoE**
 - OpenReview IDs and conflict-complete profiles: **required**
 - Corresponding author: **required**
-- Paper ID: assigned after enrollment and then inserted into
-  `paper/wacv/main.tex`
+- Paper ID: **235**, inserted into `paper/wacv/main.tex`
